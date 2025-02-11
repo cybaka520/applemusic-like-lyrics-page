@@ -1,3 +1,4 @@
+import { parseTTML } from "@applemusic-like-lyrics/lyric";
 import {
 	hideLyricViewAtom,
 	musicAlbumNameAtom,
@@ -17,7 +18,8 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { type Event, listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
-import { type FC, useEffect, useTransition } from "react";
+import { type FC, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
 	musicIdAtom,
@@ -30,7 +32,7 @@ export const WSProtocolMusicContext: FC = () => {
 	const wsProtocolListenAddr = useAtomValue(wsProtocolListenAddrAtom);
 	const setConnectedAddrs = useSetAtom(wsProtocolConnectedAddrsAtom);
 	const store = useStore();
-	const { t } = useTransition();
+	const { t } = useTranslation();
 
 	useEffect(() => {
 		emitAudioThread("pauseAudio");
@@ -43,77 +45,62 @@ export const WSProtocolMusicContext: FC = () => {
 		store.set(musicCoverAtom, "");
 		store.set(musicArtistsAtom, []);
 
+		function sendWSMessage<T extends keyof WSBodyMessageMap>(
+			type: T,
+			value: WSBodyMessageMap[T] extends undefined
+				? undefined
+				: WSBodyMessageMap[T] | undefined = undefined,
+		) {
+			invoke("ws_boardcast_message", {
+				data: {
+					type,
+					value,
+				},
+			});
+		}
+
 		const toEmit = <T,>(onEmit: T) => ({
 			onEmit,
 		});
 		store.set(
 			onRequestNextSongAtom,
 			toEmit(() => {
-				toast(
-					t(
-						"ws-protocol.toast.switchSongNotSupported",
-						"WS Protocol 模式下无法切换歌曲",
-					),
-				);
+				sendWSMessage("forwardSong");
 			}),
 		);
 		store.set(
 			onRequestPrevSongAtom,
 			toEmit(() => {
-				toast(
-					t(
-						"ws-protocol.toast.switchSongNotSupported",
-						"WS Protocol 模式下无法切换歌曲",
-					),
-				);
+				sendWSMessage("backwardSong");
 			}),
 		);
 		store.set(
 			onPlayOrResumeAtom,
 			toEmit(() => {
-				toast(
-					t(
-						"ws-protocol.toast.pauseOrPlaySongNotSupported",
-						"WS Protocol 模式下无法暂停 / 继续播放音乐",
-					),
-				);
+				sendWSMessage(store.get(musicPlayingAtom) ? "pause" : "resume");
 			}),
 		);
 		store.set(
 			onSeekPositionAtom,
-			toEmit(() => {
-				toast(
-					t(
-						"ws-protocol.toast.seekNotSupported",
-						"WS Protocol 模式下无法修改播放进度",
-					),
-				);
+			toEmit((progress) => {
+				sendWSMessage("seekPlayProgress", {
+					progress,
+				});
 			}),
 		);
 		store.set(
 			onChangeVolumeAtom,
-			toEmit(() => {
-				toast(
-					t(
-						"ws-protocol.toast.changeVolumeNotSupported",
-						"WS Protocol 模式下无法修改音量",
-					),
-					{
-						toastId: "ws-protocol-change-volume",
-					},
-				);
+			toEmit((volume) => {
+				sendWSMessage("setVolume", {
+					volume,
+				});
 			}),
 		);
 
 		const unlistenConnected = listen<string>(
 			"on-ws-protocol-client-connected",
 			(evt) => {
-				invoke("ws_boardcast_message", {
-					data: {
-						type: "ping",
-						value: {},
-					} as WSBodyMap["ping"],
-				});
+				sendWSMessage("ping");
 				setConnectedAddrs((prev) => new Set([...prev, evt.payload]));
 			},
 		);
@@ -130,6 +117,8 @@ export const WSProtocolMusicContext: FC = () => {
 		}
 
 		interface WSLyricLine {
+			startTime: number;
+			endTime: number;
 			words: WSLyricWord[];
 			isBG: boolean;
 			isDuet: boolean;
@@ -138,57 +127,48 @@ export const WSProtocolMusicContext: FC = () => {
 		}
 
 		type WSBodyMessageMap = {
-			// biome-ignore lint/complexity/noBannedTypes:
-			ping: {};
-			// biome-ignore lint/complexity/noBannedTypes:
-			pong: {};
-			setMusicId: {
-				id: string;
-				name: string;
+			ping: undefined;
+			pong: undefined;
+			setMusicInfo: {
+				musicId: string;
+				musicName: string;
+				albumId: string;
+				albumName: string;
+				artists: WSArtist[];
 				duration: number;
 			};
-			setMusicAlbum: {
-				id: string;
-				name: string;
-			};
-			setMusicAlbumCoverImageURL: {
+			setMusicAlbumCoverImageURI: {
 				imgUrl: string;
 			};
 			setMusicAlbumCoverImageData: {
 				data: number[];
 			};
-			setMusicArtists: {
-				artists: WSArtist[];
-			};
-			onLoadProgress: {
-				progress: number;
-			};
 			onPlayProgress: {
 				progress: number;
 			};
-			// biome-ignore lint/complexity/noBannedTypes:
-			onPaused: {};
-			// biome-ignore lint/complexity/noBannedTypes:
-			onResumed: {};
-			setPlayProgress: {
-				progress: number;
+			onVolumeChanged: {
+				volume: number;
 			};
+			onPaused: undefined;
+			onResumed: undefined;
 			onAudioData: {
 				data: number[];
 			};
 			setLyric: {
 				data: WSLyricLine[];
 			};
-			// biome-ignore lint/complexity/noBannedTypes:
-			pause: {};
-			// biome-ignore lint/complexity/noBannedTypes:
-			resume: {};
-			// biome-ignore lint/complexity/noBannedTypes:
-			forwardSong: {};
-			// biome-ignore lint/complexity/noBannedTypes:
-			backwardSong: {};
+			setLyricFromTTML: {
+				data: string;
+			};
+			pause: undefined;
+			resume: undefined;
+			forwardSong: undefined;
+			backwardSong: undefined;
 			setVolume: {
 				volume: number;
+			};
+			seekPlayProgress: {
+				progress: number;
 			};
 		};
 
@@ -203,14 +183,21 @@ export const WSProtocolMusicContext: FC = () => {
 			const payload = evt.payload;
 
 			switch (payload.type) {
-				case "setMusicId": {
-					store.set(musicIdAtom, payload.value.id);
-					store.set(musicNameAtom, payload.value.name);
+				case "setMusicInfo": {
+					store.set(musicIdAtom, payload.value.musicId);
+					store.set(musicNameAtom, payload.value.musicName);
 					store.set(musicDurationAtom, payload.value.duration);
+					store.set(
+						musicArtistsAtom,
+						payload.value.artists.map((v) => ({
+							id: v.id,
+							name: v.name,
+						})),
+					);
 					store.set(musicPlayingPositionAtom, 0);
 					break;
 				}
-				case "setMusicAlbumCoverImageURL": {
+				case "setMusicAlbumCoverImageURI": {
 					store.set(musicCoverAtom, payload.value.imgUrl);
 					break;
 				}
@@ -219,34 +206,49 @@ export const WSProtocolMusicContext: FC = () => {
 					store.set(musicPlayingPositionAtom, payload.value.progress);
 					break;
 				}
-				case "setMusicArtists": {
-					store.set(
-						musicArtistsAtom,
-						payload.value.artists.map((v) => ({
-							id: v.id,
-							name: v.name,
-						})),
-					);
+				case "onPaused": {
+					store.set(musicPlayingAtom, false);
+					break;
+				}
+				case "onResumed": {
+					store.set(musicPlayingAtom, true);
 					break;
 				}
 				case "setLyric": {
 					const processed = payload.value.data.map((line) => ({
 						...line,
-						startTime: Math.min(
-							...line.words
-								.filter((v) => v.word.trim().length > 0)
-								.map((v) => v.startTime),
-						),
-						endTime: Math.max(
-							...line.words
-								.filter((v) => v.word.trim().length > 0)
-								.map((v) => v.endTime),
-						),
+						words: line.words.map((word) => ({
+							...word,
+							obscene: false,
+						})),
 					}));
 					if (processed.length > 0) {
 						store.set(hideLyricViewAtom, false);
 					}
 					store.set(musicLyricLinesAtom, processed);
+					break;
+				}
+				case "setLyricFromTTML": {
+					try {
+						const data = parseTTML(payload.value.data);
+						const processed = data.lines.map((line) => ({
+							...line,
+							words: line.words.map((word) => ({
+								...word,
+								obscene: false,
+							})),
+						}));
+						store.set(musicLyricLinesAtom, processed);
+					} catch (e) {
+						console.error(e);
+						toast.error(
+							t(
+								"ws-protocol.toast.ttmlParseError",
+								"解析来自 WS 发送端的 TTML 歌词时出错：{{error}}",
+								{ error: String(e) },
+							),
+						);
+					}
 					break;
 				}
 				default:
@@ -276,7 +278,7 @@ export const WSProtocolMusicContext: FC = () => {
 				addr: "",
 			});
 		};
-	}, [wsProtocolListenAddr, setConnectedAddrs, store]);
+	}, [wsProtocolListenAddr, setConnectedAddrs, store, t]);
 
 	return null;
 };
