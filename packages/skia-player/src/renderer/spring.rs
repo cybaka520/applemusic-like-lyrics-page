@@ -18,6 +18,7 @@ pub fn round(mut x: Num) -> Num {
 /// 一个一维弹簧，可用于动画用途
 ///
 /// 优点是调用次数无关，可以在任意时间计算出当前时间的弹簧末端位置，非常方便
+#[derive(Debug)]
 pub struct Spring {
     start_time: Instant,
     damper: Num,

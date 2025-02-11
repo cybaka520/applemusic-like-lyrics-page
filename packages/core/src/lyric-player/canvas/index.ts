@@ -43,7 +43,6 @@ export class CanvasLyricPlayer extends LyricPlayerBase {
 			(line) => new CanvasLyricLine(this, line),
 		);
 
-		this.setLinePosXSpringParams({});
 		this.setLinePosYSpringParams({});
 		this.setLineScaleSpringParams({});
 		this.calcLayout(true, true);

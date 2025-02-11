@@ -29,7 +29,7 @@ fn main() {
     std::thread::spawn(move || {
         while let Ok(body) = rx.recv_blocking() {
             match body {
-                Body::SetMusicAlbumCoverImageURL { img_url } => {
+                Body::SetMusicAlbumCoverImageURI { img_url } => {
                     let img_url = img_url.to_string();
                     let win_sx = win_sx.clone();
                     // TODO: 确保同步

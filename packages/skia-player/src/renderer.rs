@@ -110,7 +110,7 @@ pub struct Renderer {
     frame_time: Instant,
     frame: usize,
     cur_frame: usize,
-    progress: f64,
+    progress: u64,
     scale: f32,
     physical_width: usize,
     physical_height: usize,
@@ -154,7 +154,7 @@ impl Renderer {
                 sf_pro_type_face.clone(),
             ),
             pingfang_type_face,
-            progress: 0.,
+            progress: 0,
             sf_pro_type_face,
             fps_time: Instant::now(),
             frame_time: Instant::now(),
@@ -368,9 +368,9 @@ impl Renderer {
         self.lyric_renderer.set_lines(lines);
     }
 
-    pub fn set_progress(&mut self, time: f64) {
+    pub fn set_progress(&mut self, time: u64) {
         self.progress = time;
-        self.lyric_renderer.set_progress(time);
+        self.lyric_renderer.set_current_time(time);
     }
 
     pub fn set_album_image(&mut self, image: impl AsRef<[u8]>) {
