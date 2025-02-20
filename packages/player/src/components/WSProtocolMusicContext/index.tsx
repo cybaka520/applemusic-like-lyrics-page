@@ -1,5 +1,7 @@
+import { FFTPlayer } from "@applemusic-like-lyrics/fft";
 import { parseTTML } from "@applemusic-like-lyrics/lyric";
 import {
+	fftDataAtom,
 	hideLyricViewAtom,
 	musicAlbumNameAtom,
 	musicArtistsAtom,
@@ -19,25 +21,53 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import { type Event, listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
+	fftDataRangeAtom,
 	musicIdAtom,
 	wsProtocolConnectedAddrsAtom,
 	wsProtocolListenAddrAtom,
 } from "../../states/index.ts";
 import { emitAudioThread } from "../../utils/player.ts";
+import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
 
 export const WSProtocolMusicContext: FC = () => {
 	const wsProtocolListenAddr = useAtomValue(wsProtocolListenAddrAtom);
 	const setConnectedAddrs = useSetAtom(wsProtocolConnectedAddrsAtom);
 	const store = useStore();
 	const { t } = useTranslation();
+	const fftPlayer = useRef<FFTPlayer>();
 
 	useEffect(() => {
 		emitAudioThread("pauseAudio");
 	}, []);
+
+	const fftDataRange = useAtomValue(fftDataRangeAtom);
+
+	useEffect(() => {
+		let canceled = false;
+		const fft = new FFTPlayer();
+		fft.setFreqRange(fftDataRange[0], fftDataRange[1]);
+		fftPlayer.current = fft;
+		const result = new Float32Array(64);
+
+		const onFFTFrame = () => {
+			if (canceled) return;
+			fft.read(result);
+			store.set(fftDataAtom, [...result]);
+			requestAnimationFrame(onFFTFrame);
+		};
+
+		requestAnimationFrame(onFFTFrame);
+
+		return () => {
+			canceled = true;
+			fftPlayer.current = undefined;
+			fft.free();
+		};
+	}, [fftDataRange, store]);
 
 	useEffect(() => {
 		setConnectedAddrs(new Set());
@@ -222,6 +252,14 @@ export const WSProtocolMusicContext: FC = () => {
 					store.set(musicPlayingAtom, true);
 					break;
 				}
+				case "onAudioData": {
+					fftPlayer.current?.pushDataI16(
+						48000,
+						2,
+						new Int16Array(new Uint8Array(payload.value.data).buffer),
+					);
+					break;
+				}
 				case "setLyric": {
 					const processed = payload.value.data.map((line) => ({
 						...line,
@@ -288,5 +326,9 @@ export const WSProtocolMusicContext: FC = () => {
 		};
 	}, [wsProtocolListenAddr, setConnectedAddrs, store, t]);
 
-	return null;
+	return (
+		<>
+			<FFTToLowPassContext />
+		</>
+	);
 };

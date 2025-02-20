@@ -259,6 +259,12 @@ impl FFTPlayer {
         self.push_data(rate, channels, decoded);
     }
 
+    /// 设置频谱范围
+    #[wasm_bindgen(js_name = "setFreqRange")]
+    pub fn set_freq_range_js(&self, start_freq: f32, end_freq: f32) {
+        self.set_freq_range(start_freq, end_freq);
+    }
+
     /// 读取频谱数据
     #[wasm_bindgen(js_name = "read")]
     pub fn read_js(&mut self, buf: &mut [f32]) -> bool {

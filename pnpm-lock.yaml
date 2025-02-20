@@ -164,6 +164,9 @@ importers:
       '@applemusic-like-lyrics/core':
         specifier: workspace:^
         version: link:../core
+      '@applemusic-like-lyrics/fft':
+        specifier: workspace:^
+        version: link:../fft
       '@applemusic-like-lyrics/lyric':
         specifier: workspace:^
         version: link:../lyric

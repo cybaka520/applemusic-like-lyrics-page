@@ -42,10 +42,9 @@ export const cssBackgroundPropertyAtom = atomWithStorage(
 	"#111111",
 );
 
-export const fftDataRangeAtom = atomWithStorage(
-	"amll-player.fftDataRange",
-	[80, 2000],
-);
+export const fftDataRangeAtom = atomWithStorage("amll-player.fftDataRange", [
+	80, 2000,
+] as [number, number]);
 
 export const showStatJSFrameAtom = atomWithStorage(
 	"amll-player.showStatJSFrame",
