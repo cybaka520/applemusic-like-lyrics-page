@@ -261,18 +261,36 @@ const CodeButton: FC<{
 	controlPoints: ControlPointHandleState[];
 }> = ({ controlPoints, controlPointSize }) => {
 	const code = useMemo(() => {
-		const result = [`preset(${controlPointSize}, ${controlPointSize}, [`];
+		// const result = [`preset(${controlPointSize}, ${controlPointSize}, [`];
+		// for (let y = 0; y < controlPointSize; y++) {
+		// 	for (let x = 0; x < controlPointSize; x++) {
+		// 		const point = controlPoints[y * controlPointSize + x];
+		// 		if (point === undefined) continue;
+		// 		result.push(
+		// 			`	p(${x}, ${y}, ${point.x}, ${point.y}, ${point.uRot}, ${point.vRot}, ${point.uScale}, ${point.vScale}),`,
+		// 		);
+		// 	}
+		// }
+		// result.push("]),");
+		// return result.join("\n");
+		const result = [controlPointSize, controlPointSize];
 		for (let y = 0; y < controlPointSize; y++) {
 			for (let x = 0; x < controlPointSize; x++) {
 				const point = controlPoints[y * controlPointSize + x];
 				if (point === undefined) continue;
-				result.push(
-					`	p(${x}, ${y}, ${point.x}, ${point.y}, ${point.uRot}, ${point.vRot}, ${point.uScale}, ${point.vScale}),`,
-				);
+				result.push([
+					x,
+					y,
+					point.x,
+					point.y,
+					point.uRot,
+					point.vRot,
+					point.uScale,
+					point.vScale,
+				]);
 			}
 		}
-		result.push("]),");
-		return result.join("\n");
+		return JSON.stringify(result);
 	}, [controlPoints, controlPointSize]);
 
 	return (
