@@ -218,6 +218,8 @@ export const WSProtocolMusicContext: FC = () => {
 			};
 		};
 
+		let curCoverBlobUrl = "";
+
 		function onBody(evt: Event<WSBodyMap[keyof WSBodyMessageMap]>) {
 			const payload = evt.payload;
 
@@ -241,7 +243,26 @@ export const WSProtocolMusicContext: FC = () => {
 					break;
 				}
 				case "setMusicAlbumCoverImageURI": {
+					if (curCoverBlobUrl) {
+						URL.revokeObjectURL(curCoverBlobUrl);
+						curCoverBlobUrl = "";
+					}
 					store.set(musicCoverAtom, payload.value.imgUrl);
+					break;
+				}
+				case "setMusicAlbumCoverImageData": {
+					const data = new Uint8Array(payload.value.data);
+					const blob = new Blob([data], { type: "image" });
+					const url = URL.createObjectURL(blob);
+					if (curCoverBlobUrl) {
+						URL.revokeObjectURL(curCoverBlobUrl);
+					}
+					curCoverBlobUrl = url;
+					store.set(musicCoverAtom, url);
+					break;
+				}
+				case "onVolumeChanged": {
+					store.set(onChangeVolumeAtom, payload.value.volume);
 					break;
 				}
 				case "onPlayProgress": {
@@ -302,7 +323,11 @@ export const WSProtocolMusicContext: FC = () => {
 					break;
 				}
 				default:
-					console.log("on-ws-protocol-client-body", payload);
+					console.log(
+						"on-ws-protocol-client-body",
+						"未处理的报文（暂不支持）",
+						payload,
+					);
 			}
 		}
 
@@ -327,6 +352,10 @@ export const WSProtocolMusicContext: FC = () => {
 			invoke("ws_reopen_connection", {
 				addr: "",
 			});
+			if (curCoverBlobUrl) {
+				URL.revokeObjectURL(curCoverBlobUrl);
+				store.set(musicCoverAtom, "");
+			}
 		};
 	}, [wsProtocolListenAddr, setConnectedAddrs, store, t]);
 
