@@ -11,6 +11,7 @@ use tauri::{
 };
 use tauri_plugin_fs::OpenOptions;
 use tracing::*;
+use tauri::ipc::Channel;
 
 mod client;
 mod player;
@@ -21,8 +22,8 @@ pub type AMLLWebSocketServerState<'r> = State<'r, AMLLWebSocketServerWrapper>;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn ws_reopen_connection(addr: &str, ws: AMLLWebSocketServerState) {
-    ws.write().unwrap().reopen(addr.to_string());
+fn ws_reopen_connection(addr: &str, ws: AMLLWebSocketServerState, channel: Channel<ws_protocol::Body>) {
+    ws.write().unwrap().reopen(addr.to_string(), channel);
 }
 
 #[tauri::command]
