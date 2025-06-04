@@ -638,6 +638,9 @@ export class LyricLineEl extends LyricLineBase {
 		} else {
 			this.generateCalcBasedMaskImage();
 		}
+		if (this.isEnabled) {
+			this.enable(this.lyricPlayer.getCurrentTime());
+		}
 	}
 
 	private generateCalcBasedMaskImage() {

@@ -137,9 +137,7 @@ export class DomLyricPlayer extends LyricPlayerBase {
 		this.setLinePosXSpringParams({});
 		this.setLinePosYSpringParams({});
 		this.setLineScaleSpringParams({});
-		this.calcLayout(true, true).then(() => {
-			this.initialLayoutFinished = true;
-		});
+		this.calcLayout(true);
 	}
 
 	override pause() {

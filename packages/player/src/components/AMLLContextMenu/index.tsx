@@ -12,6 +12,7 @@ import type { FC } from "react";
 import { Trans } from "react-i18next";
 import { router } from "../../router.tsx";
 import { musicIdAtom } from "../../states/index.ts";
+import { invoke } from "@tauri-apps/api/core";
 
 export const AMLLContextMenuContent: FC = () => {
 	const [hideLyricView, setHideLyricView] = useAtom(hideLyricViewAtom);
@@ -61,6 +62,14 @@ export const AMLLContextMenuContent: FC = () => {
 				<Trans i18nKey="amll.contextMenu.editMusicOverrideMessage">
 					编辑歌曲覆盖信息
 				</Trans>
+			</ContextMenu.Item>
+			<ContextMenu.Separator />
+			<ContextMenu.Item
+				onClick={() => {
+					invoke("open_screenshot_window");
+				}}
+			>
+				<Trans i18nKey="amll.contextMenu.openRecorder">打开截图工具</Trans>
 			</ContextMenu.Item>
 			<ContextMenu.Separator />
 			<ContextMenu.Item

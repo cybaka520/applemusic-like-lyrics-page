@@ -3,7 +3,11 @@
  * 已经部署好所有组件的歌词播放器组件，在正确设置所有的 Jotai 状态后可以开箱即用
  */
 
-import { BackgroundRender, LyricPlayer, type LyricPlayerRef } from "@applemusic-like-lyrics/react";
+import {
+	BackgroundRender,
+	LyricPlayer,
+	type LyricPlayerRef,
+} from "@applemusic-like-lyrics/react";
 import structuredClone from "@ungap/structured-clone";
 import { useAtom, useAtomValue } from "jotai";
 import {
@@ -281,7 +285,9 @@ const PrebuiltCoreLyricPlayer: FC<{
 			wordFadeWidth={Math.max(0.01, lyricWordFadeWidth)}
 			lyricPlayer={lyricPlayerImplementation}
 			onLyricLineClick={(evt) => onLyricLineClick?.(evt, amllPlayerRef.current)}
-			onLyricLineContextMenu={(evt) => onLyricLineContextMenu?.(evt, amllPlayerRef.current)}
+			onLyricLineContextMenu={(evt) =>
+				onLyricLineContextMenu?.(evt, amllPlayerRef.current)
+			}
 		/>
 	);
 };

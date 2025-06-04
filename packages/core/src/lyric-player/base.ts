@@ -141,6 +141,7 @@ export abstract class LyricPlayerBase
 	constructor() {
 		super();
 		this.resizeObserver.observe(this.element);
+		this.resizeObserver.observe(this.interludeDots.getElement());
 		this.element.classList.add(styles.lyricPlayer);
 
 		this.element.appendChild(this.interludeDots.getElement());
@@ -702,11 +703,11 @@ export abstract class LyricPlayerBase
 					i === this.scrollToIndex + 1)
 			) {
 				setDots = true;
-				this.interludeDots.setTransform(0, curPos + 10);
+				this.interludeDots.setTransform(0, curPos);
 				if (interlude) {
 					this.interludeDots.setInterlude([interlude[0], interlude[1]]);
 				}
-				curPos += this.interludeDotsSize[1] + 40;
+				curPos += this.interludeDotsSize[1];
 			}
 			let targetOpacity: number;
 

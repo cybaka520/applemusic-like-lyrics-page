@@ -13,6 +13,10 @@
 	mix-blend-mode: plus-lighter;
 	font-size: var(--amll-lp-font-size, max(max(4.7vh, 3.2vw), 12px));
 
+	@media screen and (max-width: 768px) {
+		font-size: var(--amll-lp-font-size, max(8vw, 12px));
+	}
+
 	&.dom {
 		--amll-lp-line-width-aspect: 0.8;
 		--amll-lp-line-padding-x: 1em;
