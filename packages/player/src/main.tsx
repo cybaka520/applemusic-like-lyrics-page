@@ -7,7 +7,7 @@ import App from "./App.tsx";
 import "./i18n";
 import "./styles.css";
 import "./utils/player";
-// import "./utils/merge-raf";
+import "./utils/merge-raf";
 
 const ErrorRender = (props: FallbackProps) => {
 	console.error(props.error);

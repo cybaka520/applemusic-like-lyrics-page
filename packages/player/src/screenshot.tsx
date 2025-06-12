@@ -7,63 +7,64 @@ import App from "./App.tsx";
 import "./i18n.ts";
 import "./styles.css";
 import "./utils/player.ts";
+import "./utils/merge-raf.ts";
 import { ScreenshotApp } from "./pages/screenshot/index.tsx";
 
 const ErrorRender = (props: FallbackProps) => {
-	console.error(props.error);
-	return (
-		<div>
-			<h2>An unrecoverable error has occured</h2>
-			<code>
-				<pre>
-					{props.error.message}
-					{props.error.stack}
-				</pre>
-			</code>
-		</div>
-	);
+    console.error(props.error);
+    return (
+        <div>
+            <h2>An unrecoverable error has occured</h2>
+            <code>
+                <pre>
+                    {props.error.message}
+                    {props.error.stack}
+                </pre>
+            </code>
+        </div>
+    );
 };
 
 addEventListener("on-system-titlebar-click-close", async () => {
-	const win = getCurrentWindow();
-	await win.close();
+    const win = getCurrentWindow();
+    await win.close();
 });
 
 addEventListener("on-system-titlebar-click-resize", async () => {
-	const win = getCurrentWindow();
-	if (await win.isMaximizable()) {
-		if (await win.isMaximized()) {
-			await win.unmaximize();
-			setSystemTitlebarResizeAppearance(
-				SystemTitlebarResizeAppearance.Maximize,
-			);
-		} else {
-			await win.maximize();
-			setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Restore);
-		}
-	}
+    const win = getCurrentWindow();
+    if (await win.isMaximizable()) {
+        if (await win.isMaximized()) {
+            await win.unmaximize();
+            setSystemTitlebarResizeAppearance(
+                SystemTitlebarResizeAppearance.Maximize,
+            );
+        } else {
+            await win.maximize();
+            setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Restore);
+        }
+    }
 });
 
 const win = getCurrentWindow();
 async function checkWindow() {
-	if (await win.isMaximized()) {
-		setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Restore);
-	} else {
-		setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Maximize);
-	}
+    if (await win.isMaximized()) {
+        setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Restore);
+    } else {
+        setSystemTitlebarResizeAppearance(SystemTitlebarResizeAppearance.Maximize);
+    }
 }
 checkWindow();
 win.onResized(checkWindow);
 
 addEventListener("on-system-titlebar-click-minimize", async () => {
-	const win = getCurrentWindow();
-	await win.minimize();
+    const win = getCurrentWindow();
+    await win.minimize();
 });
 
 createRoot(document.getElementById("root") as HTMLElement).render(
-	<ErrorBoundary fallbackRender={ErrorRender}>
-		<Provider>
-			<ScreenshotApp />
-		</Provider>
-	</ErrorBoundary>,
+    <ErrorBoundary fallbackRender={ErrorRender}>
+        <Provider>
+            <ScreenshotApp />
+        </Provider>
+    </ErrorBoundary>,
 );
