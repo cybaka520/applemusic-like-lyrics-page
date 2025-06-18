@@ -45,7 +45,7 @@
 		"jotai": "^2.10.2",
 		"md5": "^2.3.0",
 		"react": "^19",
-		"react-base-virtual-list": "^1.0.1",
+		"react-base-virtual-list": "^1.1",
 		"react-compiler-runtime": "19.0.0-beta-a7bf2bd-20241110",
 		"react-dom": "^19",
 		"react-error-boundary": "^6",
