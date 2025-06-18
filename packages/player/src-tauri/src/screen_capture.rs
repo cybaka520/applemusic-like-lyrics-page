@@ -35,7 +35,7 @@ pub async fn take_screenshot(
             win.set_resizable(false).into_ta_result()?;
         }
 
-        let mut result = String::new();
+        let result;
 
         #[cfg(target_os = "windows")]
         {
