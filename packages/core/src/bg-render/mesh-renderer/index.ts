@@ -624,11 +624,6 @@ class BHPMesh extends Mesh {
 	getControlPoint(x: number, y: number) {
 		return this._controlPoints.get(x, y);
 	}
-	private uMX = Mat4.create();
-	private uMY = Mat4.create();
-	private uMR = Mat4.create();
-	private uMG = Mat4.create();
-	private uMB = Mat4.create();
 	private tmpV2 = Vec2.create();
 	// 预分配重复使用的矩阵，避免频繁创建
 	private tempX = Mat4.create();
@@ -749,6 +744,7 @@ export class MeshGradientRenderer extends BaseRenderer {
 	private frameTime = 0;
 	private currentImageData?: ImageData;
 	private lastTickTime = 0;
+	private smoothedVolume = 0;
 	private volume = 0;
 	private tickHandle = 0;
 	private maxFPS = 60;
@@ -891,6 +887,9 @@ export class MeshGradientRenderer extends BaseRenderer {
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		this.checkIfResize();
 
+		const lerpFactor = Math.min(1.0, delta / 100.0); 
+		this.smoothedVolume += (this.volume - this.smoothedVolume) * lerpFactor;
+
 		this.mainProgram.use();
 		
 		// 预设置不变的uniform
@@ -901,9 +900,8 @@ export class MeshGradientRenderer extends BaseRenderer {
 			this.manualControl ? 1 : this.canvas.width / this.canvas.height,
 		);
 		this.mainProgram.setUniform1i("u_texture", 0);
-		this.mainProgram.setUniform1f("u_volume", this.volume);
 
-		// 渲染所有网格状态
+		this.mainProgram.setUniform1f("u_volume", this.smoothedVolume);
 		for (const state of this.meshStates) {
 			this.mainProgram.setUniform1f("u_alpha", state.alpha);
 			state.texture.bind();
