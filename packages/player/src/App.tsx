@@ -28,6 +28,7 @@ import { ExtensionInjectPoint } from "./components/ExtensionInjectPoint/index.ts
 import { LocalMusicContext } from "./components/LocalMusicContext/index.tsx";
 import { NowPlayingBar } from "./components/NowPlayingBar/index.tsx";
 import { ShotcutContext } from "./components/ShotcutContext/index.tsx";
+import { SystemListenerMusicContext } from "./components/SystemListenerMusicContext/index.tsx";
 import { UpdateContext } from "./components/UpdateContext/index.tsx";
 import { WSProtocolMusicContext } from "./components/WSProtocolMusicContext/index.tsx";
 import "./i18n";
@@ -121,6 +122,9 @@ function App() {
 			{musicContextMode === MusicContextMode.Local && <LocalMusicContext />}
 			{musicContextMode === MusicContextMode.WSProtocol && (
 				<WSProtocolMusicContext />
+			)}
+			{musicContextMode === MusicContextMode.SystemListener && (
+				<SystemListenerMusicContext />
 			)}
 			<UpdateContext />
 			<ShotcutContext />

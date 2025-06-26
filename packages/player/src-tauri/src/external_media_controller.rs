@@ -1,0 +1,269 @@
+#![cfg(target_os = "windows")]
+
+use serde::{Deserialize, Serialize};
+use smtc_suite::{
+    MediaCommand, MediaController, MediaUpdate, NowPlayingInfo as SmtcNowPlayingInfo,
+    SmtcControlCommand, SmtcSessionInfo as SmtcSesssionInfo,
+};
+use std::thread;
+use std::{
+    sync::{
+        Arc, Mutex,
+        mpsc::{RecvTimeoutError, SendError, Sender},
+    },
+    time::Duration,
+};
+use tauri::{AppHandle, Emitter, Runtime};
+use tracing::{debug, error, info, trace, warn};
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct CachedNowPlayingInfo {
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub album_title: Option<String>,
+    pub duration_ms: Option<u64>,
+    pub is_playing: Option<bool>,
+    pub cover_data_hash: Option<u64>,
+}
+
+impl From<&SmtcNowPlayingInfo> for CachedNowPlayingInfo {
+    fn from(info: &SmtcNowPlayingInfo) -> Self {
+        Self {
+            title: info.title.clone(),
+            artist: info.artist.clone(),
+            album_title: info.album_title.clone(),
+            duration_ms: info.duration_ms,
+            is_playing: info.is_playing,
+            cover_data_hash: info.cover_data_hash,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[serde(rename_all = "camelCase")]
+pub struct SmtcSessionInfo {
+    pub session_id: String,
+    pub display_name: String,
+}
+
+impl From<SmtcSesssionInfo> for SmtcSessionInfo {
+    fn from(info: SmtcSesssionInfo) -> Self {
+        Self {
+            session_id: info.session_id,
+            display_name: info.display_name,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(tag = "type", content = "data")]
+pub enum SmtcPartialUpdatePayload {
+    #[serde(rename_all = "camelCase")]
+    TrackMetadata {
+        title: Option<String>,
+        artist: Option<String>,
+        album_title: Option<String>,
+        duration_ms: Option<u64>,
+    },
+    CoverData(Option<Vec<u8>>),
+    PlaybackStatus {
+        #[serde(rename = "isPlaying")]
+        is_playing: bool,
+        #[serde(rename = "positionMs")]
+        position_ms: u64,
+    },
+    SessionsChanged(Vec<SmtcSessionInfo>),
+    SelectedSessionVanished(String),
+    Error(String),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "command", content = "payload")]
+pub enum ExternalMediaCommandPayload {
+    SelectSession { session_id: String },
+    Play,
+    Pause,
+    SkipNext,
+    SkipPrevious,
+    SeekTo { time_ms: u64 },
+}
+
+pub struct ExternalMediaControllerState(pub Arc<Mutex<Sender<MediaCommand>>>);
+
+impl ExternalMediaControllerState {
+    pub fn send_command(&self, command: MediaCommand) -> Result<(), SendError<MediaCommand>> {
+        self.0.lock().unwrap().send(command)
+    }
+}
+
+#[tauri::command]
+pub async fn control_external_media(
+    payload: ExternalMediaCommandPayload,
+    state: tauri::State<'_, ExternalMediaControllerState>,
+) -> Result<(), String> {
+    info!("接收到控制命令: {:?}", payload);
+    let command = match payload {
+        ExternalMediaCommandPayload::SelectSession { session_id } => {
+            MediaCommand::SelectSession(session_id)
+        }
+        ExternalMediaCommandPayload::Play => MediaCommand::Control(SmtcControlCommand::Play),
+        ExternalMediaCommandPayload::Pause => MediaCommand::Control(SmtcControlCommand::Pause),
+        ExternalMediaCommandPayload::SkipNext => {
+            MediaCommand::Control(SmtcControlCommand::SkipNext)
+        }
+        ExternalMediaCommandPayload::SkipPrevious => {
+            MediaCommand::Control(SmtcControlCommand::SkipPrevious)
+        }
+        ExternalMediaCommandPayload::SeekTo { time_ms } => {
+            MediaCommand::Control(SmtcControlCommand::SeekTo(time_ms))
+        }
+    };
+    state.send_command(command).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn request_smtc_update(
+    state: tauri::State<'_, ExternalMediaControllerState>,
+) -> Result<(), String> {
+    info!("正在请求 SMTC 更新...");
+    state
+        .send_command(MediaCommand::RequestUpdate)
+        .map_err(|e| e.to_string())
+}
+
+pub fn start_listener<R: Runtime>(app_handle: AppHandle<R>) -> Arc<Mutex<Sender<MediaCommand>>> {
+    info!("正在启动 SMTC 监听器...");
+    let controller = match smtc_suite::MediaManager::start() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("启动 smtc-suite MediaManager 失败: {}", e);
+            let (tx, _rx) = std::sync::mpsc::channel();
+            return Arc::new(Mutex::new(tx));
+        }
+    };
+    let command_tx_for_state = Arc::new(Mutex::new(controller.command_tx.clone()));
+
+    thread::Builder::new()
+        .name("smtc-event-bridge-optimized".into())
+        .spawn(move || {
+            event_bridge_main_loop(app_handle, controller);
+        })
+        .expect("创建 smtc-event-bridge 线程失败");
+
+    command_tx_for_state
+}
+
+fn parse_apple_music_field(mut info: SmtcNowPlayingInfo) -> SmtcNowPlayingInfo {
+    if let Some(original_artist_field) = info.artist.take() {
+        if let Some((artist, album)) = original_artist_field.split_once(" — ") {
+            info.artist = Some(artist.trim().to_string());
+            if info.album_title.as_deref().unwrap_or("").is_empty() {
+                info.album_title = Some(album.trim().to_string());
+            }
+        } else {
+            info.artist = Some(original_artist_field);
+        }
+    }
+    info
+}
+
+fn get_estimated_pos(info: &SmtcNowPlayingInfo) -> Option<u64> {
+    if info.is_playing.unwrap_or(false) {
+        if let (Some(last_pos_ms), Some(report_time)) =
+            (info.position_ms, info.position_report_time)
+        {
+            let elapsed_ms = report_time.elapsed().as_millis() as u64;
+            let estimated_pos = last_pos_ms + elapsed_ms;
+            if let Some(duration_ms) = info.duration_ms {
+                if duration_ms > 0 {
+                    return Some(estimated_pos.min(duration_ms));
+                }
+            }
+            return Some(estimated_pos);
+        }
+    }
+    info.position_ms
+}
+
+fn event_bridge_main_loop<R: Runtime>(app_handle: AppHandle<R>, controller: MediaController) {
+    let mut last_known_info: Option<SmtcNowPlayingInfo> = None;
+    let mut last_sent_metadata_hash: u64 = 0;
+    let mut last_sent_cover_hash: u64 = 0;
+
+    loop {
+        match controller
+            .update_rx
+            .recv_timeout(Duration::from_millis(100))
+        {
+            Ok(update) => {
+                match update {
+                    MediaUpdate::TrackChanged(info) => {
+                        let info = parse_apple_music_field(info);
+
+                        let metadata_hash =
+                            fxhash::hash64(&(info.title.as_deref(), info.artist.as_deref()));
+                        let cover_hash = info.cover_data_hash.unwrap_or(0);
+
+                        if metadata_hash != last_sent_metadata_hash {
+                            debug!("元数据发生变化，发送 TrackMetadata 更新。");
+                            let payload = SmtcPartialUpdatePayload::TrackMetadata {
+                                title: info.title.clone(),
+                                artist: info.artist.clone(),
+                                album_title: info.album_title.clone(),
+                                duration_ms: info.duration_ms,
+                            };
+                            let _ = app_handle.emit("smtc_update", payload);
+                            last_sent_metadata_hash = metadata_hash;
+                        }
+
+                        if cover_hash != last_sent_cover_hash {
+                            debug!("封面发生变化，发送 CoverData 更新。");
+                            let payload =
+                                SmtcPartialUpdatePayload::CoverData(info.cover_data.clone());
+                            let _ = app_handle.emit("smtc_update", payload);
+                            last_sent_cover_hash = cover_hash;
+                        }
+
+                        last_known_info = Some(info);
+                    }
+
+                    MediaUpdate::SessionsChanged(sessions) => {
+                        debug!("SMTC SessionsChanged: {} 个会话", sessions.len());
+                        let payload = SmtcPartialUpdatePayload::SessionsChanged(
+                            sessions.into_iter().map(SmtcSessionInfo::from).collect(),
+                        );
+                        let _ = app_handle.emit("smtc_update", payload);
+                    }
+                    MediaUpdate::SelectedSessionVanished(id) => {
+                        warn!("SMTC 选择的会话已消失: {}", id);
+                        let payload = SmtcPartialUpdatePayload::SelectedSessionVanished(id);
+                        let _ = app_handle.emit("smtc_update", payload);
+                        last_known_info = None;
+                    }
+                    MediaUpdate::Error(e) => {
+                        error!("SMTC 运行时错误: {}", e);
+                        let payload = SmtcPartialUpdatePayload::Error(e);
+                        let _ = app_handle.emit("smtc_update", payload);
+                    }
+                    _ => {}
+                }
+            }
+            Err(RecvTimeoutError::Timeout) => {
+                if let Some(info) = &last_known_info {
+                    if info.is_playing.unwrap_or(false) {
+                        let estimated_pos = get_estimated_pos(info).unwrap_or(0);
+                        let payload = SmtcPartialUpdatePayload::PlaybackStatus {
+                            is_playing: true,
+                            position_ms: estimated_pos,
+                        };
+                        let _ = app_handle.emit("smtc_update", payload);
+                    }
+                }
+            }
+            Err(RecvTimeoutError::Disconnected) => {
+                info!("媒体事件通道已关闭，程序退出。");
+                break;
+            }
+        }
+    }
+}

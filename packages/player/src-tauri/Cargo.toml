@@ -49,10 +49,11 @@ tokio = { version = "1.45.1", features = [
 ] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+fxhash = "0.2.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 webview2-com = "*"
-
+smtc-suite = "1"
 [target.'cfg(target_os = "android")'.dependencies]
 cpal = { version = "*", features = ["oboe-shared-stdcxx"] }
 tracing-android = "^0.2"

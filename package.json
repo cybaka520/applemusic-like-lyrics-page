@@ -20,6 +20,10 @@
       "esbuild",
       "nx",
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "jotai": "2.12.5",
+      "@types/react": "19.1.8"
+    }
   }
 }

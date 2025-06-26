@@ -42,7 +42,7 @@
 		"framer-motion": "^12",
 		"i18next": "^25",
 		"i18next-icu": "^2.3.0",
-		"jotai": "^2.10.2",
+		"jotai": "^2.12.5",
 		"md5": "^2.3.0",
 		"react": "^19",
 		"react-base-virtual-list": "^1.1",

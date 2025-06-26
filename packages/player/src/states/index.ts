@@ -87,8 +87,19 @@ export const lyricPlayerImplementationAtom = atomWithStorage(
 export enum MusicContextMode {
 	Local = "local",
 	WSProtocol = "ws-protocol",
+	SystemListener = "system-listener",
 }
 
-export const musicContextModeAtom = atom(MusicContextMode.Local);
+export const musicContextModeAtom = atomWithStorage(
+	"amll-player.musicContextMode",
+	MusicContextMode.Local,
+);
 
+export interface SmtcSession {
+	sessionId: string;
+	displayName: string;
+}
+export const smtcSessionsAtom = atom<SmtcSession[]>([]);
+export const smtcSelectedSessionIdAtom = atom<string | null>(null);
 export const audioQualityDialogOpenedAtom = atom(false);
+export const smtcTrackIdAtom = atom<string>(""); 

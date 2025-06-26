@@ -38,10 +38,12 @@ export const BouncingSlider: React.FC<
 	useEffect(() => {
 		const outer = outerRef.current;
 		const inner = innerRef.current;
+		
 		if (outer && inner) {
 			const heightSpring = new Spring(80);
 			const bounceSpring = new Spring(0);
 			let dragging = false;
+			let hasMoved = false;
 			heightSpring.updateParams({
 				stiffness: 150,
 				mass: 1,
@@ -120,27 +122,30 @@ export const BouncingSlider: React.FC<
 				heightSpring.setTargetPosition(189);
 				lastTime = null;
 				dragging = true;
+				hasMoved = false;
 				isSeekingRef.current = true;
 				window.addEventListener("mousemove", onMouseMove);
 				window.addEventListener("mouseup", onMouseUp);
 				onBeforeChange?.();
-				setValue(evt);
 			};
 			const onMouseUp = (evt: MouseEvent) => {
 				evt.stopImmediatePropagation();
 				evt.stopPropagation();
 				evt.preventDefault();
+				if (!hasMoved) {
+					setValue(evt);
+				}
 				heightSpring.setTargetPosition(80);
 				lastTime = null;
 				dragging = false;
 				isSeekingRef.current = false;
 				window.removeEventListener("mousemove", onMouseMove);
 				window.removeEventListener("mouseup", onMouseUp);
-				setValue(evt);
 				bounceSpring.setTargetPosition(0);
 				onSeeking?.(false);
 			};
 			const onMouseMove = (evt: MouseEvent) => {
+				hasMoved = true;
 				setValue(evt);
 			};
 			inner.addEventListener("mousedown", onMouseDown);
