@@ -7,10 +7,10 @@ static PLAYER_HANDLER: RwLock<Option<AudioPlayerHandle>> = RwLock::const_new(Non
 
 #[tauri::command]
 pub async fn local_player_send_msg(msg: AudioThreadEventMessage<AudioThreadMessage>) {
-    if let Some(handler) = &*PLAYER_HANDLER.read().await {
-        if let Err(err) = handler.send(msg).await {
-            warn!("failed to send msg to local player: {:?}", err);
-        }
+    if let Some(handler) = &*PLAYER_HANDLER.read().await
+        && let Err(err) = handler.send(msg).await
+    {
+        warn!("failed to send msg to local player: {:?}", err);
     }
 }
 

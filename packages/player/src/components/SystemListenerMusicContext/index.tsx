@@ -29,14 +29,14 @@ import { musicIdAtom, smtcTrackIdAtom } from "../../states";
 
 type SmtcPartialUpdatePayload =
 	| {
-			type: "TrackMetadata";
-			data: {
-				title: string | null;
-				artist: string | null;
-				albumTitle: string | null;
-				durationMs: number | null;
-			};
-	  }
+		type: "TrackMetadata";
+		data: {
+			title: string | null;
+			artist: string | null;
+			albumTitle: string | null;
+			durationMs: number | null;
+		};
+	}
 	| { type: "CoverData"; data: number[] | null }
 	| { type: "PlaybackStatus"; data: { isPlaying: boolean; positionMs: number } }
 	| { type: "SessionsChanged"; data: { sessionId: string; displayName: string }[] }
@@ -115,36 +115,33 @@ export const SystemListenerMusicContext: FC = () => {
 				toast.info(t("amll.systemListener.volumeNotSupported", "请在系统或其他应用中直接调节音量"));
 			}),
 		);
-		store.set(onClickControlThumbAtom, toEmit(() => {}));
-		store.set(onRequestOpenMenuAtom, toEmit(() => {}));
-		store.set(onClickLeftFunctionButtonAtom, toEmit(() => {}));
-		store.set(onClickRightFunctionButtonAtom, toEmit(() => {}));
+		store.set(onClickControlThumbAtom, toEmit(() => { }));
+		store.set(onRequestOpenMenuAtom, toEmit(() => { }));
+		store.set(onClickLeftFunctionButtonAtom, toEmit(() => { }));
+		store.set(onClickRightFunctionButtonAtom, toEmit(() => { }));
 
 
 		const unlistenPromise = listen<SmtcPartialUpdatePayload>(
 			"smtc_update",
 			(event) => {
 				const { type, data } = event.payload;
-				console.log(`%c[SystemListener] 事件接收: ${type}`, 'background: #222; color: #bada55', data);
 
 				switch (type) {
 					case "TrackMetadata": {
 						const newTrackId = `${data.title}-${data.artist}-${data.albumTitle}`;
-                        const oldTrackId = store.get(smtcTrackIdAtom);
-						
-						console.log(`[SystemListener] TrackMetadata 更新前。新 ID: ${newTrackId}, 旧 ID: ${oldTrackId}`);
-						
-                        if (newTrackId !== oldTrackId) {
-                            setSmtcTrackId(newTrackId);
-                            
-							setMusicId(newTrackId); 
+						const oldTrackId = store.get(smtcTrackIdAtom);
 
-                            store.set(musicPlayingPositionAtom, 0);
-                            
-                            store.set(musicPlayingAtom, data.isPlaying ?? false);
-							
+						console.log(`[SystemListener] TrackMetadata 更新。新 ID: ${newTrackId}, 旧 ID: ${oldTrackId}`);
+
+						if (newTrackId !== oldTrackId) {
+							setSmtcTrackId(newTrackId);
+
+							setMusicId(newTrackId);
+
+							store.set(musicPlayingPositionAtom, 0);
+
 							store.set(musicLyricLinesAtom, []);
-                        }
+						}
 
 						store.set(musicNameAtom, data.title ?? "未知曲目");
 						store.set(musicAlbumNameAtom, data.albumTitle ?? "");
@@ -156,8 +153,8 @@ export const SystemListenerMusicContext: FC = () => {
 						);
 						store.set(musicDurationAtom, data.durationMs ?? 0);
 						break;
-                    }
-					
+					}
+
 					case "CoverData":
 						if (data && data.length > 0) {
 							const imgBlob = new Blob([new Uint8Array(data)], { type: "image/png" });
@@ -165,7 +162,7 @@ export const SystemListenerMusicContext: FC = () => {
 							try {
 								const oldUrl = store.get(musicCoverAtom);
 								if (oldUrl.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
-							} catch (e) {}
+							} catch (e) { }
 							store.set(musicCoverAtom, newUrl);
 							store.set(musicCoverIsVideoAtom, false);
 						} else {
@@ -174,28 +171,28 @@ export const SystemListenerMusicContext: FC = () => {
 						break;
 
 					case "PlaybackStatus": {
-						
+
 						store.set(musicPlayingAtom, data.isPlaying);
 
 						store.set(musicPlayingPositionAtom, data.positionMs);
-						
+
 						break;
-                    }
+					}
 
 					case "SessionsChanged":
 						break;
-                    
-                    case "SelectedSessionVanished":
-                        toast.warn(t("amll.systemListener.sessionVanished", "被监听的应用似乎已关闭"));
-						store.set(musicPlayingAtom, false);
-                        break;
 
-                    case "Error":
+					case "SelectedSessionVanished":
+						toast.warn(t("amll.systemListener.sessionVanished", "被监听的应用似乎已关闭"));
+						store.set(musicPlayingAtom, false);
+						break;
+
+					case "Error":
 						console.error(`[SystemListener] 错误：${data}`);
 						toast.error(t("amll.systemListener.error", "系统监听发生错误: {error}", { error: data }));
-                        break;
+						break;
 					default:
-                        console.warn(`[SystemListener] 收到未处理的事件类型：${type}`);
+						console.warn(`[SystemListener] 收到未处理的事件类型：${type}`);
 				}
 			},
 		);
@@ -203,26 +200,26 @@ export const SystemListenerMusicContext: FC = () => {
 		return () => {
 			console.log("[SystemListenerMusicContext] 组件即将卸载。正在清理监听器和回调函数。");
 			unlistenPromise.then((unlisten) => unlisten());
-            
-			store.set(onPlayOrResumeAtom, toEmit(() => {}));
-			store.set(onRequestNextSongAtom, toEmit(() => {}));
-			store.set(onRequestPrevSongAtom, toEmit(() => {}));
-			store.set(onSeekPositionAtom, toEmit(() => {}));
-			store.set(onLyricLineClickAtom, toEmit(() => {}));
-			store.set(onChangeVolumeAtom, toEmit(() => {}));
-			store.set(onClickControlThumbAtom, toEmit(() => {}));
-			store.set(onRequestOpenMenuAtom, toEmit(() => {}));
-			store.set(onClickLeftFunctionButtonAtom, toEmit(() => {}));
-			store.set(onClickRightFunctionButtonAtom, toEmit(() => {}));
 
-            store.set(musicNameAtom, "");
-            store.set(musicAlbumNameAtom, "");
-            store.set(musicArtistsAtom, []);
-            store.set(musicPlayingAtom, false);
-            store.set(musicPlayingPositionAtom, 0);
-            store.set(musicDurationAtom, 0);
-            store.set(musicCoverAtom, "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
-            store.set(musicLyricLinesAtom, []);
+			store.set(onPlayOrResumeAtom, toEmit(() => { }));
+			store.set(onRequestNextSongAtom, toEmit(() => { }));
+			store.set(onRequestPrevSongAtom, toEmit(() => { }));
+			store.set(onSeekPositionAtom, toEmit(() => { }));
+			store.set(onLyricLineClickAtom, toEmit(() => { }));
+			store.set(onChangeVolumeAtom, toEmit(() => { }));
+			store.set(onClickControlThumbAtom, toEmit(() => { }));
+			store.set(onRequestOpenMenuAtom, toEmit(() => { }));
+			store.set(onClickLeftFunctionButtonAtom, toEmit(() => { }));
+			store.set(onClickRightFunctionButtonAtom, toEmit(() => { }));
+
+			store.set(musicNameAtom, "");
+			store.set(musicAlbumNameAtom, "");
+			store.set(musicArtistsAtom, []);
+			store.set(musicPlayingAtom, false);
+			store.set(musicPlayingPositionAtom, 0);
+			store.set(musicDurationAtom, 0);
+			store.set(musicCoverAtom, "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+			store.set(musicLyricLinesAtom, []);
 			setSmtcTrackId("");
 			setMusicId("");
 		};

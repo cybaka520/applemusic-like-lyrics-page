@@ -65,7 +65,7 @@ import {
 	displayLanguageAtom,
 	fftDataRangeAtom,
 	lyricPlayerImplementationAtom,
-	showStatJSFrameAtom,
+	showStatJSFrameAtom
 } from "../../states/index.ts";
 import { updateInfoAtom } from "../../states/updater.ts";
 import { restartApp } from "../../utils/player.ts";
@@ -96,7 +96,7 @@ const NumberSettings: FC<
 	{
 		configAtom: WritableAtom<number, [any], void>;
 	} & ComponentProps<typeof SettingEntry> &
-		Omit<TextField.RootProps, "value" | "onChange">
+	Omit<TextField.RootProps, "value" | "onChange">
 > = ({ label, description, configAtom, ...props }) => {
 	const [value, setValue] = useAtom(configAtom);
 
@@ -118,7 +118,7 @@ const SwitchSettings: FC<
 	{
 		configAtom: WritableAtom<boolean, [any], void>;
 	} & ComponentProps<typeof SettingEntry> &
-		Omit<SwitchProps, "value" | "onChange">
+	Omit<SwitchProps, "value" | "onChange">
 > = ({ label, description, configAtom }) => {
 	const [value, setValue] = useAtom(configAtom);
 
@@ -421,6 +421,39 @@ const RendererBasedSettings: FC = () => {
 
 const appVersionAtom = loadable(atom(() => getVersion()));
 
+const ThemeSelectSetting: FC = () => {
+	const { t } = useTranslation();
+	const [mode, setMode] = useAtom(darkModeAtom);
+
+	const menu = useMemo(() => [
+		{ label: t("page.settings.general.theme.auto", "自动"), value: DarkMode.Auto },
+		{ label: t("page.settings.general.theme.light", "浅色"), value: DarkMode.Light },
+		{ label: t("page.settings.general.theme.dark", "深色"), value: DarkMode.Dark },
+	], [t]);
+
+	const handleValueChange = (newMode: DarkMode) => {
+		setMode(newMode);
+	};
+
+	return (
+		<SettingEntry
+			label={t("page.settings.general.theme.label", "界面主题")}
+			description={t("page.settings.general.theme.description", "不太稳定，建议设置后重启以正确应用主题样式")}
+		>
+			<Select.Root value={mode} onValueChange={(v) => handleValueChange(v as DarkMode)}>
+				<Select.Trigger />
+				<Select.Content>
+					{menu.map((item) => (
+						<Select.Item key={item.value} value={item.value}>
+							{item.label}
+						</Select.Item>
+					))}
+				</Select.Content>
+			</Select.Root>
+		</SettingEntry>
+	);
+};
+
 export const PlayerSettingsTab: FC<{ category: string }> = ({ category }) => {
 	const fftDataRange = useAtomValue(fftDataRangeAtom);
 	const updateInfo = useAtomValue(updateInfoAtom);
@@ -466,9 +499,8 @@ export const PlayerSettingsTab: FC<{ category: string }> = ({ category }) => {
 						type: "language",
 					}).of(langId) || langId;
 				return {
-					label: `${
-						origName === name ? origName : `${origName} (${name})`
-					} (${((keyNum / originalLocaleKeyNum) * 100).toFixed(1)}%)`,
+					label: `${origName === name ? origName : `${origName} (${name})`
+						} (${((keyNum / originalLocaleKeyNum) * 100).toFixed(1)}%)`,
 					value: langId,
 				};
 			});
@@ -603,28 +635,7 @@ export const PlayerSettingsTab: FC<{ category: string }> = ({ category }) => {
 							menu={supportedLanguagesMenu}
 							configAtom={displayLanguageAtom}
 						/>
-						<SelectSettings
-							label={t("page.settings.general.theme.label", "界面主题")}
-							description={t(
-								"page.settings.general.theme.description",
-								"不太稳定，建议设置后重启以正确应用主题样式",
-							)}
-							menu={[
-								{
-									label: t("page.settings.general.theme.auto", "自动"),
-									value: DarkMode.Auto,
-								},
-								{
-									label: t("page.settings.general.theme.light", "浅色"),
-									value: DarkMode.Light,
-								},
-								{
-									label: t("page.settings.general.theme.dark", "深色"),
-									value: DarkMode.Dark,
-								},
-							]}
-							configAtom={darkModeAtom}
-						/>
+						<ThemeSelectSetting />
 					</>
 				);
 			case "lyricContent":

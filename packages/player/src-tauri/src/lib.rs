@@ -13,15 +13,12 @@ use tauri_plugin_fs::OpenOptions;
 use tokio::sync::RwLock;
 use tracing::*;
 
-mod client;
 mod player;
 mod screen_capture;
 mod server;
 
 #[cfg(target_os = "windows")]
 mod external_media_controller;
-#[cfg(target_os = "windows")]
-use external_media_controller::ExternalMediaControllerState;
 
 pub type AMLLWebSocketServerWrapper = RwLock<AMLLWebSocketServer>;
 pub type AMLLWebSocketServerState<'r> = State<'r, AMLLWebSocketServerWrapper>;
@@ -64,6 +61,19 @@ async fn ws_boardcast_message(
 #[tauri::command]
 fn restart_app<R: Runtime>(app: AppHandle<R>) {
     tauri::process::restart(&app.env())
+}
+
+#[tauri::command]
+async fn reset_window_theme<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        #[cfg(desktop)]
+        if let Err(e) = window.set_theme(None) {
+            return Err(e.to_string());
+        }
+        Ok(())
+    } else {
+        Err("Main window not found.".to_string())
+    }
 }
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -313,6 +323,7 @@ pub fn run() {
             external_media_controller::control_external_media,
             #[cfg(target_os = "windows")]
             external_media_controller::request_smtc_update,
+            reset_window_theme,
         ])
         .setup(|app| {
             player::init_local_player(app.handle().clone());

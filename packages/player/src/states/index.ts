@@ -8,12 +8,27 @@ export enum DarkMode {
 	Light = "light",
 	Dark = "dark",
 }
-export const autoDarkModeAtom = atom(true);
-export const darkModeAtom = atom(DarkMode.Auto);
-export const isDarkThemeAtom = atom((get) => {
-	if (get(darkModeAtom) === DarkMode.Auto) return get(autoDarkModeAtom);
-	return get(darkModeAtom) === DarkMode.Dark;
-});
+
+export const autoDarkModeAtom = atom(true); 
+
+export const darkModeAtom = atomWithStorage(
+	"amll-player.darkMode",
+	DarkMode.Auto,
+);
+
+export const isDarkThemeAtom = atom(
+	(get) => {
+		const mode = get(darkModeAtom);
+		if (mode === DarkMode.Auto) {
+			return get(autoDarkModeAtom);
+		}
+		return mode === DarkMode.Dark;
+	},
+	(_get, set, newIsDark: boolean) => {
+		const newMode = newIsDark ? DarkMode.Dark : DarkMode.Light;
+		set(darkModeAtom, newMode);
+	},
+);
 
 export const musicIdAtom = atom("");
 export const playlistCardOpenedAtom = atom(false);

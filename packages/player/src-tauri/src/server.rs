@@ -9,7 +9,7 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock as TokioRwLock;
 use tokio::task::JoinHandle;
 use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::{accept_async, WebSocketStream};
+use tokio_tungstenite::{WebSocketStream, accept_async};
 use tracing::*;
 
 type Connections =
@@ -123,8 +123,17 @@ impl AMLLWebSocketServer {
 
         while let Some(Ok(data)) = read.next().await {
             if data.is_binary() {
-                let data_vec = data.into_data();
-                if let Ok(body) = ws_protocol::parse_body(&data_vec) {
+                // trace!("WebSocket 客户端 {addr} 发送原始数据: {data:?}");
+
+                let data = data.into_data();
+                if let Ok(body) = ws_protocol::parse_body(&data) {
+                    // match &body {
+                    //     Body::OnAudioData { .. } => {}
+                    //     _ => {
+                    //         trace!("WebSocket 客户端 {addr} 解析到原始数据: {body:?}");
+                    //     }
+                    // }
+                    // app.emit("on-ws-protocol-client-body", body)?;
                     if let Err(e) = channel.send(body) {
                         error!("向前端发送消息失败，可能前端已关闭。错误: {e:?}");
                         break;

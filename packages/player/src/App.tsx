@@ -4,17 +4,15 @@ import {
 } from "@applemusic-like-lyrics/react-full";
 import { Box, Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import { platform, version } from "@tauri-apps/plugin-os";
 import classNames from "classnames";
-import { useAtomValue, useStore } from "jotai";
+import { atom, useAtomValue, useStore } from "jotai";
 import {
 	StrictMode,
 	Suspense,
 	lazy,
 	useEffect,
 	useLayoutEffect,
-	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
@@ -23,7 +21,7 @@ import semverGt from "semver/functions/gt";
 import Stats from "stats.js";
 import styles from "./App.module.css";
 import { AppContainer } from "./components/AppContainer/index.tsx";
-import DarkThemeDetector from "./components/DarkThemeDetector/index.tsx";
+import { DarkThemeDetector } from "./components/DarkThemeDetector/index.tsx";
 import { ExtensionInjectPoint } from "./components/ExtensionInjectPoint/index.tsx";
 import { LocalMusicContext } from "./components/LocalMusicContext/index.tsx";
 import { NowPlayingBar } from "./components/NowPlayingBar/index.tsx";
@@ -34,60 +32,69 @@ import { WSProtocolMusicContext } from "./components/WSProtocolMusicContext/inde
 import "./i18n";
 import { router } from "./router.tsx";
 import {
+	DarkMode,
 	MusicContextMode,
 	audioQualityDialogOpenedAtom,
+	darkModeAtom,
 	displayLanguageAtom,
 	isDarkThemeAtom,
 	musicContextModeAtom,
 	showStatJSFrameAtom,
 } from "./states/index.ts";
+import { invoke } from "@tauri-apps/api/core";
 
 const ExtensionContext = lazy(() => import("./components/ExtensionContext"));
 const AMLLWrapper = lazy(() => import("./components/AMLLWrapper"));
 
+const hasBackgroundAtom = atom(false);
+
 function App() {
+	const store = useStore();
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const showStatJSFrame = useAtomValue(showStatJSFrameAtom);
 	const musicContextMode = useAtomValue(musicContextModeAtom);
 	const displayLanguage = useAtomValue(displayLanguageAtom);
 	const isDarkTheme = useAtomValue(isDarkThemeAtom);
-	const [hasBackground, setHasBackground] = useState(false);
-	const store = useStore();
+	const hasBackground = useAtomValue(hasBackgroundAtom);
 	const { i18n } = useTranslation();
 
-	useEffect(() => {
-		store.set(onClickAudioQualityTagAtom, {
-			onEmit() {
-				store.set(audioQualityDialogOpenedAtom, true);
-			},
-		});
-	}, [store]);
+	const darkMode = useAtomValue(darkModeAtom);
 
 	useEffect(() => {
-		(async () => {
-			const win = getCurrentWindow();
-			if (platform() === "windows") {
-				if (semverGt("10.0.22000", version())) {
-					setHasBackground(true);
-					await win.clearEffects();
-				}
-			}
-			await new Promise((r) => requestAnimationFrame(r));
-
-			await win.show();
-		})();
-	}, []);
-
-	useEffect(() => {
-		(async () => {
-			const win = getCurrentWindow();
-			if (isDarkTheme) {
-				await win.setTheme("dark");
+		const syncThemeToWindow = async () => {
+			if (darkMode === DarkMode.Auto) {
+				await invoke("reset_window_theme").catch(err => {
+					console.error("重置主题失败:", err);
+				});
 			} else {
-				await win.setTheme("light");
+				const { getCurrentWindow } = await import("@tauri-apps/api/window");
+				const appWindow = getCurrentWindow();
+				const finalTheme = darkMode === DarkMode.Dark ? "dark" : "light";
+				await appWindow.setTheme(finalTheme);
 			}
-		})();
-	}, [isDarkTheme]);
+		};
+		syncThemeToWindow();
+	}, [darkMode]);
+
+	useEffect(() => {
+		const initializeWindow = async () => {
+
+			if ((window as any).__AMLL_PLAYER_INITIALIZED__) return;
+			(window as any).__AMLL_PLAYER_INITIALIZED__ = true;
+
+			setTimeout(async () => {
+				const { getCurrentWindow } = await import("@tauri-apps/api/window");
+				const appWindow = getCurrentWindow();
+				if (platform() === "windows" && !semverGt(version(), "10.0.22000")) {
+					store.set(hasBackgroundAtom, true);
+					await appWindow.clearEffects();
+				}
+				await appWindow.show();
+			}, 50);
+		};
+
+		initializeWindow();
+	}, [store]);
 
 	useLayoutEffect(() => {
 		console.log("displayLanguage", displayLanguage, i18n);
@@ -115,7 +122,15 @@ function App() {
 			};
 		}
 	}, [showStatJSFrame]);
+	useEffect(() => {
+		store.set(onClickAudioQualityTagAtom, {
+			onEmit() {
+				store.set(audioQualityDialogOpenedAtom, true);
+			},
+		});
+	}, [store]);
 
+	// 渲染逻辑
 	return (
 		<>
 			{/* 上下文组件均不建议被 StrictMode 包含，以免重复加载扩展程序发生问题  */}
@@ -133,6 +148,8 @@ function App() {
 				<ExtensionContext />
 			</Suspense>
 			<ExtensionInjectPoint injectPointName="context" hideErrorCallout />
+
+			{/* UI渲染 */}
 			<StrictMode>
 				<Theme
 					appearance={isDarkTheme ? "dark" : "light"}
