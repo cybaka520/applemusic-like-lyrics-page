@@ -900,8 +900,9 @@ export class MeshGradientRenderer extends BaseRenderer {
 			this.manualControl ? 1 : this.canvas.width / this.canvas.height,
 		);
 		this.mainProgram.setUniform1i("u_texture", 0);
+		this.mainProgram.setUniform1f("u_volume", this.volume);
 
-		this.mainProgram.setUniform1f("u_volume", this.smoothedVolume);
+		// 渲染所有网格状态
 		for (const state of this.meshStates) {
 			this.mainProgram.setUniform1f("u_alpha", state.alpha);
 			state.texture.bind();
