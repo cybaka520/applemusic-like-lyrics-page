@@ -17,7 +17,7 @@ import {
 	onRequestNextSongAtom,
 	onRequestPrevSongAtom,
 	onSeekPositionAtom,
-} from "@applemusic-like-lyrics/react-full";
+} from "@applemusic-like-lyrics/states";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { type Event, listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
