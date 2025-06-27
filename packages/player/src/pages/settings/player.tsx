@@ -110,7 +110,7 @@ const NumberSettings: FC<
 	{ configAtom: WritableAtom<number, [any], void> } & React.ComponentProps<
 		typeof SettingEntry
 	> &
-		Omit<React.ComponentProps<typeof TextField.Root>, "value" | "onChange">
+	Omit<React.ComponentProps<typeof TextField.Root>, "value" | "onChange">
 > = ({ label, description, configAtom, ...props }) => {
 	const [value, setValue] = useAtom(configAtom);
 	return (
@@ -129,7 +129,7 @@ const SwitchSettings: FC<
 	{ configAtom: WritableAtom<boolean, [any], void> } & React.ComponentProps<
 		typeof SettingEntry
 	> &
-		Omit<SwitchProps, "value" | "onChange">
+	Omit<SwitchProps, "value" | "onChange">
 > = ({ label, description, configAtom }) => {
 	const [value, setValue] = useAtom(configAtom);
 	return (
@@ -503,7 +503,7 @@ const LyricAppearanceSettings = () => {
 				implementationObject = { lyricPlayer: DomLyricPlayer };
 				break;
 		}
-		setLyricPlayerImplValue(implementationObject as any);
+		setLyricPlayerImplValue(implementationObject);
 	};
 
 	return (
@@ -844,7 +844,7 @@ const LyricBackgroundSettings = () => {
 				rendererObject = { renderer: "css-bg" };
 				break;
 		}
-		setBackgroundRendererValue(rendererObject as any);
+		setBackgroundRendererValue(rendererObject);
 	};
 
 	return (
@@ -1094,122 +1094,64 @@ const AboutSettings = () => {
 const SmtcSettings = () => {
 	const { t } = useTranslation();
 	const sessions = useAtomValue(smtcSessionsAtom);
-	const [selectedSession, setSelectedSession] = useAtom(
-		smtcSelectedSessionIdAtom,
-	);
+	const [selectedSession, setSelectedSession] = useAtom(smtcSelectedSessionIdAtom);
 	const [textConversion, setTextConversion] = useAtom(smtcTextConversionModeAtom);
 
-	const sessionMenu = useMemo(
-		() => [
-			{
-				label: t("page.settings.smtc.session.auto", "自动选择"),
-				value: "null",
-			},
-			...sessions.map((s: SmtcSession) => ({
-				label: s.displayName,
-				value: s.sessionId,
-			})),
-		],
-		[t, sessions],
-	);
-	const textConversionMenu = useMemo(
-		() => [
-			{
-				label: t("page.settings.smtc.textConversion.off", "关闭"),
-				value: TextConversionMode.Off,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.t2s", "繁体到简体"),
-				value: TextConversionMode.TraditionalToSimplified,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.s2t", "简体到繁体"),
-				value: TextConversionMode.SimplifiedToTraditional,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.s2tw", "简体到台湾正体"),
-				value: TextConversionMode.SimplifiedToTaiwan,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.tw2s", "台湾正体到简体"),
-				value: TextConversionMode.TaiwanToSimplified,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.s2hk", "简体到香港繁体"),
-				value: TextConversionMode.SimplifiedToHongKong,
-			},
-			{
-				label: t("page.settings.smtc.textConversion.hk2s", "香港繁体到简体"),
-				value: TextConversionMode.HongKongToSimplified,
-			},
-		],
-		[t],
-	);
+	const sessionMenu = useMemo(() => [
+		{ label: t("page.settings.smtc.session.auto"), value: "null" },
+		...sessions.map((s: SmtcSession) => ({ label: s.displayName, value: s.sessionId }))
+	], [t, sessions]);
+
+	const textConversionMenu = useMemo(() => [
+		{ label: t("page.settings.smtc.textConversion.off"), value: TextConversionMode.Off },
+		{ label: t("page.settings.smtc.textConversion.t2s"), value: TextConversionMode.TraditionalToSimplified },
+		{ label: t("page.settings.smtc.textConversion.s2t"), value: TextConversionMode.SimplifiedToTraditional },
+		{ label: t("page.settings.smtc.textConversion.s2tw"), value: TextConversionMode.SimplifiedToTaiwan },
+		{ label: t("page.settings.smtc.textConversion.tw2s"), value: TextConversionMode.TaiwanToSimplified },
+		{ label: t("page.settings.smtc.textConversion.s2hk"), value: TextConversionMode.SimplifiedToHongKong },
+		{ label: t("page.settings.smtc.textConversion.hk2s"), value: TextConversionMode.HongKongToSimplified },
+	], [t]);
 
 	const handleSessionChange = (value: string) => {
 		const finalValue = value === "null" ? null : value;
 		setSelectedSession(finalValue);
-		invoke("control_external_media", {
-			payload: { type: "selectSession", session_id: finalValue ?? "" },
-		}).catch(console.error);
+		invoke("control_external_media", { payload: { type: "selectSession", session_id: finalValue ?? "" } })
+			.catch((err) => {
+				console.error(err);
+				toast.error(t("page.settings.smtc.session.changeFailed", { error: err }));
+			});
 	};
+
 	const handleTextConversionChange = (value: TextConversionMode) => {
 		setTextConversion(value);
-		invoke("control_external_media", {
-			payload: { type: "setTextConversion", mode: value },
-		}).catch(console.error);
+		invoke("control_external_media", { payload: { type: "setTextConversion", mode: value } })
+			.catch((err) => {
+				console.error(err);
+				toast.error(t("page.settings.smtc.textConversion.changeFailed", { error: err }));
+			});
 	};
 
 	return (
 		<>
-			<SubTitle>
-				<Trans i18nKey="page.settings.smtc.subtitle">SMTC 监听设置</Trans>
-			</SubTitle>
+			<SubTitle><Trans i18nKey="page.settings.smtc.subtitle">SMTC 监听设置</Trans></SubTitle>
+
 			<SettingEntry
-				label={t("page.settings.smtc.session.label", "选择媒体会话")}
-				description={t(
-					"page.settings.smtc.session.description",
-					"选择要监听和控制的应用程序。",
-				)}
+				label={t("page.settings.smtc.session.label")}
+				description={t("page.settings.smtc.session.description")}
 			>
-				<Select.Root
-					value={selectedSession ?? "null"}
-					onValueChange={handleSessionChange}
-				>
+				<Select.Root value={selectedSession ?? 'null'} onValueChange={handleSessionChange}>
 					<Select.Trigger />
-					<Select.Content>
-						{sessionMenu.map((item) => (
-							<Select.Item key={item.value} value={item.value}>
-								{item.label}
-							</Select.Item>
-						))}
-					</Select.Content>
+					<Select.Content>{sessionMenu.map((item) => (<Select.Item key={item.value} value={item.value}>{item.label}</Select.Item>))}</Select.Content>
 				</Select.Root>
 			</SettingEntry>
+
 			<SettingEntry
-				label={t(
-					"page.settings.smtc.textConversion.label",
-					"歌词信息简繁转换",
-				)}
-				description={t(
-					"page.settings.smtc.textConversion.description",
-					"自动转换从其他播放器获取的曲目元数据。",
-				)}
+				label={t("page.settings.smtc.textConversion.label")}
+				description={t("page.settings.smtc.textConversion.description")}
 			>
-				<Select.Root
-					value={textConversion}
-					onValueChange={(v) =>
-						handleTextConversionChange(v as TextConversionMode)
-					}
-				>
+				<Select.Root value={textConversion} onValueChange={(v) => handleTextConversionChange(v as TextConversionMode)}>
 					<Select.Trigger />
-					<Select.Content>
-						{textConversionMenu.map((item) => (
-							<Select.Item key={item.value} value={item.value}>
-								{item.label}
-							</Select.Item>
-						))}
-					</Select.Content>
+					<Select.Content>{textConversionMenu.map((item) => (<Select.Item key={item.value} value={item.value}>{item.label}</Select.Item>))}</Select.Content>
 				</Select.Root>
 			</SettingEntry>
 		</>

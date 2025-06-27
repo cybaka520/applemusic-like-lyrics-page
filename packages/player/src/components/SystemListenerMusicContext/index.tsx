@@ -191,7 +191,7 @@ export const SystemListenerMusicContext: FC = () => {
 					}
 
 					case "selectedSessionVanished":
-						toast.warn(t("amll.systemListener.sessionVanished", "监听的 SMTC 会话已消失"));
+						toast.warn(t("amll.systemListener.sessionVanished"));
 						store.set(musicPlayingAtom, false);
 						setSmtcSessions([]);
 						break;
@@ -199,7 +199,7 @@ export const SystemListenerMusicContext: FC = () => {
 
 					case "error":
 						console.error(`[SystemListener] 错误：${data}`);
-						toast.error(t("amll.systemListener.error", "系统监听发生错误: {error}", { error: data }));
+						toast.error(t("amll.systemListener.error", { error: data }));
 						break;
 
 					default:

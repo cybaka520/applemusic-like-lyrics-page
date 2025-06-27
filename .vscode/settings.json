@@ -11,5 +11,8 @@
 		"./packages/player/src-tauri/Cargo.toml",
 		"./packages/skia-player/Cargo.toml",
 		"./packages/lyric/Cargo.toml"
-	]
+	],
+	"[css]": {
+		"editor.defaultFormatter": "vscode.css-language-features"
+	}
 }

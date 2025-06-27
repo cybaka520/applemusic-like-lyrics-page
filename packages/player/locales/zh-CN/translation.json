@@ -33,6 +33,10 @@
       "tip": "在上方输入搜索关键词，点击候选项即可将歌词内容直接导入到歌词数据中。",
       "supportText": "AMLL TTML DB 是由 AMLL 社区爱好者们一同建设的开源无版权歌词数据库，想为 AMLL TTML DB 贡献歌词吗？前往<1>GitHub 仓库</1>即可知晓提交歌词流程！",
       "noResults": "无结果"
+    },
+    "systemListener": {
+        "sessionVanished": "监听的 SMTC 会话已消失。",
+        "error": "系统监听发生错误：{{error}}"
     }
   },
   "common": {
@@ -89,6 +93,9 @@
       },
       "updateAvailableTag": "有可用更新",
       "menu": {
+        "systemListenerActive": "SMTC 监听模式",
+        "enterSystemListenerMode": "进入 SMTC 监听模式",
+        "exitSystemListenerMode": "退出 SMTC 监听模式",
         "enterWSProtocolMode": "进入 WS Protocol 模式",
         "asWSProtocolReceiver": "作为状态接收者",
         "asWSProtocolSenderWIP": "作为状态发送者（施工中）",
@@ -301,6 +308,27 @@
         "enableLyricSwapTransRomanLine": {
           "label": "启用音译歌词与翻译歌词互换",
           "description": "仅上面两者启用后有效"
+        }
+      },
+      "smtc": {
+        "subtitle": "SMTC 监听设置",
+        "session": {
+          "label": "选择媒体会话",
+          "description": "选择要监听和控制的应用程序。",
+          "auto": "自动选择",
+          "changeFailed": "切换媒体会话失败：{{error}}"
+        },
+        "textConversion": {
+          "label": "歌词信息简繁转换",
+          "description": "自动转换从其他播放器获取的曲目元数据。",
+          "off": "关闭",
+          "t2s": "繁体到简体",
+          "s2t": "简体到繁体",
+          "s2tw": "简体到台湾正体",
+          "tw2s": "台湾正体到简体",
+          "s2hk": "简体到香港繁体",
+          "hk2s": "香港繁体到简体",
+          "changeFailed": "设置简繁转换失败：{{error}}"
         }
       }
     },

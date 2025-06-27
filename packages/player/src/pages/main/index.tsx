@@ -70,7 +70,7 @@ export const Component: FC = () => {
 									ml="2"
 									onClick={() => router.navigate("/settings#player")}
 								>
-									{t("page.main.systemListenerActive", "SMTC 监听模式")}
+									{t("page.main.menu.systemListenerActive")}
 								</Badge>
 							)}
 						</Heading>
@@ -91,7 +91,7 @@ export const Component: FC = () => {
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content>
 								<ExtensionInjectPoint injectPointName="page.main.menu.top" />
-								
+
 								{currentPlatform === "windows" && (
 									<DropdownMenu.Item
 										color={isSystemListenerMode ? "green" : undefined}
@@ -104,11 +104,11 @@ export const Component: FC = () => {
 										}}
 									>
 										{isSystemListenerMode
-											? t("page.main.menu.exitSystemListenerMode", "退出 SMTC 监听模式")
-											: t("page.main.menu.enterSystemListenerMode", "进入 SMTC 监听模式")}
+											? t("page.main.menu.exitSystemListenerMode")
+											: t("page.main.menu.enterSystemListenerMode")}
 									</DropdownMenu.Item>
 								)}
-                                {currentPlatform === "windows" && <DropdownMenu.Separator />}
+								{currentPlatform === "windows" && <DropdownMenu.Separator />}
 
 								<DropdownMenu.Sub>
 									<DropdownMenu.SubTrigger>

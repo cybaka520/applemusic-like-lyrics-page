@@ -59,9 +59,9 @@ const SidebarButton: FC<{
 			size="3"
 			data-state={isActive ? 'active' : 'inactive'}
 		>
-			<Flex gap="3" align="center">
+			<Flex gap="3" align="center" style={{ minWidth: 0 }}>
 				{icon}
-				<Text>{label}</Text>
+				<Text truncate>{label}</Text>
 			</Flex>
 		</Button>
 	);
@@ -146,12 +146,12 @@ export const Component: FC = () => {
 					transform: none;
 				}
 			`}</style>
-			
+
 			<Box
 				style={{
 					position: 'absolute',
-					top: 'var(--space-4)', 
-					left: 'var(--space-4)', 
+					top: 'var(--space-4)',
+					left: 'var(--space-4)',
 					zIndex: 10
 				}}
 			>
@@ -161,7 +161,7 @@ export const Component: FC = () => {
 					</Button>
 				</Tooltip>
 			</Box>
-			
+
 			<Flex
 				direction="row"
 				gap="4"

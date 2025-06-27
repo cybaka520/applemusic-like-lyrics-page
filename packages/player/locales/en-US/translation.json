@@ -31,6 +31,10 @@
       "tip": "Type your search keywords above, and click on a suggestion to import the lyrics into the database directly.",
       "supportText": "AMLL TTML DB is a free and open-source lyrics' database built by the AMLL community. Want to contribute your lyrics to AMLL TTML DB? Head over to the <1>GitHub repository</1> to learn more on how to submit!",
       "noResults": "No results."
+    },
+    "systemListener": {
+        "sessionVanished": "The listened SMTC session has vanished.",
+        "error": "An error occurred in the system listener: {{error}}"
     }
   },
   "common": {
@@ -85,6 +89,9 @@
       },
       "updateAvailableTag": "Update available",
       "menu": {
+        "systemListenerActive": "SMTC Listener Mode",
+        "enterSystemListenerMode": "Enter SMTC Listener Mode",
+        "exitSystemListenerMode": "Exit SMTC Listener Mode",
         "enterWSProtocolMode": "Start WS Protocol mode",
         "asWSProtocolReceiver": "As WS Protocol Receiver",
         "asWSProtocolSenderWIP": "As WS Protocol Sender (On development)",
@@ -288,6 +295,27 @@
         "enableLyricSwapTransRomanLine": {
           "label": "Swap Translation and Romanized Translation",
           "description": "Only valid when the above two are enabled."
+        }
+      },
+      "smtc": {
+        "subtitle": "SMTC Listener Settings",
+        "session": {
+          "label": "Select Media Session",
+          "description": "Select the application to listen to and control.",
+          "auto": "Automatic selection",
+          "changeFailed": "Failed to switch media session: {{error}}"
+        },
+        "textConversion": {
+          "label": "Lyrics Info Text Conversion",
+          "description": "Automatically convert track metadata obtained from other players.",
+          "off": "Off",
+          "t2s": "Traditional to Simplified",
+          "s2t": "Simplified to Traditional",
+          "s2tw": "Simplified to Taiwan Traditional",
+          "tw2s": "Taiwan Traditional to Simplified",
+          "s2hk": "Simplified to Hong Kong Traditional",
+          "hk2s": "Hong Kong Traditional to Simplified",
+          "changeFailed": "Failed to set text conversion mode: {{error}}"
         }
       }
     },
