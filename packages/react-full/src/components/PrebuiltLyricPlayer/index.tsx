@@ -96,6 +96,8 @@ import ShuffleActiveIcon from './shuffle-active.svg?react';
 
 import "./icon-animations.css";
 import styles from "./index.module.css";
+import { useThrottle } from "../../hook/useThrottle";
+import React from "react";
 
 const PrebuiltMusicInfo: FC<{
 	className?: string;
@@ -199,25 +201,39 @@ const PrebuiltMediaButtons: FC<{
 	);
 };
 
-const PrebuiltProgressBar: FC = () => {
+const PrebuiltProgressBar: FC<{ disabled?: boolean }> = React.memo(({ disabled }) => {
 	const musicDuration = useAtomValue(musicDurationAtom);
+    
 	const musicPosition = useAtomValue(musicPlayingPositionAtom);
+
 	const musicQualityTag = useAtomValue(musicQualityTagAtom);
 	const onClickAudioQualityTag = useAtomValue(
 		onClickAudioQualityTagAtom,
 	).onEmit;
 	const onSeekPosition = useAtomValue(onSeekPositionAtom).onEmit;
 
+    const throttledSeek = useThrottle((position: number) => {
+        onSeekPosition?.(position);
+    }, 100);
+
+    const TimeLabel: FC<{ isRemaining?: boolean }> = ({ isRemaining }) => {
+        const currentPosition = useAtomValue(musicPlayingPositionAtom);
+        const duration = useAtomValue(musicDurationAtom);
+        const time = isRemaining ? (currentPosition - duration) / 1000 : currentPosition / 1000;
+        return <>{toDuration(time)}</>;
+    };
+
 	return (
 		<div>
 			<BouncingSlider
-				value={musicPosition}
 				min={0}
 				max={musicDuration}
-				onChange={onSeekPosition}
+                value={musicPosition}
+				onChange={throttledSeek}
+                disabled={disabled}
 			/>
 			<div className={styles.progressBarLabels}>
-				<div>{toDuration(musicPosition / 1000)}</div>
+				<div><TimeLabel /></div>
 				<div>
 					<AnimatePresence mode="popLayout">
 						{musicQualityTag && (
@@ -231,11 +247,11 @@ const PrebuiltProgressBar: FC = () => {
 						)}
 					</AnimatePresence>
 				</div>
-				<div>{toDuration((musicPosition - musicDuration) / 1000)}</div>
+				<div><TimeLabel isRemaining /></div>
 			</div>
 		</div>
 	);
-};
+});
 
 const PrebuiltCoreLyricPlayer: FC<{
 	alignPosition: number;
@@ -339,6 +355,11 @@ const PrebuiltVolumeControl: FC<{
 	const musicVolume = useAtomValue(musicVolumeAtom);
 	const onChangeVolume = useAtomValue(onChangeVolumeAtom).onEmit;
 	const showVolumeControl = useAtomValue(showVolumeControlAtom);
+
+    const throttledOnChangeVolume = useThrottle((volume: number) => {
+        onChangeVolume?.(volume);
+    }, 100);
+
 	if (showVolumeControl)
 		return (
 			<VolumeControl
@@ -347,7 +368,7 @@ const PrebuiltVolumeControl: FC<{
 				max={1}
 				style={style}
 				className={className}
-				onChange={onChangeVolume}
+				onChange={throttledOnChangeVolume}
 			/>
 		);
 	return null;

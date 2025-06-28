@@ -29,7 +29,7 @@ import {
 	musicIdAtom,
 	wsProtocolConnectedAddrsAtom,
 	wsProtocolListenAddrAtom,
-} from "../../states/index.ts";
+} from "@applemusic-like-lyrics/states";
 import { emitAudioThread } from "../../utils/player.ts";
 import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
 

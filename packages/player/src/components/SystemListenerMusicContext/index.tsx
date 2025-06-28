@@ -1,47 +1,52 @@
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-
+import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
 import {
-    musicAlbumNameAtom,
-    musicArtistsAtom,
-    musicCoverAtom,
-    musicCoverIsVideoAtom,
-    musicDurationAtom,
-    musicIdAtom,
-    musicLyricLinesAtom,
-    musicNameAtom,
-    musicPlayingAtom,
-    musicPlayingPositionAtom,
-    onChangeVolumeAtom,
-    onClickControlThumbAtom,
-    onClickLeftFunctionButtonAtom,
-    onClickRightFunctionButtonAtom,
-    onLyricLineClickAtom,
-    onPlayOrResumeAtom,
-    onRequestNextSongAtom,
-    onRequestOpenMenuAtom,
-    onRequestPrevSongAtom,
-    onSeekPositionAtom,
-    RepeatMode,
-    smtcRepeatModeAtom,
-    smtcSessionsAtom,
-    smtcShuffleStateAtom,
-    smtcTextConversionModeAtom,
-    smtcTrackIdAtom,
+	musicAlbumNameAtom,
+	musicArtistsAtom,
+	musicCoverAtom,
+	musicCoverIsVideoAtom,
+	musicDurationAtom,
+	musicIdAtom,
+	musicLyricLinesAtom,
+	musicNameAtom,
+	musicPlayingAtom,
+	musicPlayingPositionAtom,
+	onChangeVolumeAtom,
+	onClickControlThumbAtom,
+	onClickLeftFunctionButtonAtom,
+	onClickRightFunctionButtonAtom,
+	onLyricLineClickAtom,
+	onPlayOrResumeAtom,
+	onRequestNextSongAtom,
+	onRequestOpenMenuAtom,
+	onRequestPrevSongAtom,
+	onSeekPositionAtom,
+	RepeatMode,
+	smtcRepeatModeAtom,
+	smtcSessionsAtom,
+	smtcShuffleStateAtom,
+	smtcTextConversionModeAtom,
+	smtcTrackIdAtom,
+	musicVolumeAtom,
+	isLyricPageOpenedAtom,
 } from "@applemusic-like-lyrics/states";
-
+import { FFTPlayer } from "@applemusic-like-lyrics/fft";
+import { fftDataAtom } from "@applemusic-like-lyrics/states";
 type SmtcEvent =
 	| { type: "trackMetadata"; data: { title: string | null; artist: string | null; albumTitle: string | null; durationMs: number | null; } }
 	| { type: "coverData"; data: number[] | null }
 	| { type: "playbackStatus"; data: { isPlaying: boolean; positionMs: number; isShuffleActive: boolean; repeatMode: RepeatMode; } }
+	| { type: "volumeChanged"; data: { volume: number; isMuted: boolean } }
 	| { type: "sessionsChanged"; data: { sessionId: string; displayName: string }[] }
 	| { type: "selectedSessionVanished"; data: string }
 	| { type: "error"; data: string }
+	| { type: "audioData"; data: number[] };
 
 export const SystemListenerMusicContext: FC = () => {
 	const store = useStore();
@@ -52,6 +57,33 @@ export const SystemListenerMusicContext: FC = () => {
 	const setSmtcShuffle = useSetAtom(smtcShuffleStateAtom);
 	const setSmtcRepeat = useSetAtom(smtcRepeatModeAtom);
 	const textConversionMode = useAtomValue(smtcTextConversionModeAtom);
+	const fftPlayer = useRef<FFTPlayer | undefined>(undefined);
+	const setIsLyricPageOpened = useSetAtom(isLyricPageOpenedAtom);
+
+	useEffect(() => {
+		let canceled = false;
+		const fft = new FFTPlayer();
+		fftPlayer.current = fft;
+		const result = new Float32Array(64);
+
+		const onFFTFrame = () => {
+			if (canceled || !fftPlayer.current) return;
+			fftPlayer.current.read(result);
+			store.set(fftDataAtom, [...result]);
+			requestAnimationFrame(onFFTFrame);
+		};
+
+		requestAnimationFrame(onFFTFrame);
+
+		return () => {
+			canceled = true;
+			if (fftPlayer.current) {
+				fftPlayer.current.free();
+			}
+			fftPlayer.current = undefined;
+			store.set(fftDataAtom, []);
+		};
+	}, [store]);
 
 	useEffect(() => {
 		invoke("control_external_media", {
@@ -75,6 +107,10 @@ export const SystemListenerMusicContext: FC = () => {
 		}, 100);
 
 		const toEmit = <T,>(onEmit: T) => ({ onEmit });
+
+		invoke("control_external_media", {
+			payload: { type: "startAudioVisualization" },
+		}).catch(console.error);
 
 		store.set(
 			onPlayOrResumeAtom,
@@ -101,34 +137,59 @@ export const SystemListenerMusicContext: FC = () => {
 				invoke("control_external_media", {
 					payload: {
 						type: "seekTo",
-						payload: { time_ms: time },
+						time_ms: Math.floor(time),
 					},
 				});
 			}),
 		);
 		store.set(
-			onLyricLineClickAtom,
-			toEmit((evt) => {
-				const time = evt.line.getLine().startTime;
+			onSeekPositionAtom,
+			toEmit((time: number) => {
 				invoke("control_external_media", {
 					payload: {
 						type: "seekTo",
-						payload: { time_ms: time },
+						time_ms: Math.floor(time),
 					},
 				});
 			}),
 		);
 
+
 		store.set(
 			onChangeVolumeAtom,
-			toEmit(() => {
-				toast.info(t("amll.systemListener.volumeNotSupported", "请在系统或其他应用中直接调节音量"));
+			toEmit((volume: number) => {
+				invoke("control_external_media", {
+					payload: {
+						type: "setVolume",
+						volume: volume,
+					},
+				}).catch(err => console.error("设置音量失败:", err));
 			}),
 		);
-		store.set(onClickControlThumbAtom, toEmit(() => { }));
+
+		store.set(
+			onClickControlThumbAtom,
+			toEmit(() => {
+				store.set(isLyricPageOpenedAtom, false);
+			}),
+		);
+
 		store.set(onRequestOpenMenuAtom, toEmit(() => { }));
-		store.set(onClickLeftFunctionButtonAtom, toEmit(() => { }));
-		store.set(onClickRightFunctionButtonAtom, toEmit(() => { }));
+		store.set(
+			onClickLeftFunctionButtonAtom,
+			toEmit(() => {
+				// 直接用 store 来设置
+				store.set(isLyricPageOpenedAtom, false);
+			}),
+		);
+		store.set(
+			onClickRightFunctionButtonAtom,
+			toEmit(() => {
+				// 直接用 store 来设置
+				store.set(isLyricPageOpenedAtom, false);
+			}),
+		);
+
 
 		const unlistenPromise = listen<SmtcEvent>(
 			"smtc_update",
@@ -184,6 +245,12 @@ export const SystemListenerMusicContext: FC = () => {
 						break;
 					}
 
+					case "volumeChanged": {
+						const newVolume = data.isMuted ? 0 : data.volume;
+						store.set(musicVolumeAtom, newVolume);
+						break;
+					}
+
 					case "sessionsChanged": {
 						console.log(`[SystemListener] 收到会话列表更新:`, data);
 						setSmtcSessions(data);
@@ -201,6 +268,17 @@ export const SystemListenerMusicContext: FC = () => {
 						console.error(`[SystemListener] 错误：${data}`);
 						toast.error(t("amll.systemListener.error", { error: data }));
 						break;
+
+					case "audioData": {
+						if (fftPlayer.current) {
+							fftPlayer.current.pushDataI16(
+								48000,
+								2,
+								new Int16Array(new Uint8Array(data).buffer)
+							);
+						}
+						break;
+					}
 
 					default:
 						const unhandled: never = type;
@@ -223,6 +301,7 @@ export const SystemListenerMusicContext: FC = () => {
 			store.set(onRequestOpenMenuAtom, toEmit(() => { }));
 			store.set(onClickLeftFunctionButtonAtom, toEmit(() => { }));
 			store.set(onClickRightFunctionButtonAtom, toEmit(() => { }));
+			store.set(onClickControlThumbAtom, toEmit(() => { }));
 
 			store.set(musicNameAtom, "");
 			store.set(musicAlbumNameAtom, "");
@@ -236,8 +315,15 @@ export const SystemListenerMusicContext: FC = () => {
 			setMusicId("");
 			setSmtcShuffle(false);
 			setSmtcRepeat(RepeatMode.Off);
+			invoke("control_external_media", {
+				payload: { type: "stopAudioVisualization" },
+			}).catch(console.error);
 		};
 	}, [store, t, setMusicId, setSmtcTrackId, setSmtcSessions, setSmtcShuffle, setSmtcRepeat]);
 
-	return null;
+	return (
+		<>
+			<FFTToLowPassContext />
+		</>
+	);
 };

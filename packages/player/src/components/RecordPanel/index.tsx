@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import styles from "./index.module.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useAtom, useAtomValue } from "jotai";
-import { isLyricPageOpenedAtom } from "@applemusic-like-lyrics/react-full";
+import { isLyricPageOpenedAtom } from "@applemusic-like-lyrics/states";
 import { CameraIcon, Cross1Icon, StopIcon } from "@radix-ui/react-icons";
 import { recordPanelOpenedAtom } from "../../states/index.ts";
 import { toast } from "react-toastify";

@@ -102,6 +102,7 @@ dependencies = [
  "anyhow-tauri",
  "base64 0.22.1",
  "cpal 0.16.0",
+ "crossbeam-channel",
  "futures",
  "fxhash",
  "image",
@@ -795,25 +796,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02260d489095346e5cafd04dea8e8cb54d1d74fcd759022a9b72986ebe9a1257"
 dependencies = [
  "serde",
- "toml",
-]
-
-[[package]]
-name = "cbindgen"
-version = "0.29.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "975982cdb7ad6a142be15bdf84aea7ec6a9e5d4d797c004d43185b24cfe4e684"
-dependencies = [
- "clap",
- "heck 0.5.0",
- "indexmap 2.9.0",
- "log",
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.104",
- "tempfile",
  "toml",
 ]
 
@@ -5262,12 +5244,12 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "smtc-suite"
-version = "1.0.1"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3391424483b1a0360d401cec945dc6b767283f426670c2deaef671ae041c75ac"
+checksum = "dbf9178f629e5c6594996f55bb1c9b963ca3e936082c887561039503ce2d0575"
 dependencies = [
  "base64 0.22.1",
- "cbindgen",
+ "crossbeam-channel",
  "easer",
  "env_logger",
  "ferrous-opencc",

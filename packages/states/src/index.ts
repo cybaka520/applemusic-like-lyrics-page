@@ -28,6 +28,26 @@ export enum AudioQualityType {
 	DolbyAtmos = "dolby-atmos",
 }
 
+export interface MusicQualityState {
+    type: AudioQualityType;
+    codec: string;
+    channels: number;
+    sampleRate: number;
+    sampleFormat: string;
+}
+
+export const musicQualityAtom = atom<MusicQualityState>({
+    type: AudioQualityType.None,
+    codec: "unknown",
+	channels: 2,
+	sampleRate: 44100,
+	sampleFormat: "s16",
+});
+
+export const fftDataRangeAtom = atomWithStorage("amll-player.fftDataRange", [
+	80, 2000,
+] as [number, number]);
+
 export enum DarkMode { Auto = "auto", Light = "light", Dark = "dark" }
 export enum MusicContextMode { Local = "local", WSProtocol = "ws-protocol", SystemListener = "system-listener" }
 export enum TextConversionMode { Off = "off", TraditionalToSimplified = "traditionalToSimplified", SimplifiedToTraditional = "simplifiedToTraditional", SimplifiedToTaiwan = "simplifiedToTaiwan", TaiwanToSimplified = "taiwanToSimplified", SimplifiedToHongKong = "simplifiedToHongKong", HongKongToSimplified = "hongKongToSimplified" }
