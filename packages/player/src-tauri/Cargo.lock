@@ -4797,9 +4797,9 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "smtc-suite"
-version = "2.0.0"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbf9178f629e5c6594996f55bb1c9b963ca3e936082c887561039503ce2d0575"
+checksum = "d4b1634e200663d2251475314566359b675d957126b9d54bc45e30dae155e234"
 dependencies = [
  "base64 0.22.1",
  "crossbeam-channel",

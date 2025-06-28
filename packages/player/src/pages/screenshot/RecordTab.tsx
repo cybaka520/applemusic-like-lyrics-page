@@ -17,7 +17,6 @@ import {
 	recoverWindowSizeAtom,
 	recordMediaStreamAtom,
 } from "./states.ts";
-import { pre } from "framer-motion/client";
 
 const RecordTab = () => {
 	const [resizeWindow, setResizeWindow] = useAtom(resizeWindowAtom);
@@ -26,7 +25,7 @@ const RecordTab = () => {
 	const [recoverWindowSize, setRecoverWindowSize] = useAtom(
 		recoverWindowSizeAtom,
 	);
-	const [recordMediaStream, setRecordMediaStream] = useAtom(
+	const [, setRecordMediaStream] = useAtom(
 		recordMediaStreamAtom,
 	);
 	const [screenshotData, setScreenshotData] = useState<string | undefined>(
@@ -241,7 +240,7 @@ const RecordTab = () => {
 				</Button>
 			</Flex>
 			<Flex align="center" justify="center" flexGrow="1" overflow="hidden">
-				<video autoplay muted ref={previewRef} />
+				<video autoPlay muted ref={previewRef} />
 			</Flex>
 		</Flex>
 	);

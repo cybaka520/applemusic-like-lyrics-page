@@ -23,7 +23,8 @@
     ],
     "overrides": {
       "jotai": "2.12.5",
-      "@types/react": "19.1.8"
+      "@types/react": "19.1.8",
+      "@tauri-apps/plugin-updater": "2.9.0" 
     }
   }
 }

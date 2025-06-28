@@ -9,6 +9,7 @@
   "dependencies": {
     "@applemusic-like-lyrics/core": "workspace:*",
     "@applemusic-like-lyrics/react": "workspace:*",
+    "@tauri-apps/plugin-updater":" ^2.9.0",
     "@tauri-apps/api": "^2.6.0"
   },
   "peerDependencies": {

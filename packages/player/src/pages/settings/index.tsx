@@ -21,7 +21,7 @@ import { platform } from "@tauri-apps/plugin-os";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { Suspense, type FC, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { loadedExtensionAtom } from "../../states/extension.ts";
+import { loadedExtensionAtom } from "@applemusic-like-lyrics/states";
 import { ExtensionTab } from "./extension.tsx";
 import { PlayerSettingsTab } from "./player.tsx";
 

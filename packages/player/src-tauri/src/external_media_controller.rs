@@ -1,26 +1,13 @@
-use std::{
-    sync::{Arc, Mutex},
-    thread,
-};
-
 use anyhow::{Context, Result};
-use crossbeam_channel::{Receiver, select, unbounded};
+use crossbeam_channel::Receiver;
 use serde::{Deserialize, Serialize};
 use smtc_suite::{
     MediaCommand as SmtcControlCommandInternal, MediaUpdate, NowPlayingInfo as SmtcNowPlayingInfo,
     SmtcSessionInfo as SuiteSmtcSessionInfo,
 };
+use std::thread;
 use tauri::{AppHandle, Emitter, Runtime};
 use tracing::{debug, error, info, warn};
-
-/// 从UI后端（`event_receiver_loop`）发出的内部命令。
-///
-/// 目前只用于从其他地方请求一次状态全量更新。
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ListenerCommand {
-    /// 重新发送一次当前缓存的媒体信息。
-    RequestUpdate,
-}
 
 /// 文本转换模式。
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -156,9 +143,8 @@ impl From<&SmtcNowPlayingInfo> for CachedNowPlayingInfo {
 /// Tauri 的状态管理结构体。
 pub struct ExternalMediaControllerState {
     /// 向 `smtc-suite` 发送命令的通道发送端。
-    pub smtc_command_tx: Arc<Mutex<crossbeam_channel::Sender<SmtcControlCommandInternal>>>,
-    /// 向 `event_receiver_loop` 发送内部命令的通道发送端。
-    pub listener_command_tx: Arc<Mutex<crossbeam_channel::Sender<ListenerCommand>>>,
+    pub smtc_command_tx:
+        std::sync::Arc<std::sync::Mutex<crossbeam_channel::Sender<SmtcControlCommandInternal>>>,
 }
 
 impl ExternalMediaControllerState {
@@ -169,15 +155,6 @@ impl ExternalMediaControllerState {
             .lock()
             .map_err(|e| anyhow::anyhow!("SMTC 命令通道的 Mutex 锁已毒化：{}", e))?;
         guard.send(command).context("发送命令到 SMTC 监听线程失败")
-    }
-
-    /// 辅助函数，用于安全地发送内部命令到 `event_receiver_loop`。
-    pub fn send_listener_command(&self, command: ListenerCommand) -> anyhow::Result<()> {
-        let guard = self
-            .listener_command_tx
-            .lock()
-            .map_err(|e| anyhow::anyhow!("监听器命令通道的 Mutex 锁已毒化：{}", e))?;
-        guard.send(command).context("发送命令到监听线程失败")
     }
 }
 
@@ -197,7 +174,7 @@ pub async fn control_external_media(
             } else {
                 session_id
             };
-            smtc_suite::MediaCommand::SelectSession(target_id)
+            SmtcControlCommandInternal::SelectSession(target_id)
         }
         MediaCommand::SetTextConversion { mode } => {
             let suite_mode = match mode {
@@ -221,47 +198,46 @@ pub async fn control_external_media(
                     smtc_suite::TextConversionMode::HongKongToSimplified
                 }
             };
-            smtc_suite::MediaCommand::SetTextConversion(suite_mode)
+            SmtcControlCommandInternal::SetTextConversion(suite_mode)
         }
-        MediaCommand::SetShuffle { is_active } => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SetShuffle(is_active))
-        }
+        MediaCommand::SetShuffle { is_active } => SmtcControlCommandInternal::Control(
+            smtc_suite::SmtcControlCommand::SetShuffle(is_active),
+        ),
         MediaCommand::SetRepeatMode { mode } => {
             let suite_mode = match mode {
                 RepeatMode::Off => smtc_suite::RepeatMode::Off,
                 RepeatMode::One => smtc_suite::RepeatMode::One,
                 RepeatMode::All => smtc_suite::RepeatMode::All,
             };
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SetRepeatMode(
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SetRepeatMode(
                 suite_mode,
             ))
         }
         MediaCommand::Play => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::Play)
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::Play)
         }
         MediaCommand::Pause => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::Pause)
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::Pause)
         }
         MediaCommand::SkipNext => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SkipNext)
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SkipNext)
         }
         MediaCommand::SkipPrevious => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SkipPrevious)
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SkipPrevious)
         }
         MediaCommand::SeekTo { time_ms } => {
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SeekTo(time_ms))
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SeekTo(time_ms))
         }
         MediaCommand::SetVolume { volume } => {
-            // 确保音量值在有效范围内。
             let clamped_volume = volume.max(0.0).min(1.0);
-            smtc_suite::MediaCommand::Control(smtc_suite::SmtcControlCommand::SetVolume(
+            SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SetVolume(
                 clamped_volume,
             ))
         }
-        MediaCommand::StartAudioVisualization => smtc_suite::MediaCommand::StartAudioCapture,
-        MediaCommand::StopAudioVisualization => smtc_suite::MediaCommand::StopAudioCapture,
+        MediaCommand::StartAudioVisualization => SmtcControlCommandInternal::StartAudioCapture,
+        MediaCommand::StopAudioVisualization => SmtcControlCommandInternal::StopAudioCapture,
         MediaCommand::SetHighFrequencyProgressUpdates { enabled } => {
-            smtc_suite::MediaCommand::SetHighFrequencyProgressUpdates(enabled)
+            SmtcControlCommandInternal::SetHighFrequencyProgressUpdates(enabled)
         }
     };
 
@@ -275,7 +251,7 @@ pub async fn request_smtc_update(
 ) -> Result<(), String> {
     info!("正在请求 SMTC 更新...");
     state
-        .send_listener_command(ListenerCommand::RequestUpdate)
+        .send_smtc_command(SmtcControlCommandInternal::RequestUpdate)
         .map_err(|e| e.to_string())
 }
 
@@ -287,11 +263,9 @@ pub fn start_listener<R: Runtime>(app_handle: AppHandle<R>) -> ExternalMediaCont
         Err(e) => {
             error!("启动 smtc-suite MediaManager 失败: {}", e);
             // 如果启动失败，创建一个哑状态，防止应用崩溃，但功能将不可用。
-            let (smtc_tx, _) = unbounded();
-            let (listener_tx, _) = unbounded();
+            let (smtc_tx, _) = crossbeam_channel::unbounded();
             return ExternalMediaControllerState {
-                smtc_command_tx: Arc::new(Mutex::new(smtc_tx)),
-                listener_command_tx: Arc::new(Mutex::new(listener_tx)),
+                smtc_command_tx: std::sync::Arc::new(std::sync::Mutex::new(smtc_tx)),
             };
         }
     };
@@ -299,20 +273,11 @@ pub fn start_listener<R: Runtime>(app_handle: AppHandle<R>) -> ExternalMediaCont
     let update_rx_crossbeam = controller.update_rx;
     let smtc_command_tx_crossbeam = controller.command_tx;
 
-    let (listener_command_tx, listener_command_rx) = unbounded::<ListenerCommand>();
-    let last_known_info = Arc::new(Mutex::new(None::<SmtcNowPlayingInfo>));
-
     let app_handle_receiver = app_handle.clone();
-    let last_known_info_receiver = last_known_info.clone();
     thread::Builder::new()
         .name("smtc-event-receiver".into())
         .spawn(move || {
-            event_receiver_loop(
-                app_handle_receiver,
-                update_rx_crossbeam,
-                listener_command_rx,
-                last_known_info_receiver,
-            );
+            event_receiver_loop(app_handle_receiver, update_rx_crossbeam);
         })
         .expect("创建 smtc-event-receiver 线程失败");
 
@@ -326,127 +291,95 @@ pub fn start_listener<R: Runtime>(app_handle: AppHandle<R>) -> ExternalMediaCont
     }
 
     ExternalMediaControllerState {
-        smtc_command_tx: Arc::new(Mutex::new(smtc_command_tx_crossbeam)),
-        listener_command_tx: Arc::new(Mutex::new(listener_command_tx)),
+        smtc_command_tx: std::sync::Arc::new(std::sync::Mutex::new(smtc_command_tx_crossbeam)),
     }
 }
 
 /// 核心事件循环，运行在专用的后台线程中。
-fn event_receiver_loop<R: Runtime>(
-    app_handle: AppHandle<R>,
-    update_rx: Receiver<MediaUpdate>,
-    command_rx: Receiver<ListenerCommand>,
-    last_known_info: Arc<Mutex<Option<SmtcNowPlayingInfo>>>,
-) {
+fn event_receiver_loop<R: Runtime>(app_handle: AppHandle<R>, update_rx: Receiver<MediaUpdate>) {
     let mut last_sent_info_cache = CachedNowPlayingInfo::default();
 
-    loop {
-        select! {
-            // 分支 1: 处理来自 `smtc-suite` 的更新。
-            recv(update_rx) -> msg => {
-                match msg {
-                    Ok(update) => {
-                        let mut guard = last_known_info.lock().unwrap();
-
-                        match update {
-                            MediaUpdate::TrackChanged(mut new_info) => {
-                                new_info = parse_apple_music_field(new_info);
-
-                                // 创建一个新的、包含封面哈希的缓存对象用于比较
-                                let current_info_cache = CachedNowPlayingInfo::from(&new_info);
-
-                                // 判断是否为新歌或信息有更新
-                                // 任何一个元数据或封面哈希变化，都认为是更新
-                                if last_sent_info_cache != current_info_cache {
-                                    debug!("检测到曲目信息更新，正在发送元数据和封面...");
-
-                                    // 发送元数据
-                                    let _ = app_handle.emit("smtc_update", SmtcEvent::TrackMetadata(TrackMetadata {
-                                        title: new_info.title.clone(),
-                                        artist: new_info.artist.clone(),
-                                        album_title: new_info.album_title.clone(),
-                                        duration_ms: new_info.duration_ms,
-                                    }));
-
-                                    // 发送封面
-                                    let _ = app_handle.emit("smtc_update", SmtcEvent::CoverData(new_info.cover_data.clone()));
-
-                                    // 更新缓存
-                                    last_sent_info_cache = current_info_cache;
-                                }
-
-                                // 总是发送 PlaybackStatus，因为这是高频更新的核心
-                                let _ = app_handle.emit("smtc_update", SmtcEvent::PlaybackStatus(PlaybackStatus {
-                                    is_playing: new_info.is_playing.unwrap_or(false),
-                                    position_ms: new_info.position_ms.unwrap_or(0),
-                                    is_shuffle_active: new_info.is_shuffle_active.unwrap_or(false),
-                                    repeat_mode: new_info.repeat_mode.map(|m| match m {
-                                        smtc_suite::RepeatMode::Off => RepeatMode::Off,
-                                        smtc_suite::RepeatMode::One => RepeatMode::One,
-                                        smtc_suite::RepeatMode::All => RepeatMode::All,
-                                    }).unwrap_or(RepeatMode::Off),
-                                }));
-
-                                // 更新全局共享状态
-                                *guard = Some(new_info);
-                            }
-                            MediaUpdate::VolumeChanged { session_id: _, volume, is_muted } => {
-                                let payload = SmtcEvent::VolumeChanged(VolumeStatus { volume, is_muted });
-                                let _ = app_handle.emit("smtc_update", payload);
-                            }
-                            MediaUpdate::SessionsChanged(sessions) => {
-                                let payload = SmtcEvent::SessionsChanged(sessions.into_iter().map(SmtcSessionInfo::from).collect());
-                                let _ = app_handle.emit("smtc_update", payload);
-                            }
-                            MediaUpdate::SelectedSessionVanished(id) => {
-                                let payload = SmtcEvent::SelectedSessionVanished(id.clone());
-                                let _ = app_handle.emit("smtc_update", payload);
-                                // 当会话消失时，清空所有缓存状态。
-                                *guard = None;
-                                last_sent_info_cache = CachedNowPlayingInfo::default();
-                            }
-                            MediaUpdate::AudioData(bytes) => {
-                                let payload = SmtcEvent::AudioData(bytes);
-                                let _ = app_handle.emit("smtc_update", payload);
-                            }
-                            MediaUpdate::Error(e) => {
-                                let payload = SmtcEvent::Error(e.to_string());
-                                let _ = app_handle.emit("smtc_update", payload);
-                            }
-                        }
-                    },
-                    Err(_) => {
-                        info!("媒体事件通道已关闭，接收线程退出。");
-                        break;
-                    }
+    for update in update_rx {
+        match update {
+            MediaUpdate::TrackChanged(new_info) => {
+                let new_info = parse_apple_music_field(new_info);
+                let current_info_cache = CachedNowPlayingInfo::from(&new_info);
+                if last_sent_info_cache != current_info_cache {
+                    debug!("检测到曲目信息更新，正在发送元数据和封面...");
+                    emit_track_metadata(&app_handle, &new_info);
+                    last_sent_info_cache = current_info_cache;
                 }
-            },
-            // 分支 2: 处理来自 Tauri 命令的内部请求。
-            recv(command_rx) -> msg => {
-                match msg {
-                    Ok(ListenerCommand::RequestUpdate) => {
-                        info!("收到更新请求，正在重新发送当前元数据和封面...");
-                        let guard = last_known_info.lock().unwrap();
-                        if let Some(info) = &*guard {
-                            // 重新发送当前缓存的元数据和封面，但不发送播放状态，
-                            // 因为播放状态由 `TrackChanged` 持续更新。
-                            let _ = app_handle.emit("smtc_update", SmtcEvent::TrackMetadata(TrackMetadata {
-                                title: info.title.clone(),
-                                artist: info.artist.clone(),
-                                album_title: info.album_title.clone(),
-                                duration_ms: info.duration_ms,
-                            }));
-                            let _ = app_handle.emit("smtc_update", SmtcEvent::CoverData(info.cover_data.clone()));
-                        }
-                    },
-                    Err(_) => {
-                        info!("监听器命令通道已关闭，接收线程退出。");
-                        break;
-                    }
-                }
+                emit_playback_status(&app_handle, &new_info);
+            }
+            MediaUpdate::TrackChangedForced(new_info) => {
+                let new_info = parse_apple_music_field(new_info);
+                emit_track_metadata(&app_handle, &new_info);
+                emit_playback_status(&app_handle, &new_info);
+                last_sent_info_cache = CachedNowPlayingInfo::from(&new_info);
+            }
+            MediaUpdate::VolumeChanged {
+                volume, is_muted, ..
+            } => {
+                let payload = SmtcEvent::VolumeChanged(VolumeStatus { volume, is_muted });
+                let _ = app_handle.emit("smtc_update", payload);
+            }
+            MediaUpdate::SessionsChanged(sessions) => {
+                let payload = SmtcEvent::SessionsChanged(
+                    sessions.into_iter().map(SmtcSessionInfo::from).collect(),
+                );
+                let _ = app_handle.emit("smtc_update", payload);
+            }
+            MediaUpdate::SelectedSessionVanished(id) => {
+                let payload = SmtcEvent::SelectedSessionVanished(id);
+                let _ = app_handle.emit("smtc_update", payload);
+                last_sent_info_cache = CachedNowPlayingInfo::default();
+            }
+            MediaUpdate::AudioData(bytes) => {
+                let payload = SmtcEvent::AudioData(bytes);
+                let _ = app_handle.emit("smtc_update", payload);
+            }
+            MediaUpdate::Error(e) => {
+                let payload = SmtcEvent::Error(e);
+                let _ = app_handle.emit("smtc_update", payload);
             }
         }
     }
+
+    info!("媒体事件通道已关闭，接收线程退出。");
+}
+
+/// 辅助函数，发送曲目元数据和封面。
+fn emit_track_metadata<R: Runtime>(app_handle: &AppHandle<R>, info: &SmtcNowPlayingInfo) {
+    let _ = app_handle.emit(
+        "smtc_update",
+        SmtcEvent::TrackMetadata(TrackMetadata {
+            title: info.title.clone(),
+            artist: info.artist.clone(),
+            album_title: info.album_title.clone(),
+            duration_ms: info.duration_ms,
+        }),
+    );
+    let _ = app_handle.emit("smtc_update", SmtcEvent::CoverData(info.cover_data.clone()));
+}
+
+/// 辅助函数，发送播放状态。
+fn emit_playback_status<R: Runtime>(app_handle: &AppHandle<R>, info: &SmtcNowPlayingInfo) {
+    let _ = app_handle.emit(
+        "smtc_update",
+        SmtcEvent::PlaybackStatus(PlaybackStatus {
+            is_playing: info.is_playing.unwrap_or(false),
+            position_ms: info.position_ms.unwrap_or(0),
+            is_shuffle_active: info.is_shuffle_active.unwrap_or(false),
+            repeat_mode: info
+                .repeat_mode
+                .map(|m| match m {
+                    smtc_suite::RepeatMode::Off => RepeatMode::Off,
+                    smtc_suite::RepeatMode::One => RepeatMode::One,
+                    smtc_suite::RepeatMode::All => RepeatMode::All,
+                })
+                .unwrap_or(RepeatMode::Off),
+        }),
+    );
 }
 
 /// 特殊的解析逻辑，用于处理 Apple Music 的元数据。

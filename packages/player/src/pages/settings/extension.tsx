@@ -20,11 +20,13 @@ import type { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
 	ExtensionLoadResult,
+} from "@applemusic-like-lyrics/states";
+import { restartApp } from "../../utils/player.ts";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import {
 	extensionDirAtom,
 	extensionMetaAtom,
 } from "../../states/extension.ts";
-import { restartApp } from "../../utils/player.ts";
-import { revealItemInDir } from "@tauri-apps/plugin-opener";
 
 const requireRestartAtom = atom(false);
 

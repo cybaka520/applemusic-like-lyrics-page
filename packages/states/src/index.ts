@@ -13,6 +13,9 @@ import type {
 	LyricPlayerRef,
 } from "@applemusic-like-lyrics/react";
 
+import { type Update } from "@tauri-apps/plugin-updater";
+import type { PlayerExtensionContext } from "../../player/src/components/ExtensionContext/ext-ctx";
+
 export type SongData =
 	| { type: "local"; filePath: string; origOrder: number; }
 	| { type: "custom"; id: string; songJsonData: string; origOrder: number; };
@@ -462,3 +465,63 @@ export const correctedMusicPlayingPositionAtom = atom(
         return originalPosition;
     }
 );
+
+/**
+ * 扩展的加载结果枚举
+ */
+export enum ExtensionLoadResult {
+	Loadable = "loadable",
+	Disabled = "disabled",
+	InvaildExtensionFile = "invaild-extension-file",
+	ExtensionIdConflict = "extension-id-conflict",
+	MissingMetadata = "missing-metadata",
+	MissingDependency = "missing-dependency",
+	JavaScriptFileCorrupted = "javascript-file-corrupted",
+}
+
+/**
+ * 扩展元数据状态的接口定义
+ */
+export interface ExtensionMetaState {
+	loadResult: ExtensionLoadResult;
+	id: string;
+	fileName: string;
+	scriptData: string;
+	dependency: string[];
+	[key: string]: string | string[] | undefined;
+}
+
+/**
+ * 一个用于触发 extensionMetaAtom 重新加载的原子状态
+ * （这是一个常见的 Jotai 模式，可以安全移动）
+ */
+export const reloadExtensionMetaAtom = atom(0);
+
+/**
+ * 存储当前已加载并成功运行的扩展实例
+ */
+export const loadedExtensionAtom = atom<LoadedExtension[]>([]); 
+
+
+export interface ArtistStateEntry { name: string; id: string; }
+export interface SmtcSession { sessionId: string; displayName: string; }
+
+export interface MusicQualityState {
+    type: AudioQualityType;
+    codec: string;
+    channels: number;
+    sampleRate: number;
+    sampleFormat: string;
+}
+
+export const backgroundRendererAtom = atomWithStorage("amll-player.backgroundRenderer", "mesh");
+export interface LoadedExtension {
+	extensionMeta: ExtensionMetaState;
+	extensionFunc: () => Promise<void>;
+	context: PlayerExtensionContext;
+}
+
+export const isChechingUpdateAtom = atom(false);
+export const updateInfoAtom = atom<Update | false>(false);
+export const autoUpdateAtom = atomWithStorage("amll-player.autoUpdate", true);
+

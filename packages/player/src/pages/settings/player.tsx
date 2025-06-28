@@ -88,7 +88,7 @@ import {
 } from "@applemusic-like-lyrics/states";
 
 import { fftDataRangeAtom } from "@applemusic-like-lyrics/states";
-import { updateInfoAtom } from "../../states/updater.ts";
+import { updateInfoAtom } from "@applemusic-like-lyrics/states";
 
 const SettingEntry: FC<
 	PropsWithChildren<{ label: string; description?: string }>
@@ -1098,8 +1098,12 @@ const SmtcSettings = () => {
 	const sessions = useAtomValue(smtcSessionsAtom);
 	const [selectedSession, setSelectedSession] = useAtom(smtcSelectedSessionIdAtom);
 	const [textConversion, setTextConversion] = useAtom(smtcTextConversionModeAtom);
-	const [enableWsLyrics, setEnableWsLyrics] = useAtom(enableWsLyricsInSmtcModeAtom);
-	const [offset, setOffset] = useAtom(smtcTimeOffsetAtom);
+
+	const handleForceUpdateClick = () => {
+		invoke("request_smtc_update").catch((err) => {
+			console.error("手动调用 request_smtc_update 失败:", err);
+		});
+	};
 
 	const sessionMenu = useMemo(() => [
 		{ label: t("page.settings.smtc.session.auto"), value: "null" },
@@ -1140,19 +1144,19 @@ const SmtcSettings = () => {
 			<SubTitle><Trans i18nKey="page.settings.smtc.subtitle">SMTC 监听设置</Trans></SubTitle>
 
 			<NumberSettings
-                label={t("page.settings.smtc.timeOffset.label", "时间轴偏移量 (ms)")}
-                description={t("page.settings.smtc.timeOffset.description", "校准歌词与歌曲的同步。正数解决歌词偏早，负数解决歌词偏晚。")}
-                configAtom={smtcTimeOffsetAtom}
-                type="number"
-                step={50}
-                placeholder="0"
-            />
+				label={t("page.settings.smtc.timeOffset.label", "时间轴偏移量 (ms)")}
+				description={t("page.settings.smtc.timeOffset.description", "校准歌词与歌曲的同步。正数解决歌词偏早，负数解决歌词偏晚。")}
+				configAtom={smtcTimeOffsetAtom}
+				type="number"
+				step={50}
+				placeholder="0"
+			/>
 
 			<SwitchSettings
-                label={t("page.settings.smtc.enableWsLyrics.label", "启用外部 WebSocket 歌词源")}
-                description={t("page.settings.smtc.enableWsLyrics.description", "允许在 SMTC 模式下，通过 WebSocket (默认 127.0.0.1:9002) 接收外部程序提供的歌词。")}
-                configAtom={enableWsLyricsInSmtcModeAtom}
-            />
+				label={t("page.settings.smtc.enableWsLyrics.label", "启用 WebSocket 歌词源")}
+				description={t("page.settings.smtc.enableWsLyrics.description", "允许在 SMTC 模式下通过 WebSocket 接收歌词。")}
+				configAtom={enableWsLyricsInSmtcModeAtom}
+			/>
 
 			<SettingEntry
 				label={t("page.settings.smtc.session.label")}
@@ -1173,6 +1177,18 @@ const SmtcSettings = () => {
 					<Select.Content>{textConversionMenu.map((item) => (<Select.Item key={item.value} value={item.value}>{item.label}</Select.Item>))}</Select.Content>
 				</Select.Root>
 			</SettingEntry>
+
+			<Card mt="2">
+				<Flex direction="row" align="center" gap="4">
+					<Flex direction="column" flexGrow="1">
+						<Text as="div">调试工具</Text>
+						<Text as="div" color="gray" size="2">手动触发一次全面的状态刷新</Text>
+					</Flex>
+					<Button onClick={handleForceUpdateClick} variant="soft" color="orange">
+						强制刷新
+					</Button>
+				</Flex>
+			</Card>
 		</>
 	);
 };

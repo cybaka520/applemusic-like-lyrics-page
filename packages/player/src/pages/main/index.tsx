@@ -23,7 +23,7 @@ import { PlaylistCard } from "../../components/PlaylistCard/index.tsx";
 import { db } from "../../dexie.ts";
 import { router } from "../../router.tsx";
 import { MusicContextMode, musicContextModeAtom } from "@applemusic-like-lyrics/states";
-import { updateInfoAtom } from "../../states/updater.ts";
+import { updateInfoAtom } from "@applemusic-like-lyrics/states";
 
 export const Component: FC = () => {
 	const playlists = useLiveQuery(() => db.playlists.toArray());
