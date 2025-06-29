@@ -33,10 +33,9 @@
 	"identifier": "net.stevexmh.amllplayer",
 	"plugins": {
 		"updater": {
-			"active": true,
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc3RTUwNTcwNjNFNjk4RTUKUldUbG1PWmpjQVhsZC9kQVBvOTlvZTIyQy9uSDMvU3ZzdTdVWDczKzk0M3ZMMEp5aEdEOEw3Z1QK",
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwMjJGQ0MyMjkzMzEyQkMKUldTOEVqTXB3dndpNEpLQXIrOG5kK1lZSENwRjk1KzRIcFZGVHhUbjFFSDEyeS9BRG9PalF3U3EK",
 			"endpoints": [
-				"https://github.com/apoint123/applemusic-like-lyrics/releases/download/full-refractor-player-dev/latest.json"
+				"https://github.com/Steve-xmh/applemusic-like-lyrics/releases/download/full-refractor-player-dev/latest.json"
 			]
 		}
 	},

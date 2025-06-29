@@ -229,7 +229,7 @@ pub async fn control_external_media(
             SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SeekTo(time_ms))
         }
         MediaCommand::SetVolume { volume } => {
-            let clamped_volume = volume.max(0.0).min(1.0);
+            let clamped_volume = volume.clamp(0.0, 1.0);
             SmtcControlCommandInternal::Control(smtc_suite::SmtcControlCommand::SetVolume(
                 clamped_volume,
             ))
