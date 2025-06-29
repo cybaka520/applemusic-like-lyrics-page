@@ -174,7 +174,7 @@ jobs:
       - name: 构建 AMLL Full React 包
         run: |
           pnpm i
-          pnpm lerna run build --scope player
+          pnpm lerna run build --concurrency=1 --stream --scope player
         env:
           AMLL_GITHUB_IS_ACTION: true
       - name: 生成开发构建版本号
