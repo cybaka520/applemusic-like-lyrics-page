@@ -184,6 +184,8 @@ jobs:
         run: |
           node ./packages/player/scripts/gen-dev-version.mjs
       - name: 构建 AMLL Player 安卓移动版程序
+        env:
+          CARGO_NDK_ANDROID_PLATFORM: 26
         run: |
           export NDK_HOME=$ANDROID_NDK_HOME
           export JAVA_HOME=$JAVA_HOME_17_X64
