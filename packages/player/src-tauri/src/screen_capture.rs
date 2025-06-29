@@ -134,7 +134,7 @@ pub async fn take_screenshot(
             }
             #[cfg(not(target_os = "windows"))]
             {
-                anyhow::bail!(
+                anyhow_tauri::bail!(
                     "Screenshot capture using DevTools is not supported on this platform yet."
                 )
             }
