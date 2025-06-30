@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - full-refractor
+      - dev
   workflow_dispatch:
 
 concurrency:
