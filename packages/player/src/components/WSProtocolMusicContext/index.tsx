@@ -105,8 +105,14 @@ export const WSProtocolMusicContext: FC = () => {
 
 		if (!isLyricOnlyMode) {
 			const toEmit = <T,>(onEmit: T) => ({ onEmit });
-			store.set(onRequestNextSongAtom, toEmit(() => sendWSMessage("forwardSong")));
-			store.set(onRequestPrevSongAtom, toEmit(() => sendWSMessage("backwardSong")));
+			store.set(
+				onRequestNextSongAtom,
+				toEmit(() => sendWSMessage("forwardSong")),
+			);
+			store.set(
+				onRequestPrevSongAtom,
+				toEmit(() => sendWSMessage("backwardSong")),
+			);
 			store.set(
 				onPlayOrResumeAtom,
 				toEmit(() => {
@@ -144,39 +150,68 @@ export const WSProtocolMusicContext: FC = () => {
 			},
 		);
 
-		interface WSArtist { id: string; name: string; }
-		interface WSLyricWord { startTime: number; endTime: number; word: string; }
-		interface WSLyricLine { startTime: number; endTime: number; words: WSLyricWord[]; isBG: boolean; isDuet: boolean; translatedLyric: string; romanLyric: string; }
+		interface WSArtist {
+			id: string;
+			name: string;
+		}
+		interface WSLyricWord {
+			startTime: number;
+			endTime: number;
+			word: string;
+		}
+		interface WSLyricLine {
+			startTime: number;
+			endTime: number;
+			words: WSLyricWord[];
+			isBG: boolean;
+			isDuet: boolean;
+			translatedLyric: string;
+			romanLyric: string;
+		}
 		type WSBodyMessageMap = {
-			ping: undefined; pong: undefined;
-			setMusicInfo: { musicId: string; musicName: string; albumId: string; albumName: string; artists: WSArtist[]; duration: number; };
-			setMusicAlbumCoverImageURI: { imgUrl: string; };
-			setMusicAlbumCoverImageData: { data: number[]; };
-			onPlayProgress: { progress: number; };
-			onVolumeChanged: { volume: number; };
-			onPaused: undefined; onResumed: undefined;
-			onAudioData: { data: number[]; };
-			setLyric: { data: WSLyricLine[]; };
-			setLyricFromTTML: { data: string; };
-			pause: undefined; resume: undefined; forwardSong: undefined; backwardSong: undefined;
-			setVolume: { volume: number; };
-			seekPlayProgress: { progress: number; };
+			ping: undefined;
+			pong: undefined;
+			setMusicInfo: {
+				musicId: string;
+				musicName: string;
+				albumId: string;
+				albumName: string;
+				artists: WSArtist[];
+				duration: number;
+			};
+			setMusicAlbumCoverImageURI: { imgUrl: string };
+			setMusicAlbumCoverImageData: { data: number[] };
+			onPlayProgress: { progress: number };
+			onVolumeChanged: { volume: number };
+			onPaused: undefined;
+			onResumed: undefined;
+			onAudioData: { data: number[] };
+			setLyric: { data: WSLyricLine[] };
+			setLyricFromTTML: { data: string };
+			pause: undefined;
+			resume: undefined;
+			forwardSong: undefined;
+			backwardSong: undefined;
+			setVolume: { volume: number };
+			seekPlayProgress: { progress: number };
 		};
-		type WSBodyMap = { [T in keyof WSBodyMessageMap]: { type: T; value: WSBodyMessageMap[T]; }; };
+		type WSBodyMap = {
+			[T in keyof WSBodyMessageMap]: { type: T; value: WSBodyMessageMap[T] };
+		};
 
 		let curCoverBlobUrl = "";
 		const onBodyChannel = new Channel<WSBodyMap[keyof WSBodyMessageMap]>();
 
 		function onBody(payload: WSBodyMap[keyof WSBodyMessageMap]) {
-			if (payload.type === 'ping') {
-				sendWSMessage('pong');
+			if (payload.type === "ping") {
+				sendWSMessage("pong");
 				return;
 			}
 
 			if (isLyricOnlyMode) {
 				switch (payload.type) {
-					case 'setLyric':
-					case 'setLyricFromTTML':
+					case "setLyric":
+					case "setLyricFromTTML":
 						break;
 					default:
 						return;
@@ -188,7 +223,10 @@ export const WSProtocolMusicContext: FC = () => {
 					store.set(musicIdAtom, payload.value.musicId);
 					store.set(musicNameAtom, payload.value.musicName);
 					store.set(musicDurationAtom, payload.value.duration);
-					store.set(musicArtistsAtom, payload.value.artists.map((v) => ({ id: v.id, name: v.name })));
+					store.set(
+						musicArtistsAtom,
+						payload.value.artists.map((v) => ({ id: v.id, name: v.name })),
+					);
 					store.set(musicPlayingPositionAtom, 0);
 					break;
 				}
@@ -228,7 +266,11 @@ export const WSProtocolMusicContext: FC = () => {
 					break;
 				}
 				case "onAudioData": {
-					fftPlayer.current?.pushDataI16(48000, 2, new Int16Array(new Uint8Array(payload.value.data).buffer));
+					fftPlayer.current?.pushDataI16(
+						48000,
+						2,
+						new Int16Array(new Uint8Array(payload.value.data).buffer),
+					);
 					break;
 				}
 				case "setLyric": {
@@ -263,7 +305,11 @@ export const WSProtocolMusicContext: FC = () => {
 					break;
 				}
 				default:
-					console.log("on-ws-protocol-client-body", "未处理的报文（暂不支持）", payload);
+					console.log(
+						"on-ws-protocol-client-body",
+						"未处理的报文（暂不支持）",
+						payload,
+					);
 			}
 		}
 

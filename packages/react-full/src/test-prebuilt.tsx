@@ -35,7 +35,7 @@ const mapLyric = (
 	i: number,
 	lines: RawLyricLine[],
 ): LyricLine => ({
-	words: line.words.map(w => ({ ...w, obscene: false })),
+	words: line.words.map((w) => ({ ...w, obscene: false })),
 	startTime: line.words[0]?.startTime ?? 0,
 	endTime:
 		line.words[line.words.length - 1]?.endTime ?? Number.POSITIVE_INFINITY,
@@ -169,7 +169,7 @@ const App: FC = () => {
 		[store],
 	);
 
-	useLayoutEffect(() => {}, []);
+	useLayoutEffect(() => { }, []);
 
 	useLayoutEffect(() => {
 		store.set(onRequestOpenMenuAtom, {

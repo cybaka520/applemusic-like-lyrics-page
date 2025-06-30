@@ -9,26 +9,29 @@ import {
 	Spinner,
 	Text,
 } from "@radix-ui/themes";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { platform } from "@tauri-apps/plugin-os";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useAtom, useAtomValue } from "jotai";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { ViewportList } from "react-viewport-list";
 import { ExtensionInjectPoint } from "../../components/ExtensionInjectPoint/index.tsx";
 import { NewPlaylistButton } from "../../components/NewPlaylistButton/index.tsx";
 import { PageContainer } from "../../components/PageContainer/index.tsx";
 import { PlaylistCard } from "../../components/PlaylistCard/index.tsx";
 import { db } from "../../dexie.ts";
 import { router } from "../../router.tsx";
-import { MusicContextMode, musicContextModeAtom } from "@applemusic-like-lyrics/states";
+import {
+	MusicContextMode,
+	musicContextModeAtom,
+} from "@applemusic-like-lyrics/states";
 import { updateInfoAtom } from "@applemusic-like-lyrics/states";
 
 export const Component: FC = () => {
 	const playlists = useLiveQuery(() => db.playlists.toArray());
 	const updateInfo = useAtomValue(updateInfoAtom);
-	const viewportRef = useRef<HTMLDivElement>(null);
+	const parentRef = useRef<HTMLDivElement>(null);
 
 	const [musicContextMode, setMusicContextMode] = useAtom(musicContextModeAtom);
 	const [currentPlatform, setCurrentPlatform] = useState<string>("");
@@ -38,7 +41,15 @@ export const Component: FC = () => {
 		setCurrentPlatform(platform());
 	}, []);
 
-	const isSystemListenerMode = musicContextMode === MusicContextMode.SystemListener;
+	const rowVirtualizer = useVirtualizer({
+		count: playlists?.length ?? 0,
+		getScrollElement: () => parentRef.current,
+		estimateSize: () => 96,
+		overscan: 5,
+	});
+
+	const isSystemListenerMode =
+		musicContextMode === MusicContextMode.SystemListener;
 
 	return (
 		<PageContainer>
@@ -142,7 +153,9 @@ export const Component: FC = () => {
 						<ExtensionInjectPoint injectPointName="page.main.sidebar.after" />
 					</Flex>
 				</Flex>
+
 				<ExtensionInjectPoint injectPointName="page.main.top" />
+
 				{playlists !== undefined ? (
 					playlists.length === 0 ? (
 						<Text mt="9" as="div" align="center">
@@ -156,11 +169,36 @@ export const Component: FC = () => {
 								overflowY: "auto",
 								minHeight: "0",
 							}}
-							ref={viewportRef}
+							ref={parentRef}
 						>
-							<ViewportList items={playlists} viewportRef={viewportRef}>
-								{(v) => <PlaylistCard playlist={v} />}
-							</ViewportList>
+							<div
+								style={{
+									height: `${rowVirtualizer.getTotalSize()}px`,
+									width: "100%",
+									position: "relative",
+								}}
+							>
+								{rowVirtualizer.getVirtualItems().map((virtualItem) => {
+									const playlist = playlists[virtualItem.index];
+									return (
+										<div
+											key={virtualItem.key}
+											style={{
+												position: "absolute",
+												top: 0,
+												left: 0,
+												width: "100%",
+												padding: "4px 8px",
+												height: `${virtualItem.size}px`,
+												transform: `translateY(${virtualItem.start}px)`,
+												boxSizing: "border-box",
+											}}
+										>
+											<PlaylistCard playlist={playlist} />
+										</div>
+									);
+								})}
+							</div>
 						</div>
 					)
 				) : (

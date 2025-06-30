@@ -18,10 +18,7 @@ import IconRewind from "../../assets/icon_rewind.svg?react";
 import { NowPlaylistCard } from "../NowPlaylistCard/index.tsx";
 import styles from "./index.module.css";
 
-import {
-	MediaButton,
-	TextMarquee,
-} from "@applemusic-like-lyrics/react-full";
+import { MediaButton, TextMarquee } from "@applemusic-like-lyrics/react-full";
 
 import {
 	hideNowPlayingBarAtom,
@@ -35,7 +32,6 @@ import {
 	onRequestPrevSongAtom,
 	playlistCardOpenedAtom,
 } from "@applemusic-like-lyrics/states";
-
 
 export const NowPlayingBar: FC = () => {
 	const hideNowPlayingBar = useAtomValue(hideNowPlayingBarAtom);

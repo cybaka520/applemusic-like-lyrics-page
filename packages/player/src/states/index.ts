@@ -24,35 +24,36 @@ export const isDarkThemeAtom = atom(
 	},
 );
 
-export const onClickSmtcShuffleAtom = atom(
-    null,
-    (get) => {
-        const currentShuffle = get(smtcShuffleStateAtom);
-        invoke("control_external_media", {
-            payload: {
-                type: "setShuffle",
-                is_active: !currentShuffle,
-            },
-        }).catch(console.error);
-    }
-);
+export const onClickSmtcShuffleAtom = atom(null, (get) => {
+	const currentShuffle = get(smtcShuffleStateAtom);
+	invoke("control_external_media", {
+		payload: {
+			type: "setShuffle",
+			is_active: !currentShuffle,
+		},
+	}).catch(console.error);
+});
 
-export const onClickSmtcRepeatAtom = atom(
-    null,
-    (get) => {
-        const currentMode = get(smtcRepeatModeAtom);
-        let nextMode: RepeatMode;
-        switch (currentMode) {
-            case RepeatMode.Off: nextMode = RepeatMode.All; break;
-            case RepeatMode.All: nextMode = RepeatMode.One; break;
-            case RepeatMode.One: nextMode = RepeatMode.Off; break;
-            default: nextMode = RepeatMode.Off;
-        }
-        invoke("control_external_media", {
-            payload: {
-                type: "setRepeatMode",
-                mode: nextMode,
-            },
-        }).catch(console.error);
-    }
-);
+export const onClickSmtcRepeatAtom = atom(null, (get) => {
+	const currentMode = get(smtcRepeatModeAtom);
+	let nextMode: RepeatMode;
+	switch (currentMode) {
+		case RepeatMode.Off:
+			nextMode = RepeatMode.All;
+			break;
+		case RepeatMode.All:
+			nextMode = RepeatMode.One;
+			break;
+		case RepeatMode.One:
+			nextMode = RepeatMode.Off;
+			break;
+		default:
+			nextMode = RepeatMode.Off;
+	}
+	invoke("control_external_media", {
+		payload: {
+			type: "setRepeatMode",
+			mode: nextMode,
+		},
+	}).catch(console.error);
+});

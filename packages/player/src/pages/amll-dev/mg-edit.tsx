@@ -378,7 +378,7 @@ export const Component: FC = () => {
 		if (!mgRendererInstance) return;
 		try {
 			mgRendererInstance.setAlbum(cover);
-		} catch { }
+		} catch {}
 	}, [cover]);
 
 	useEffect(() => {
@@ -386,7 +386,7 @@ export const Component: FC = () => {
 		if (!mgRendererInstance) return;
 		try {
 			mgRendererInstance.setWireFrame(wireframe);
-		} catch { }
+		} catch {}
 	}, [wireframe]);
 
 	useEffect(() => {

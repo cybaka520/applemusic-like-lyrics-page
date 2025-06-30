@@ -199,7 +199,17 @@ class Mesh implements Disposable {
 	}
 
 	// 批量设置顶点数据的优化方法
-	setVertexData(vx: number, vy: number, x: number, y: number, r: number, g: number, b: number, u: number, v: number): void {
+	setVertexData(
+		vx: number,
+		vy: number,
+		x: number,
+		y: number,
+		r: number,
+		g: number,
+		b: number,
+		u: number,
+		v: number,
+	): void {
 		const idx = (vx + vy * this.vertexWidth) * 7;
 		if (idx >= this.vertexData.length - 6) {
 			console.warn("Vertex data out of range", idx, this.vertexData.length);
@@ -641,12 +651,12 @@ class BHPMesh extends Mesh {
 		const controlPointsWidth = this._controlPoints.width;
 		const controlPointsHeight = this._controlPoints.height;
 		const subDivisions = this._subDivisions;
-		
+
 		// 预计算常用值
 		const invSubDivM1 = 1 / subDivM1;
 		const invTH = 1 / tH;
 		const invTW = 1 / tW;
-		
+
 		for (let x = 0; x < controlPointsWidth - 1; x++) {
 			for (let y = 0; y < controlPointsHeight - 1; y++) {
 				const p00 = this._controlPoints.get(x, y);
@@ -665,20 +675,32 @@ class BHPMesh extends Mesh {
 				const sY = y / (controlPointsHeight - 1);
 				const baseVx = y * subDivisions;
 				const baseVy = x * subDivisions;
-				
+
 				for (let u = 0; u < subDivisions; u++) {
 					const uNorm = u * invSubDivM1;
 					const vxOffset = baseVx + u;
-					
+
 					for (let v = 0; v < subDivisions; v++) {
 						const vNorm = v * invSubDivM1;
 						const vy = baseVy + v;
-						
-						const [px, py] = surfacePoint(uNorm, vNorm, this.tempX, this.tempY, this.tmpV2);
-						const [pr, pg, pb] = colorPoint(uNorm, vNorm, this.tempR, this.tempG, this.tempB);
+
+						const [px, py] = surfacePoint(
+							uNorm,
+							vNorm,
+							this.tempX,
+							this.tempY,
+							this.tmpV2,
+						);
+						const [pr, pg, pb] = colorPoint(
+							uNorm,
+							vNorm,
+							this.tempR,
+							this.tempG,
+							this.tempB,
+						);
 						const uvX = sX + v * invTH;
 						const uvY = 1 - sY - u * invTW;
-						
+
 						// 使用批量设置方法减少数组访问次数
 						this.setVertexData(vxOffset, vy, px, py, pr, pg, pb, uvX, uvY);
 					}
@@ -842,15 +864,15 @@ export class MeshGradientRenderer extends BaseRenderer {
 	private onRedraw(tickTime: number, delta: number) {
 		const latestMeshState = this.meshStates[this.meshStates.length - 1];
 		let canBeStatic = false;
-		
+
 		// 预计算常用值
 		const deltaFactor = delta / 500;
-		
+
 		if (latestMeshState) {
 			latestMeshState.mesh.bind();
 			// 考虑到我们并不逐帧更新网格控制点，因此也不需要重复调用 updateMesh
 			if (this.manualControl) latestMeshState.mesh.updateMesh();
-			
+
 			if (this.isNoCover) {
 				// 批量处理alpha更新，减少循环开销
 				let hasActiveStates = false;
@@ -868,7 +890,10 @@ export class MeshGradientRenderer extends BaseRenderer {
 				}
 				canBeStatic = !hasActiveStates;
 			} else {
-				latestMeshState.alpha = Math.min(1, latestMeshState.alpha + deltaFactor);
+				latestMeshState.alpha = Math.min(
+					1,
+					latestMeshState.alpha + deltaFactor,
+				);
 				if (latestMeshState.alpha >= 1) {
 					// 批量清理旧状态
 					const deleted = this.meshStates.splice(0, this.meshStates.length - 1);
@@ -877,7 +902,8 @@ export class MeshGradientRenderer extends BaseRenderer {
 						state.texture.dispose();
 					}
 				}
-				canBeStatic = this.meshStates.length === 1 && latestMeshState.alpha >= 1;
+				canBeStatic =
+					this.meshStates.length === 1 && latestMeshState.alpha >= 1;
 			}
 		}
 
@@ -887,11 +913,11 @@ export class MeshGradientRenderer extends BaseRenderer {
 		gl.clear(gl.COLOR_BUFFER_BIT);
 		this.checkIfResize();
 
-		const lerpFactor = Math.min(1.0, delta / 100.0); 
+		const lerpFactor = Math.min(1.0, delta / 100.0);
 		this.smoothedVolume += (this.volume - this.smoothedVolume) * lerpFactor;
 
 		this.mainProgram.use();
-		
+
 		// 预设置不变的uniform
 		gl.activeTexture(gl.TEXTURE0);
 		this.mainProgram.setUniform1f("u_time", tickTime / 10000);
@@ -1124,7 +1150,7 @@ export class MeshGradientRenderer extends BaseRenderer {
 
 	private updatePerformanceStats(tickTime: number) {
 		if (!this.enablePerformanceMonitoring) return;
-		
+
 		this.frameCount++;
 		if (tickTime - this.lastFPSUpdate > 1000) {
 			this.currentFPS = this.frameCount;

@@ -15,12 +15,7 @@ import {
 } from "@radix-ui/themes";
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
-import {
-	type WritableAtom,
-	atom,
-	useAtom,
-	useAtomValue,
-} from "jotai";
+import { type WritableAtom, atom, useAtom, useAtomValue } from "jotai";
 import { loadable } from "jotai/utils";
 import React, {
 	type FC,
@@ -114,7 +109,7 @@ const NumberSettings: FC<
 	{ configAtom: WritableAtom<number, [any], void> } & React.ComponentProps<
 		typeof SettingEntry
 	> &
-	Omit<React.ComponentProps<typeof TextField.Root>, "value" | "onChange">
+		Omit<React.ComponentProps<typeof TextField.Root>, "value" | "onChange">
 > = ({ label, description, configAtom, ...props }) => {
 	const [value, setValue] = useAtom(configAtom);
 	return (
@@ -133,7 +128,7 @@ const SwitchSettings: FC<
 	{ configAtom: WritableAtom<boolean, [any], void> } & React.ComponentProps<
 		typeof SettingEntry
 	> &
-	Omit<SwitchProps, "value" | "onChange">
+		Omit<SwitchProps, "value" | "onChange">
 > = ({ label, description, configAtom }) => {
 	const [value, setValue] = useAtom(configAtom);
 	return (
@@ -160,7 +155,10 @@ const LyricFontSetting: FC = () => {
 
 	useLayoutEffect(() => {
 		setPreview(
-			t("page.settings.lyricFont.fontPreview.defaultText", "字体预览 Font Preview"),
+			t(
+				"page.settings.lyricFont.fontPreview.defaultText",
+				"字体预览 Font Preview",
+			),
 		);
 	}, [t]);
 
@@ -325,7 +323,9 @@ const GeneralSettings = () => {
 			}
 			return result;
 		}
-		const originalLocaleKeyNum = collectLocaleKey(i18n.options.resources?.["zh-CN"] ?? {}).size;
+		const originalLocaleKeyNum = collectLocaleKey(
+			i18n.options.resources?.["zh-CN"] ?? {},
+		).size;
 		const menu = Object.keys(i18n.options.resources ?? {})
 			.map((langId) => {
 				return {
@@ -345,8 +345,7 @@ const GeneralSettings = () => {
 					}).of(langId) || langId;
 				return {
 					label: `${origName === name ? origName : `${origName} (${name})`} (${(
-						(keyNum / originalLocaleKeyNum) *
-						100
+						(keyNum / originalLocaleKeyNum) * 100
 					).toFixed(1)}%)`,
 					value: langId,
 				};
@@ -360,7 +359,10 @@ const GeneralSettings = () => {
 
 	const themeMenu = useMemo(
 		() => [
-			{ label: t("page.settings.general.theme.auto", "自动"), value: DarkMode.Auto },
+			{
+				label: t("page.settings.general.theme.auto", "自动"),
+				value: DarkMode.Auto,
+			},
 			{
 				label: t("page.settings.general.theme.light", "浅色"),
 				value: DarkMode.Light,
@@ -399,10 +401,7 @@ const GeneralSettings = () => {
 					"不太稳定，建议设置后重启以正确应用主题样式",
 				)}
 			>
-				<Select.Root
-					value={mode}
-					onValueChange={(v) => setMode(v as DarkMode)}
-				>
+				<Select.Root value={mode} onValueChange={(v) => setMode(v as DarkMode)}>
 					<Select.Trigger />
 					<Select.Content>
 						{themeMenu.map((item) => (
@@ -486,7 +485,8 @@ const LyricAppearanceSettings = () => {
 	);
 	const getLyricPlayerString = (value: { lyricPlayer?: any }): string => {
 		if (!value || !value.lyricPlayer) return LyricPlayerImplementation.Dom;
-		if (value.lyricPlayer === DomLyricPlayer) return LyricPlayerImplementation.Dom;
+		if (value.lyricPlayer === DomLyricPlayer)
+			return LyricPlayerImplementation.Dom;
 		if (value.lyricPlayer === DomSlimLyricPlayer)
 			return LyricPlayerImplementation.DomSlim;
 		if (value.lyricPlayer === CanvasLyricPlayer)
@@ -511,22 +511,65 @@ const LyricAppearanceSettings = () => {
 	};
 	const [lyricSize, setLyricSize] = useAtom(lyricSizePresetAtom);
 
-	const lyricSizeMenu = useMemo(() => [
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.tiny", "超小"), value: LyricSizePreset.Tiny },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.extra_small", "极小"), value: LyricSizePreset.ExtraSmall },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.small", "小"), value: LyricSizePreset.Small },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.medium", "中"), value: LyricSizePreset.Medium },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.large", "大"), value: LyricSizePreset.Large },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.extra_large", "极大"), value: LyricSizePreset.ExtraLarge },
-		{ label: t("page.settings.lyricAppearance.lyricFontSize.menu.huge", "超大"), value: LyricSizePreset.Huge },
-	], [t]);
+	const lyricSizeMenu = useMemo(
+		() => [
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.tiny",
+					"超小",
+				),
+				value: LyricSizePreset.Tiny,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.extra_small",
+					"极小",
+				),
+				value: LyricSizePreset.ExtraSmall,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.small",
+					"小",
+				),
+				value: LyricSizePreset.Small,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.medium",
+					"中",
+				),
+				value: LyricSizePreset.Medium,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.large",
+					"大",
+				),
+				value: LyricSizePreset.Large,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.extra_large",
+					"极大",
+				),
+				value: LyricSizePreset.ExtraLarge,
+			},
+			{
+				label: t(
+					"page.settings.lyricAppearance.lyricFontSize.menu.huge",
+					"超大",
+				),
+				value: LyricSizePreset.Huge,
+			},
+		],
+		[t],
+	);
 
 	return (
 		<>
 			<SubTitle>
-				<Trans i18nKey="page.settings.lyricAppearance.subtitle">
-					歌词样式
-				</Trans>
+				<Trans i18nKey="page.settings.lyricAppearance.subtitle">歌词样式</Trans>
 			</SubTitle>
 			<SettingEntry
 				label={t(
@@ -889,12 +932,13 @@ const LyricBackgroundSettings = () => {
 	return (
 		<>
 			<SubTitle>
-				<Trans i18nKey="page.settings.lyricBackground.subtitle">
-					歌词背景
-				</Trans>
+				<Trans i18nKey="page.settings.lyricBackground.subtitle">歌词背景</Trans>
 			</SubTitle>
 			<SettingEntry
-				label={t("page.settings.lyricBackground.backgroundRenderer.label", "背景渲染器")}
+				label={t(
+					"page.settings.lyricBackground.backgroundRenderer.label",
+					"背景渲染器",
+				)}
 			>
 				<Select.Root
 					value={getBackgroundRendererString(backgroundRendererValue)}
@@ -986,7 +1030,10 @@ const OthersSettings = () => {
 				<Trans i18nKey="page.settings.others.subtitle">杂项</Trans>
 			</SubTitle>
 			<SwitchSettings
-				label={t("page.settings.others.showStatJSFrame.label", "显示性能统计信息")}
+				label={t(
+					"page.settings.others.showStatJSFrame.label",
+					"显示性能统计信息",
+				)}
 				description={t(
 					"page.settings.others.showStatJSFrame.description",
 					"可以看到帧率、帧时间、内存占用（仅 Chromuim 系）等信息，对性能影响较小。",
@@ -1078,8 +1125,7 @@ const AboutSettings = () => {
 										2,
 									)} MiB`;
 									return `(${rec} / ${total}) (${(
-										(receivedLength / contentLength) *
-										100
+										(receivedLength / contentLength) * 100
 									).toFixed(1)}%)`;
 								}
 								const getDownloadMessage = (progressText: string) =>
@@ -1133,8 +1179,12 @@ const AboutSettings = () => {
 const SmtcSettings = () => {
 	const { t } = useTranslation();
 	const sessions = useAtomValue(smtcSessionsAtom);
-	const [selectedSession, setSelectedSession] = useAtom(smtcSelectedSessionIdAtom);
-	const [textConversion, setTextConversion] = useAtom(smtcTextConversionModeAtom);
+	const [selectedSession, setSelectedSession] = useAtom(
+		smtcSelectedSessionIdAtom,
+	);
+	const [textConversion, setTextConversion] = useAtom(
+		smtcTextConversionModeAtom,
+	);
 
 	const handleForceUpdateClick = () => {
 		invoke("request_smtc_update").catch((err) => {
@@ -1142,47 +1192,86 @@ const SmtcSettings = () => {
 		});
 	};
 
-	const sessionMenu = useMemo(() => [
-		{ label: t("page.settings.smtc.session.auto"), value: "null" },
-		...sessions.map((s: SmtcSession) => ({ label: s.displayName, value: s.sessionId }))
-	], [t, sessions]);
+	const sessionMenu = useMemo(
+		() => [
+			{ label: t("page.settings.smtc.session.auto"), value: "null" },
+			...sessions.map((s: SmtcSession) => ({
+				label: s.displayName,
+				value: s.sessionId,
+			})),
+		],
+		[t, sessions],
+	);
 
-	const textConversionMenu = useMemo(() => [
-		{ label: t("page.settings.smtc.textConversion.off"), value: TextConversionMode.Off },
-		{ label: t("page.settings.smtc.textConversion.t2s"), value: TextConversionMode.TraditionalToSimplified },
-		{ label: t("page.settings.smtc.textConversion.s2t"), value: TextConversionMode.SimplifiedToTraditional },
-		{ label: t("page.settings.smtc.textConversion.s2tw"), value: TextConversionMode.SimplifiedToTaiwan },
-		{ label: t("page.settings.smtc.textConversion.tw2s"), value: TextConversionMode.TaiwanToSimplified },
-		{ label: t("page.settings.smtc.textConversion.s2hk"), value: TextConversionMode.SimplifiedToHongKong },
-		{ label: t("page.settings.smtc.textConversion.hk2s"), value: TextConversionMode.HongKongToSimplified },
-	], [t]);
+	const textConversionMenu = useMemo(
+		() => [
+			{
+				label: t("page.settings.smtc.textConversion.off"),
+				value: TextConversionMode.Off,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.t2s"),
+				value: TextConversionMode.TraditionalToSimplified,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.s2t"),
+				value: TextConversionMode.SimplifiedToTraditional,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.s2tw"),
+				value: TextConversionMode.SimplifiedToTaiwan,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.tw2s"),
+				value: TextConversionMode.TaiwanToSimplified,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.s2hk"),
+				value: TextConversionMode.SimplifiedToHongKong,
+			},
+			{
+				label: t("page.settings.smtc.textConversion.hk2s"),
+				value: TextConversionMode.HongKongToSimplified,
+			},
+		],
+		[t],
+	);
 
 	const handleSessionChange = (value: string) => {
 		const finalValue = value === "null" ? null : value;
 		setSelectedSession(finalValue);
-		invoke("control_external_media", { payload: { type: "selectSession", session_id: finalValue ?? "" } })
-			.catch((err) => {
-				console.error(err);
-				toast.error(t("page.settings.smtc.session.changeFailed", { error: err }));
-			});
+		invoke("control_external_media", {
+			payload: { type: "selectSession", session_id: finalValue ?? "" },
+		}).catch((err) => {
+			console.error(err);
+			toast.error(t("page.settings.smtc.session.changeFailed", { error: err }));
+		});
 	};
 
 	const handleTextConversionChange = (value: TextConversionMode) => {
 		setTextConversion(value);
-		invoke("control_external_media", { payload: { type: "setTextConversion", mode: value } })
-			.catch((err) => {
-				console.error(err);
-				toast.error(t("page.settings.smtc.textConversion.changeFailed", { error: err }));
-			});
+		invoke("control_external_media", {
+			payload: { type: "setTextConversion", mode: value },
+		}).catch((err) => {
+			console.error(err);
+			toast.error(
+				t("page.settings.smtc.textConversion.changeFailed", { error: err }),
+			);
+		});
 	};
 
 	return (
 		<>
-			<SubTitle><Trans i18nKey="page.settings.smtc.subtitle">SMTC 监听设置</Trans></SubTitle>
+			<SubTitle>
+				<Trans i18nKey="page.settings.smtc.subtitle">SMTC 监听设置</Trans>
+			</SubTitle>
 
 			<NumberSettings
 				label={t("page.settings.smtc.timeOffset.label", "时间轴偏移量 (ms)")}
-				description={t("page.settings.smtc.timeOffset.description", "校准歌词与歌曲的同步。正数解决歌词偏早，负数解决歌词偏晚。")}
+				description={t(
+					"page.settings.smtc.timeOffset.description",
+					"校准歌词与歌曲的同步。正数解决歌词偏早，负数解决歌词偏晚。",
+				)}
 				configAtom={smtcTimeOffsetAtom}
 				type="number"
 				step={50}
@@ -1190,8 +1279,14 @@ const SmtcSettings = () => {
 			/>
 
 			<SwitchSettings
-				label={t("page.settings.smtc.enableWsLyrics.label", "启用 WebSocket 歌词源")}
-				description={t("page.settings.smtc.enableWsLyrics.description", "允许在 SMTC 模式下通过 WebSocket 接收歌词。")}
+				label={t(
+					"page.settings.smtc.enableWsLyrics.label",
+					"启用 WebSocket 歌词源",
+				)}
+				description={t(
+					"page.settings.smtc.enableWsLyrics.description",
+					"允许在 SMTC 模式下通过 WebSocket 接收歌词。",
+				)}
 				configAtom={enableWsLyricsInSmtcModeAtom}
 			/>
 
@@ -1199,9 +1294,18 @@ const SmtcSettings = () => {
 				label={t("page.settings.smtc.session.label")}
 				description={t("page.settings.smtc.session.description")}
 			>
-				<Select.Root value={selectedSession ?? 'null'} onValueChange={handleSessionChange}>
+				<Select.Root
+					value={selectedSession ?? "null"}
+					onValueChange={handleSessionChange}
+				>
 					<Select.Trigger />
-					<Select.Content>{sessionMenu.map((item) => (<Select.Item key={item.value} value={item.value}>{item.label}</Select.Item>))}</Select.Content>
+					<Select.Content>
+						{sessionMenu.map((item) => (
+							<Select.Item key={item.value} value={item.value}>
+								{item.label}
+							</Select.Item>
+						))}
+					</Select.Content>
 				</Select.Root>
 			</SettingEntry>
 
@@ -1209,9 +1313,20 @@ const SmtcSettings = () => {
 				label={t("page.settings.smtc.textConversion.label")}
 				description={t("page.settings.smtc.textConversion.description")}
 			>
-				<Select.Root value={textConversion} onValueChange={(v) => handleTextConversionChange(v as TextConversionMode)}>
+				<Select.Root
+					value={textConversion}
+					onValueChange={(v) =>
+						handleTextConversionChange(v as TextConversionMode)
+					}
+				>
 					<Select.Trigger />
-					<Select.Content>{textConversionMenu.map((item) => (<Select.Item key={item.value} value={item.value}>{item.label}</Select.Item>))}</Select.Content>
+					<Select.Content>
+						{textConversionMenu.map((item) => (
+							<Select.Item key={item.value} value={item.value}>
+								{item.label}
+							</Select.Item>
+						))}
+					</Select.Content>
 				</Select.Root>
 			</SettingEntry>
 
@@ -1219,9 +1334,15 @@ const SmtcSettings = () => {
 				<Flex direction="row" align="center" gap="4">
 					<Flex direction="column" flexGrow="1">
 						<Text as="div">调试工具</Text>
-						<Text as="div" color="gray" size="2">手动触发一次全面的状态刷新</Text>
+						<Text as="div" color="gray" size="2">
+							手动触发一次全面的状态刷新
+						</Text>
 					</Flex>
-					<Button onClick={handleForceUpdateClick} variant="soft" color="orange">
+					<Button
+						onClick={handleForceUpdateClick}
+						variant="soft"
+						color="orange"
+					>
 						强制刷新
 					</Button>
 				</Flex>

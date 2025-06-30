@@ -25,9 +25,7 @@ const RecordTab = () => {
 	const [recoverWindowSize, setRecoverWindowSize] = useAtom(
 		recoverWindowSizeAtom,
 	);
-	const [, setRecordMediaStream] = useAtom(
-		recordMediaStreamAtom,
-	);
+	const [, setRecordMediaStream] = useAtom(recordMediaStreamAtom);
 	const [screenshotData, setScreenshotData] = useState<string | undefined>(
 		undefined,
 	);

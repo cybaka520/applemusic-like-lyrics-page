@@ -14,7 +14,7 @@ import {
 	useState,
 } from "react";
 import { Trans } from "react-i18next";
-import { ViewportList, type ViewportListRef } from "react-viewport-list";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { type Song, db } from "../../dexie.ts";
 import {
 	currentPlaylistAtom,
@@ -98,16 +98,20 @@ const PlaylistSongItem: FC<
 export const NowPlaylistCard: FC<FlexProps> = (props) => {
 	const playlist = useAtomValue(currentPlaylistAtom);
 	const playlistIndex = useAtomValue(currentPlaylistMusicIndexAtom);
-	const playlistRef = useRef<ViewportListRef>(null);
 	const playlistContainerRef = useRef<HTMLDivElement>(null);
 
+	const rowVirtualizer = useVirtualizer({
+		count: playlist.length,
+		getScrollElement: () => playlistContainerRef.current,
+		estimateSize: () => 55,
+		overscan: 5,
+	});
+
 	useEffect(() => {
-		if (playlistRef.current) {
-			playlistRef.current.scrollToIndex({
-				index: playlistIndex,
-			});
+		if (rowVirtualizer) {
+			rowVirtualizer.scrollToIndex(playlistIndex, { align: "center" });
 		}
-	}, [playlistIndex]);
+	}, [playlistIndex, rowVirtualizer]);
 
 	return (
 		<Flex
@@ -132,19 +136,32 @@ export const NowPlaylistCard: FC<FlexProps> = (props) => {
 				style={{ overflowY: "auto" }}
 				ref={playlistContainerRef}
 			>
-				<ViewportList
-					items={playlist}
-					ref={playlistRef}
-					viewportRef={playlistContainerRef}
+				<div
+					style={{
+						height: `${rowVirtualizer.getTotalSize()}px`,
+						width: "100%",
+						position: "relative",
+					}}
 				>
-					{(songData, index) => (
-						<PlaylistSongItem
-							key={`playlist-song-item-${index}`}
-							songData={songData}
-							index={index}
-						/>
-					)}
-				</ViewportList>
+					{rowVirtualizer.getVirtualItems().map((virtualItem) => {
+						const songData = playlist[virtualItem.index];
+						return (
+							<PlaylistSongItem
+								key={virtualItem.key}
+								style={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: "100%",
+									height: `${virtualItem.size}px`,
+									transform: `translateY(${virtualItem.start}px)`,
+								}}
+								songData={songData}
+								index={virtualItem.index}
+							/>
+						);
+					})}
+				</div>
 			</Inset>
 		</Flex>
 	);

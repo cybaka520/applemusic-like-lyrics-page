@@ -4,11 +4,11 @@
  */
 
 declare global {
-  interface Window {
-    manualRafEnable: () => void;
-    manualRafDisable: () => void;
-    manualRafStep: (stepTime: number) => void;
-  }
+	interface Window {
+		manualRafEnable: () => void;
+		manualRafDisable: () => void;
+		manualRafStep: (stepTime: number) => void;
+	}
 }
 
 const origRaf = window.requestAnimationFrame;

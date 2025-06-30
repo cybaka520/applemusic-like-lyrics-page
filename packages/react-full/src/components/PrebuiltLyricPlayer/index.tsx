@@ -3,12 +3,23 @@
  * 已经部署好所有组件的歌词播放器组件，在正确设置所有的 Jotai 状态后可以开箱即用
  */
 
-import { BackgroundRender, LyricPlayer, type LyricPlayerRef } from "@applemusic-like-lyrics/react";
+import {
+	BackgroundRender,
+	LyricPlayer,
+	type LyricPlayerRef,
+} from "@applemusic-like-lyrics/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import classNames from "classnames";
 import { AnimatePresence, LayoutGroup } from "framer-motion";
 import structuredClone from "@ungap/structured-clone";
-import { type FC, type HTMLProps, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+	type FC,
+	type HTMLProps,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 
 import {
 	onChangeVolumeAtom,
@@ -41,7 +52,6 @@ import {
 	VerticalCoverLayout,
 	enableLyricLineBlurEffectAtom,
 	enableLyricLineScaleEffectAtom,
-
 	enableLyricLineSpringAnimationAtom,
 	enableLyricRomanLineAtom,
 	enableLyricSwapTransRomanLineAtom,
@@ -89,11 +99,11 @@ import IconForward from "./icon_forward.svg?react";
 import IconPause from "./icon_pause.svg?react";
 import IconPlay from "./icon_play.svg?react";
 import IconRewind from "./icon_rewind.svg?react";
-import RepeatIcon from './repeat.svg?react';
-import RepeatActiveIcon from './repeat-active.svg?react';
-import RepeatOneActiveIcon from './repeat-one-active.svg?react';
-import ShuffleIcon from './shuffle.svg?react';
-import ShuffleActiveIcon from './shuffle-active.svg?react';
+import RepeatIcon from "./repeat.svg?react";
+import RepeatActiveIcon from "./repeat-active.svg?react";
+import RepeatOneActiveIcon from "./repeat-one-active.svg?react";
+import ShuffleIcon from "./shuffle.svg?react";
+import ShuffleActiveIcon from "./shuffle-active.svg?react";
 
 import "./icon-animations.css";
 import styles from "./index.module.css";
@@ -139,8 +149,8 @@ const PrebuiltMediaButtons: FC<{
 	const cycleRepeat = useSetAtom(onClickSmtcRepeatAtom);
 
 	const iconStyle = {
-		width: '1.3em',
-		height: '1.3em',
+		width: "1.3em",
+		height: "1.3em",
 	};
 
 	const renderRepeatIcon = () => {
@@ -163,7 +173,11 @@ const PrebuiltMediaButtons: FC<{
 					onClick={toggleShuffle}
 					disabled={musicContextMode !== MusicContextMode.SystemListener}
 				>
-					{isShuffleOn ? <ShuffleActiveIcon color="#ffffffff" style={iconStyle} /> : <ShuffleIcon color="#ffffffff" style={iconStyle} />}
+					{isShuffleOn ? (
+						<ShuffleActiveIcon color="#ffffffff" style={iconStyle} />
+					) : (
+						<ShuffleIcon color="#ffffffff" style={iconStyle} />
+					)}
 				</MediaButton>
 			)}
 			<MediaButton
@@ -202,57 +216,65 @@ const PrebuiltMediaButtons: FC<{
 	);
 };
 
-const PrebuiltProgressBar: FC<{ disabled?: boolean }> = React.memo(({ disabled }) => {
-	const musicDuration = useAtomValue(musicDurationAtom);
+const PrebuiltProgressBar: FC<{ disabled?: boolean }> = React.memo(
+	({ disabled }) => {
+		const musicDuration = useAtomValue(musicDurationAtom);
 
-	const musicPosition = useAtomValue(correctedMusicPlayingPositionAtom);
+		const musicPosition = useAtomValue(correctedMusicPlayingPositionAtom);
 
-	const musicQualityTag = useAtomValue(musicQualityTagAtom);
-	const onClickAudioQualityTag = useAtomValue(
-		onClickAudioQualityTagAtom,
-	).onEmit;
-	const onSeekPosition = useAtomValue(onSeekPositionAtom).onEmit;
+		const musicQualityTag = useAtomValue(musicQualityTagAtom);
+		const onClickAudioQualityTag = useAtomValue(
+			onClickAudioQualityTagAtom,
+		).onEmit;
+		const onSeekPosition = useAtomValue(onSeekPositionAtom).onEmit;
 
-	const throttledSeek = useThrottle((position: number) => {
-		onSeekPosition?.(position);
-	}, 100);
+		const throttledSeek = useThrottle((position: number) => {
+			onSeekPosition?.(position);
+		}, 100);
 
-	const TimeLabel: FC<{ isRemaining?: boolean }> = ({ isRemaining }) => {
-		const currentPosition = useAtomValue(correctedMusicPlayingPositionAtom);
-		const duration = useAtomValue(musicDurationAtom);
-		const time = isRemaining ? (currentPosition - duration) / 1000 : currentPosition / 1000;
-		return <>{toDuration(time)}</>;
-	};
+		const TimeLabel: FC<{ isRemaining?: boolean }> = ({ isRemaining }) => {
+			const currentPosition = useAtomValue(correctedMusicPlayingPositionAtom);
+			const duration = useAtomValue(musicDurationAtom);
+			const time = isRemaining
+				? (currentPosition - duration) / 1000
+				: currentPosition / 1000;
+			return <>{toDuration(time)}</>;
+		};
 
-	return (
-		<div>
-			<BouncingSlider
-				min={0}
-				max={musicDuration}
-				value={musicPosition}
-				onChange={throttledSeek}
-				disabled={disabled}
-			/>
-			<div className={styles.progressBarLabels}>
-				<div><TimeLabel /></div>
-				<div>
-					<AnimatePresence mode="popLayout">
-						{musicQualityTag && (
-							<AudioQualityTag
-								className={styles.qualityTag}
-								isDolbyAtmos={musicQualityTag.isDolbyAtmos}
-								tagText={musicQualityTag.tagText}
-								tagIcon={musicQualityTag.tagIcon}
-								onClick={onClickAudioQualityTag}
-							/>
-						)}
-					</AnimatePresence>
+		return (
+			<div>
+				<BouncingSlider
+					min={0}
+					max={musicDuration}
+					value={musicPosition}
+					onChange={throttledSeek}
+					disabled={disabled}
+				/>
+				<div className={styles.progressBarLabels}>
+					<div>
+						<TimeLabel />
+					</div>
+					<div>
+						<AnimatePresence mode="popLayout">
+							{musicQualityTag && (
+								<AudioQualityTag
+									className={styles.qualityTag}
+									isDolbyAtmos={musicQualityTag.isDolbyAtmos}
+									tagText={musicQualityTag.tagText}
+									tagIcon={musicQualityTag.tagIcon}
+									onClick={onClickAudioQualityTag}
+								/>
+							)}
+						</AnimatePresence>
+					</div>
+					<div>
+						<TimeLabel isRemaining />
+					</div>
 				</div>
-				<div><TimeLabel isRemaining /></div>
 			</div>
-		</div>
-	);
-});
+		);
+	},
+);
 
 const PrebuiltCoreLyricPlayer: FC<{
 	alignPosition: number;

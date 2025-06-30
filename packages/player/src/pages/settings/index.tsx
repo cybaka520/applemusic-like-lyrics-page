@@ -9,17 +9,17 @@ import {
 	QuestionMarkCircledIcon,
 	TextAlignJustifyIcon,
 } from "@radix-ui/react-icons";
-import {
-	Box,
-	Button,
-	Flex,
-	Separator,
-	Text,
-	Tooltip,
-} from "@radix-ui/themes";
+import { Box, Button, Flex, Separator, Text, Tooltip } from "@radix-ui/themes";
 import { platform } from "@tauri-apps/plugin-os";
 import { atom, useAtom, useAtomValue } from "jotai";
-import { Suspense, type FC, type ReactNode, useEffect, useMemo, useState } from "react";
+import {
+	Suspense,
+	type FC,
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { loadedExtensionAtom } from "@applemusic-like-lyrics/states";
 import { ExtensionTab } from "./extension.tsx";
@@ -57,7 +57,7 @@ const SidebarButton: FC<{
 			onClick={onClick}
 			style={{ justifyContent: "flex-start", cursor: "pointer" }}
 			size="3"
-			data-state={isActive ? 'active' : 'inactive'}
+			data-state={isActive ? "active" : "inactive"}
 		>
 			<Flex gap="3" align="center" style={{ minWidth: 0 }}>
 				{icon}
@@ -67,7 +67,6 @@ const SidebarButton: FC<{
 	);
 };
 
-
 export const Component: FC = () => {
 	const os = usePlatform();
 	const [currentPage, setCurrentPage] = useAtom(currentPageAtom);
@@ -76,23 +75,51 @@ export const Component: FC = () => {
 
 	const playerSettingsPages = useMemo(() => {
 		const pages = [
-			{ id: "general", label: t("page.settings.general.subtitle"), icon: <GearIcon width={20} height={20} /> },
-			{ id: "lyricContent", label: t("page.settings.lyricContent.subtitle"), icon: <TextAlignJustifyIcon width={20} height={20} /> },
-			{ id: "lyricAppearance", label: t("page.settings.lyricAppearance.subtitle"), icon: <MagicWandIcon width={20} height={20} /> },
-			{ id: "musicInfoAppearance", label: t("page.settings.musicInfoAppearance.subtitle"), icon: <InfoCircledIcon width={20} height={20} /> },
-			{ id: "lyricBackground", label: t("page.settings.lyricBackground.subtitle"), icon: <MixerHorizontalIcon width={20} height={20} /> },
-			{ id: "others", label: t("page.settings.others.subtitle"), icon: <Component1Icon width={20} height={20} /> },
+			{
+				id: "general",
+				label: t("page.settings.general.subtitle"),
+				icon: <GearIcon width={20} height={20} />,
+			},
+			{
+				id: "lyricContent",
+				label: t("page.settings.lyricContent.subtitle"),
+				icon: <TextAlignJustifyIcon width={20} height={20} />,
+			},
+			{
+				id: "lyricAppearance",
+				label: t("page.settings.lyricAppearance.subtitle"),
+				icon: <MagicWandIcon width={20} height={20} />,
+			},
+			{
+				id: "musicInfoAppearance",
+				label: t("page.settings.musicInfoAppearance.subtitle"),
+				icon: <InfoCircledIcon width={20} height={20} />,
+			},
+			{
+				id: "lyricBackground",
+				label: t("page.settings.lyricBackground.subtitle"),
+				icon: <MixerHorizontalIcon width={20} height={20} />,
+			},
+			{
+				id: "others",
+				label: t("page.settings.others.subtitle"),
+				icon: <Component1Icon width={20} height={20} />,
+			},
 		];
 
-		if (os === 'windows') {
+		if (os === "windows") {
 			pages.push({
-				id: 'smtc',
+				id: "smtc",
 				label: t("page.settings.smtc.subtitle", "SMTC 监听设置"),
-				icon: <DesktopIcon width={20} height={20} />
+				icon: <DesktopIcon width={20} height={20} />,
 			});
 		}
 
-		pages.push({ id: "about", label: t("page.about.subtitle"), icon: <QuestionMarkCircledIcon width={20} height={20} /> });
+		pages.push({
+			id: "about",
+			label: t("page.about.subtitle"),
+			icon: <QuestionMarkCircledIcon width={20} height={20} />,
+		});
 
 		return pages;
 	}, [os, t]);
@@ -113,8 +140,11 @@ export const Component: FC = () => {
 
 		if (currentPage.startsWith("extension.")) {
 			const extensionId = currentPage.substring(10);
-			const extension = loadedExtensions.find(ext => ext.extensionMeta.id === extensionId);
-			const ExtensionSettingsComponent = extension?.context.registeredInjectPointComponent.settings;
+			const extension = loadedExtensions.find(
+				(ext) => ext.extensionMeta.id === extensionId,
+			);
+			const ExtensionSettingsComponent =
+				extension?.context.registeredInjectPointComponent.settings;
 
 			if (ExtensionSettingsComponent) {
 				return <ExtensionSettingsComponent />;
@@ -149,10 +179,10 @@ export const Component: FC = () => {
 
 			<Box
 				style={{
-					position: 'absolute',
-					top: 'var(--space-4)',
-					left: 'var(--space-4)',
-					zIndex: 10
+					position: "absolute",
+					top: "var(--space-4)",
+					left: "var(--space-4)",
+					zIndex: 10,
 				}}
 			>
 				<Tooltip content={t("common.page.back", "返回")}>
@@ -167,13 +197,21 @@ export const Component: FC = () => {
 				gap="4"
 				height="100%"
 				style={{
-					paddingTop: 'calc(var(--space-4) + var(--space-7) + var(--space-4))',
-					paddingLeft: 'var(--space-4)',
-					paddingRight: 'var(--space-4)',
-					paddingBottom: 'var(--space-4)'
+					paddingTop: "calc(var(--space-4) + var(--space-7) + var(--space-4))",
+					paddingLeft: "var(--space-4)",
+					paddingRight: "var(--space-4)",
+					paddingBottom: "var(--space-4)",
 				}}
 			>
-				<Box style={{ width: "220px", flexShrink: 0 }}>
+				<Box
+					style={{
+						width: "220px",
+						flexShrink: 0,
+						height: "100%",
+						overflowY: "auto",
+						minHeight: 0,
+					}}
+				>
 					<Flex direction="column" gap="1">
 						{playerSettingsPages.map((page) => (
 							<SidebarButton
@@ -197,7 +235,13 @@ export const Component: FC = () => {
 							return (
 								<SidebarButton
 									key={`extension.${id}`}
-									icon={<img src={String(extension.context.extensionMeta.icon)} width="20" height="20" />}
+									icon={
+										<img
+											src={String(extension.context.extensionMeta.icon)}
+											width="20"
+											height="20"
+										/>
+									}
 									label={i18n.getFixedT(null, id as any)("name", id)}
 									isActive={currentPage === `extension.${id}`}
 									onClick={() => setCurrentPage(`extension.${id}`)}

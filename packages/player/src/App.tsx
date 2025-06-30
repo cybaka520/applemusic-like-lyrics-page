@@ -3,18 +3,11 @@ import "@radix-ui/themes/styles.css";
 import { platform, version } from "@tauri-apps/plugin-os";
 import classNames from "classnames";
 import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
-import {
-	StrictMode,
-	Suspense,
-	lazy,
-	useEffect,
-	useLayoutEffect,
-} from "react";
+import { StrictMode, Suspense, lazy, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import semverGt from "semver/functions/gt";
-import Stats from "stats.js";
 import styles from "./App.module.css";
 import { AppContainer } from "./components/AppContainer/index.tsx";
 import { DarkThemeDetector } from "./components/DarkThemeDetector/index.tsx";
@@ -30,25 +23,21 @@ import { router } from "./router.tsx";
 import {
 	DarkMode,
 	MusicContextMode,
-
 	musicContextModeAtom,
 	darkModeAtom,
 	isDarkThemeAtom,
 	displayLanguageAtom,
 	isLyricPageOpenedAtom,
 	showStatJSFrameAtom,
-
 	wsLyricOnlyModeAtom,
 	enableWsLyricsInSmtcModeAtom,
-
 	audioQualityDialogOpenedAtom,
-
 	onClickAudioQualityTagAtom,
-
 	lyricSizePresetAtom,
-	LyricSizePreset
+	LyricSizePreset,
 } from "@applemusic-like-lyrics/states";
 import { invoke } from "@tauri-apps/api/core";
+import { StatsComponent } from "./components/StatsComponent/index.tsx";
 
 const ExtensionContext = lazy(() => import("./components/ExtensionContext"));
 const AMLLWrapper = lazy(() => import("./components/AMLLWrapper"));
@@ -81,7 +70,7 @@ function App() {
 	useEffect(() => {
 		const syncThemeToWindow = async () => {
 			if (darkMode === DarkMode.Auto) {
-				await invoke("reset_window_theme").catch(err => {
+				await invoke("reset_window_theme").catch((err) => {
 					console.error("重置主题失败:", err);
 				});
 			} else {
@@ -118,27 +107,6 @@ function App() {
 	}, [i18n, displayLanguage]);
 
 	useEffect(() => {
-		if (showStatJSFrame) {
-			const stat = new Stats();
-			document.body.appendChild(stat.dom);
-			stat.dom.style.position = "fixed";
-			stat.dom.style.left = "1em";
-			stat.dom.style.top = "3em";
-			let canceled = false;
-			const update = () => {
-				if (canceled) return;
-				stat.end();
-				stat.begin();
-				requestAnimationFrame(update);
-			};
-			requestAnimationFrame(update);
-			return () => {
-				canceled = true;
-				document.body.removeChild(stat.dom);
-			};
-		}
-	}, [showStatJSFrame]);
-	useEffect(() => {
 		store.set(onClickAudioQualityTagAtom, {
 			onEmit() {
 				store.set(audioQualityDialogOpenedAtom, true);
@@ -147,37 +115,37 @@ function App() {
 	}, [store]);
 
 	useEffect(() => {
-		let fontSizeFormula = '';
+		let fontSizeFormula = "";
 		switch (lyricSize) {
 			case LyricSizePreset.Tiny:
-				fontSizeFormula = 'max(max(2.5vh, 1.25vw), 10px)';
+				fontSizeFormula = "max(max(2.5vh, 1.25vw), 10px)";
 				break;
 			case LyricSizePreset.ExtraSmall:
-				fontSizeFormula = 'max(max(3vh, 1.5vw), 10px)';
+				fontSizeFormula = "max(max(3vh, 1.5vw), 10px)";
 				break;
 			case LyricSizePreset.Small:
-				fontSizeFormula = 'max(max(4vh, 2vw), 12px)';
+				fontSizeFormula = "max(max(4vh, 2vw), 12px)";
 				break;
 			case LyricSizePreset.Large:
-				fontSizeFormula = 'max(max(6vh, 3vw), 16px)';
+				fontSizeFormula = "max(max(6vh, 3vw), 16px)";
 				break;
 			case LyricSizePreset.ExtraLarge:
-				fontSizeFormula = 'max(max(7vh, 3.5vw), 18px)';
+				fontSizeFormula = "max(max(7vh, 3.5vw), 18px)";
 				break;
 			case LyricSizePreset.Huge:
-				fontSizeFormula = 'max(max(8vh, 4vw), 20px)';
+				fontSizeFormula = "max(max(8vh, 4vw), 20px)";
 				break;
 			case LyricSizePreset.Medium:
 			default:
-				fontSizeFormula = 'max(max(5vh, 2.5vw), 14px)';
+				fontSizeFormula = "max(max(5vh, 2.5vw), 14px)";
 				break;
 		}
 
-		const styleId = 'amll-font-size-style';
+		const styleId = "amll-font-size-style";
 		let styleTag = document.getElementById(styleId);
 
 		if (!styleTag) {
-			styleTag = document.createElement('style');
+			styleTag = document.createElement("style");
 			styleTag.id = styleId;
 			document.head.appendChild(styleTag);
 		}
@@ -187,20 +155,24 @@ function App() {
                 font-size: ${fontSizeFormula} !important;
             }
         `;
-
 	}, [lyricSize]);
 
 	// 渲染逻辑
 	return (
 		<>
 			{/* 上下文组件均不建议被 StrictMode 包含，以免重复加载扩展程序发生问题  */}
-			{musicContextMode === MusicContextMode.Local && <LocalMusicContext key={MusicContextMode.Local} />}
+			{showStatJSFrame && <StatsComponent />}
+			{musicContextMode === MusicContextMode.Local && (
+				<LocalMusicContext key={MusicContextMode.Local} />
+			)}
 			{musicContextMode === MusicContextMode.SystemListener && (
 				<SystemListenerMusicContext key={MusicContextMode.SystemListener} />
 			)}
 			{(musicContextMode === MusicContextMode.WSProtocol ||
 				(musicContextMode === MusicContextMode.SystemListener &&
-					enableWsLyrics)) && <WSProtocolMusicContext key={MusicContextMode.WSProtocol} />}
+					enableWsLyrics)) && (
+				<WSProtocolMusicContext key={MusicContextMode.WSProtocol} />
+			)}
 
 			<UpdateContext />
 			<ShotcutContext />

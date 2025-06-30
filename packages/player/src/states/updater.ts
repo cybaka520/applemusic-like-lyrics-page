@@ -2,7 +2,10 @@ import { check } from "@tauri-apps/plugin-updater";
 import chalk from "chalk";
 import { atom } from "jotai";
 
-import { isChechingUpdateAtom, updateInfoAtom } from "@applemusic-like-lyrics/states";
+import {
+	isChechingUpdateAtom,
+	updateInfoAtom,
+} from "@applemusic-like-lyrics/states";
 
 const LOG_TAG = chalk.bgHex("#FFAA00").hex("#FFFFFF")(" UPDATER ");
 

@@ -178,7 +178,7 @@ function pairLyric(line: LyricLine, lines: CoreLyricLine[], key: TransLine) {
 			if (
 				nearestLine &&
 				Math.abs(nearestLine.startTime - line.words[0].startTime) >
-				Math.abs(coreLine.startTime - line.words[0].startTime)
+					Math.abs(coreLine.startTime - line.words[0].startTime)
 			) {
 				nearestLine = coreLine;
 			} else if (nearestLine === undefined) {
@@ -308,7 +308,8 @@ const LyricContext: FC = () => {
 				return;
 			}
 
-			const lyricFileList: { tree: GitHubContent[] } = await lyricFileListRes.json();
+			const lyricFileList: { tree: GitHubContent[] } =
+				await lyricFileListRes.json();
 
 			const fileMap = Object.fromEntries(
 				lyricFileList.tree.map((v) => [v.path, v]),
@@ -446,13 +447,15 @@ const LyricContext: FC = () => {
 						return;
 					}
 				}
-				const compatibleLyricLines: CoreLyricLine[] = parsedLyricLines.map(line => ({
-					...line,
-					words: line.words.map(word => ({
-						...word,
-						obscene: false,
-					})),
-				}));
+				const compatibleLyricLines: CoreLyricLine[] = parsedLyricLines.map(
+					(line) => ({
+						...line,
+						words: line.words.map((word) => ({
+							...word,
+							obscene: false,
+						})),
+					}),
+				);
 				if (song.translatedLrc) {
 					try {
 						const translatedLyricLines = parseLrc(song.translatedLrc);
@@ -460,13 +463,13 @@ const LyricContext: FC = () => {
 							pairLyric(
 								{
 									...line,
-									words: line.words.map(word => ({
+									words: line.words.map((word) => ({
 										...word,
 										obscene: false,
 									})),
 								},
 								compatibleLyricLines,
-								"translatedLyric"
+								"translatedLyric",
 							);
 						}
 						console.log(LYRIC_LOG_TAG, "已匹配翻译歌词");
@@ -481,13 +484,13 @@ const LyricContext: FC = () => {
 							pairLyric(
 								{
 									...line,
-									words: line.words.map(word => ({
+									words: line.words.map((word) => ({
 										...word,
 										obscene: false,
 									})),
 								},
 								compatibleLyricLines,
-								"romanLyric"
+								"romanLyric",
 							);
 						}
 						console.log(LYRIC_LOG_TAG, "已匹配音译歌词");

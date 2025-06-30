@@ -171,8 +171,8 @@ export const RecordPanel = () => {
 								mediaRecorder === undefined
 									? {}
 									: {
-										backgroundColor: "var(--red-9)",
-									}
+											backgroundColor: "var(--red-9)",
+										}
 							}
 						>
 							{mediaRecorder === undefined && (

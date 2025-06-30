@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { BouncingSlider, type SliderProps } from "../BouncingSlider"; 
+import React, { useEffect, useRef } from "react";
+import { BouncingSlider, type SliderProps } from "../BouncingSlider";
 import IconSpeaker from "./icon_speaker.svg?react";
 import IconSpeaker3 from "./icon_speaker_3.svg?react";
 import styles from "./index.module.css";

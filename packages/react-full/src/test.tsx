@@ -4,7 +4,10 @@ import { HorizontalLayout } from "./layout/horizontal";
 import { VerticalLayout } from "./layout/vertical";
 import { PrebuiltLyricPlayer } from "./components/PrebuiltLyricPlayer";
 import { Provider, useStore } from "jotai";
-import { hideLyricViewAtom, musicLyricLinesAtom } from "@applemusic-like-lyrics/states";
+import {
+	hideLyricViewAtom,
+	musicLyricLinesAtom,
+} from "@applemusic-like-lyrics/states";
 
 const App: FC = () => {
 	const [hideLyric, setHideLyric] = useState(false);
