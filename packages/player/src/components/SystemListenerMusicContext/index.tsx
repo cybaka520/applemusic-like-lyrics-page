@@ -1,12 +1,7 @@
-import { type FC, useEffect } from "react";
-
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import { useAtomValue, useSetAtom, useStore } from "jotai";
-import { useTranslation } from "react-i18next";
-import { toast } from "react-toastify";
-import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
+import { FFTPlayer } from "@applemusic-like-lyrics/fft";
 import {
+	fftDataAtom,
+	isLyricPageOpenedAtom,
 	musicAlbumNameAtom,
 	musicArtistsAtom,
 	musicCoverAtom,
@@ -17,6 +12,7 @@ import {
 	musicNameAtom,
 	musicPlayingAtom,
 	musicPlayingPositionAtom,
+	musicVolumeAtom,
 	onChangeVolumeAtom,
 	onClickControlThumbAtom,
 	onClickLeftFunctionButtonAtom,
@@ -33,31 +29,30 @@ import {
 	smtcShuffleStateAtom,
 	smtcTextConversionModeAtom,
 	smtcTrackIdAtom,
-	musicVolumeAtom,
-	isLyricPageOpenedAtom,
 } from "@applemusic-like-lyrics/states";
-import { FFTPlayer } from "@applemusic-like-lyrics/fft";
-import { fftDataAtom } from "@applemusic-like-lyrics/states";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { type FC, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
+
 type SmtcEvent =
 	| {
-			type: "trackMetadata";
+			type: "trackChanged" | "trackChangedForced";
 			data: {
 				title: string | null;
 				artist: string | null;
 				albumTitle: string | null;
 				durationMs: number | null;
+				positionMs: number | null;
+				isPlaying: boolean | null;
+				isShuffleActive: boolean | null;
+				repeatMode: RepeatMode | null;
 			};
 	  }
-	| { type: "coverData"; data: number[] | null }
-	| {
-			type: "playbackStatus";
-			data: {
-				isPlaying: boolean;
-				positionMs: number;
-				isShuffleActive: boolean;
-				repeatMode: RepeatMode;
-			};
-	  }
+	| { type: "coverData"; data: string | null }
 	| { type: "volumeChanged"; data: { volume: number; isMuted: boolean } }
 	| {
 			type: "sessionsChanged";
@@ -76,7 +71,6 @@ export const SystemListenerMusicContext: FC = () => {
 	const setSmtcShuffle = useSetAtom(smtcShuffleStateAtom);
 	const setSmtcRepeat = useSetAtom(smtcRepeatModeAtom);
 	const textConversionMode = useAtomValue(smtcTextConversionModeAtom);
-	const setIsLyricPageOpened = useSetAtom(isLyricPageOpenedAtom);
 
 	useEffect(() => {
 		invoke("control_external_media", {
@@ -204,19 +198,17 @@ export const SystemListenerMusicContext: FC = () => {
 			const { type, data } = event.payload;
 
 			switch (type) {
-				case "trackMetadata": {
+				case "trackChanged":
+				case "trackChangedForced": {
 					const newTrackId = `${data.title}-${data.artist}-${data.albumTitle}`;
 					const oldTrackId = store.get(smtcTrackIdAtom);
 
-					console.log(
-						`[SystemListener] TrackMetadata 更新。新 ID: ${newTrackId}, 旧 ID: ${oldTrackId}`,
-					);
-
 					if (newTrackId !== oldTrackId) {
+						console.log(`[SystemListener] 曲目已切换: ${newTrackId}`);
 						setSmtcTrackId(newTrackId);
 						setMusicId(newTrackId);
-						store.set(musicPlayingPositionAtom, 0);
 						store.set(musicLyricLinesAtom, []);
+						store.set(musicPlayingPositionAtom, 0);
 					}
 
 					store.set(musicNameAtom, data.title ?? "未知曲目");
@@ -229,19 +221,29 @@ export const SystemListenerMusicContext: FC = () => {
 						})),
 					);
 					store.set(musicDurationAtom, data.durationMs ?? 0);
+					store.set(musicPlayingAtom, data.isPlaying ?? false);
+					store.set(musicPlayingPositionAtom, data.positionMs ?? 0);
+					setSmtcShuffle(data.isShuffleActive ?? false);
+					setSmtcRepeat(data.repeatMode ?? RepeatMode.Off);
 					break;
 				}
 
-				case "coverData":
-					if (data && data.length > 0) {
-						const imgBlob = new Blob([new Uint8Array(data)], {
-							type: "image/png",
-						});
+				case "coverData": {
+					const base64Data = data;
+					if (base64Data) {
+						const byteCharacters = atob(base64Data);
+						const byteNumbers = new Array(byteCharacters.length);
+						for (let i = 0; i < byteCharacters.length; i++) {
+							byteNumbers[i] = byteCharacters.charCodeAt(i);
+						}
+						const byteArray = new Uint8Array(byteNumbers);
+						const imgBlob = new Blob([byteArray], { type: "image/png" });
 						const newUrl = URL.createObjectURL(imgBlob);
+
 						try {
 							const oldUrl = store.get(musicCoverAtom);
 							if (oldUrl.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
-						} catch (e) {}
+						} catch {}
 						store.set(musicCoverAtom, newUrl);
 						store.set(musicCoverIsVideoAtom, false);
 					} else {
@@ -250,13 +252,6 @@ export const SystemListenerMusicContext: FC = () => {
 							"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
 						);
 					}
-					break;
-
-				case "playbackStatus": {
-					store.set(musicPlayingAtom, data.isPlaying);
-					store.set(musicPlayingPositionAtom, data.positionMs);
-					setSmtcShuffle(data.isShuffleActive);
-					setSmtcRepeat(data.repeatMode);
 					break;
 				}
 
@@ -295,8 +290,9 @@ export const SystemListenerMusicContext: FC = () => {
 				}
 
 				default:
-					const unhandled: never = type;
-					console.warn(`[SystemListener] 收到未处理的事件类型：'${unhandled}'`);
+					if (type) {
+						console.warn(`[SystemListener] 收到未处理的事件类型：'${type}'`);
+					}
 			}
 		});
 
@@ -383,13 +379,7 @@ export const SystemListenerMusicContext: FC = () => {
 		setSmtcSessions,
 		setSmtcShuffle,
 		setSmtcRepeat,
-		textConversionMode,
-		setIsLyricPageOpened,
 	]);
 
-	return (
-		<>
-			<FFTToLowPassContext />
-		</>
-	);
+	return <FFTToLowPassContext />;
 };

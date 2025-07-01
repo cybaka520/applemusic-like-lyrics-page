@@ -70,6 +70,7 @@ dependencies = [
  "amll-player-core",
  "anyhow",
  "anyhow-tauri",
+ "base64 0.22.1",
  "cpal",
  "crossbeam-channel",
  "futures",
@@ -4618,9 +4619,9 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "smtc-suite"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4b1634e200663d2251475314566359b675d957126b9d54bc45e30dae155e234"
+checksum = "ea33e026b036462a9a94c444866982bb06586a1af3a62b8a9f652d2f1ea89799"
 dependencies = [
  "base64 0.22.1",
  "crossbeam-channel",

@@ -81,7 +81,7 @@ import {
 	smtcTextConversionModeAtom,
 	enableWsLyricsInSmtcModeAtom,
 	smtcTimeOffsetAtom,
-	LyricSizePresetValue,
+	type LyricSizePresetValue,
 } from "@applemusic-like-lyrics/states";
 
 import { fftDataRangeAtom } from "@applemusic-like-lyrics/states";
@@ -1195,7 +1195,7 @@ const SmtcSettings = () => {
 	const sessionMenu = useMemo(
 		() => [
 			{ label: t("page.settings.smtc.session.auto"), value: "null" },
-			...sessions.map((s: SmtcSession) => ({
+			...(sessions || []).map((s: SmtcSession) => ({
 				label: s.displayName,
 				value: s.sessionId,
 			})),
