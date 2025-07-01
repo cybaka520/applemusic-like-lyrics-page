@@ -1,10 +1,11 @@
+import type { ExtensionMetaState } from "@applemusic-like-lyrics/states";
+import type * as TauriHttp from "@tauri-apps/plugin-http";
 import { fromObject, fromSource, removeComments } from "convert-source-map";
 import type { ComponentType } from "react";
 import { SourceMapConsumer, SourceMapGenerator } from "source-map-js";
 import type { db } from "../../dexie.ts";
 import type ExtensionEnv from "../../extension-env.ts";
 import i18n from "../../i18n.ts";
-import type { ExtensionMetaState } from "@applemusic-like-lyrics/states";
 
 export async function sourceMapOffsetLines(
 	code: string,
@@ -67,6 +68,7 @@ export class PlayerExtensionContext
 		readonly extensionMeta: Readonly<ExtensionMetaState>,
 		readonly lyric: typeof import("@applemusic-like-lyrics/lyric"),
 		readonly playerDB: typeof db,
+		readonly http: typeof TauriHttp,
 	) {
 		super();
 	}

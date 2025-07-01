@@ -1,24 +1,36 @@
 import * as lyric from "@applemusic-like-lyrics/lyric";
-import chalk from "chalk";
-import { useAtomValue, useSetAtom, useStore } from "jotai";
-import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import { uid } from "uid";
-import { db } from "../../dexie.ts";
+import * as playerStates from "@applemusic-like-lyrics/states";
+import * as amllStates from "@applemusic-like-lyrics/states";
 import {
 	ExtensionLoadResult,
 	type ExtensionMetaState,
 	type LoadedExtension,
 	loadedExtensionAtom,
 } from "@applemusic-like-lyrics/states";
-import * as playerStates from "@applemusic-like-lyrics/states";
-import { PlayerExtensionContext, sourceMapOffsetLines } from "./ext-ctx.ts";
-import * as amllStates from "@applemusic-like-lyrics/states";
-
+import * as http from "@tauri-apps/plugin-http";
+import chalk from "chalk";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
+import type * as JSXRuntime from "react/jsx-runtime";
+import { useTranslation } from "react-i18next";
+import { uid } from "uid";
+import { db } from "../../dexie.ts";
 import { extensionMetaAtom } from "../../states/extension.ts";
+import { PlayerExtensionContext, sourceMapOffsetLines } from "./ext-ctx.ts";
+
 const AsyncFunction: FunctionConstructor = Object.getPrototypeOf(
 	async () => {},
 ).constructor;
+
+declare global {
+	interface Window {
+		React: typeof React;
+		ReactDOM: typeof ReactDOM;
+		Jotai: typeof Jotai;
+		RadixTheme: typeof RadixTheme;
+		JSXRuntime: typeof JSXRuntime;
+	}
+}
 
 class Notify {
 	promise: Promise<void>;
@@ -70,6 +82,7 @@ const SingleExtensionContext: FC<{
 			extensionMeta,
 			lyric,
 			db,
+			http,
 		);
 
 		const loadedExt: LoadedExtension = {
@@ -87,12 +100,12 @@ const SingleExtensionContext: FC<{
 					import("@radix-ui/themes"),
 					import("react/jsx-runtime"),
 				]);
-			const globalWindow = window as any;
-			globalWindow.React = React;
-			globalWindow.ReactDOM = ReactDOM;
-			globalWindow.Jotai = Jotai;
-			globalWindow.RadixTheme = RadixTheme;
-			globalWindow.JSXRuntime = JSXRuntime;
+			window.React = React;
+			window.ReactDOM = ReactDOM;
+			window.Jotai = Jotai;
+			window.RadixTheme = RadixTheme;
+			window.JSXRuntime = JSXRuntime;
+
 			const cancelNotify = cancelRef.current;
 			if (cancelNotify) {
 				await cancelNotify.wait();
@@ -228,7 +241,12 @@ export const ExtensionContext: FC = () => {
 	);
 
 	return loadableExtensions.map((metaState) => {
-		const extPromise = loadingPromisesMap.get(metaState.id)!;
+		const extPromise = loadingPromisesMap.get(metaState.id);
+
+		if (!extPromise) {
+			return null;
+		}
+
 		return (
 			<SingleExtensionContext
 				key={`${metaState.fileName}-${metaState.id}`}

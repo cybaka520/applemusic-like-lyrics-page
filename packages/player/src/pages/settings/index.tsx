@@ -1,3 +1,4 @@
+import { loadedExtensionAtom } from "@applemusic-like-lyrics/states";
 import {
 	ArrowLeftIcon,
 	Component1Icon,
@@ -13,15 +14,14 @@ import { Box, Button, Flex, Separator, Text, Tooltip } from "@radix-ui/themes";
 import { platform } from "@tauri-apps/plugin-os";
 import { atom, useAtom, useAtomValue } from "jotai";
 import {
-	Suspense,
 	type FC,
 	type ReactNode,
+	Suspense,
 	useEffect,
 	useMemo,
 	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { loadedExtensionAtom } from "@applemusic-like-lyrics/states";
 import { ExtensionTab } from "./extension.tsx";
 import { PlayerSettingsTab } from "./player.tsx";
 
