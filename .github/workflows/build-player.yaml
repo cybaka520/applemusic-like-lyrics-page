@@ -64,6 +64,8 @@ jobs:
           fetch-depth: 0 # 为了正确生成开发版本号码
       - name: 缓存 Cargo 产物
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "monorepo-cargo-cache-${{ runner.os }}-${{ matrix.arch }}"
 
       - name: 安装 PNPM
         uses: pnpm/action-setup@v4
@@ -93,7 +95,7 @@ jobs:
       - name: 安装 wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
         with:
-          version: latest
+          version: 'v0.13.1'
       - name: 构建 AMLL Full React 包
         run: |
           pnpm i
@@ -143,6 +145,8 @@ jobs:
           fetch-depth: 0 # 为了正确生成开发版本号码
       - name: 缓存 Cargo 产物
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "monorepo-cargo-cache-${{ runner.os }}-${{ matrix.arch }}"
 
       - name: 安装 PNPM
         uses: pnpm/action-setup@v4
@@ -158,7 +162,7 @@ jobs:
       - name: 安装 wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
         with:
-          version: latest
+          version: 'v0.13.1'
       - name: 安装 wasm32 目标
         run: rustup target add wasm32-unknown-unknown
       - name: 构建 AMLL Full React 包
