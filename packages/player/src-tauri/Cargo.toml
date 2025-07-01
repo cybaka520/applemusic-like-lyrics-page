@@ -45,6 +45,7 @@ tauri-plugin-shell = { version = "2" }
 
 amll-player-core = { path = "../../player-core" }
 ws-protocol = { path = "../../ws-protocol" }
+tauri-plugin-http = "2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 smtc-suite = "2"

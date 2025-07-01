@@ -29,13 +29,6 @@ pub enum TextConversionMode {
 pub enum SmtcEvent {
     /// 曲目信息已更新。负载是完整的 NowPlayingInfo 对象。
     TrackChanged(FrontendNowPlayingInfo),
-    /// 因强制刷新而发送的曲目信息。
-    TrackChangedForced(FrontendNowPlayingInfo),
-    /// 封面数据已更新。负载是 Base64 编码的字符串或 null。
-    CoverData(Option<String>),
-    /// 音量或静音状态已发生变化。
-    VolumeChanged { volume: f32, is_muted: bool },
-    /// 可用的媒体会话列表已更新。
     SessionsChanged(Vec<SmtcSessionInfo>),
     /// 之前选择的媒体会话已消失。
     SelectedSessionVanished(String),
@@ -43,6 +36,11 @@ pub enum SmtcEvent {
     AudioData(Vec<u8>),
     /// 报告一个错误。
     Error(String),
+    /// 音量或静音状态已发生变化。
+    VolumeChanged {
+        volume: f32,
+        is_muted: bool,
+    },
 }
 
 /// SMTC 会话信息的封装，用于在前端显示。
@@ -102,6 +100,12 @@ pub struct FrontendNowPlayingInfo {
     pub is_playing: Option<bool>,
     pub is_shuffle_active: Option<bool>,
     pub repeat_mode: Option<RepeatMode>,
+    pub can_play: Option<bool>,
+    pub can_pause: Option<bool>,
+    pub can_skip_next: Option<bool>,
+    pub can_skip_previous: Option<bool>,
+    pub cover_data: Option<String>,
+    pub cover_data_hash: Option<u64>,
 }
 
 /// 将后端库的结构转换为前端 DTO。
@@ -120,6 +124,12 @@ impl From<SmtcNowPlayingInfo> for FrontendNowPlayingInfo {
                 smtc_suite::RepeatMode::One => RepeatMode::One,
                 smtc_suite::RepeatMode::All => RepeatMode::All,
             }),
+            can_play: info.can_play,
+            can_pause: info.can_pause,
+            can_skip_next: info.can_skip_next,
+            can_skip_previous: info.can_skip_previous,
+            cover_data: info.cover_data.map(|bytes| STANDARD.encode(bytes)),
+            cover_data_hash: info.cover_data_hash,
         }
     }
 }
@@ -283,27 +293,19 @@ pub fn start_listener<R: Runtime>(app_handle: AppHandle<R>) -> ExternalMediaCont
 fn event_receiver_loop<R: Runtime>(app_handle: AppHandle<R>, update_rx: Receiver<MediaUpdate>) {
     for update in update_rx {
         let event_to_emit = match update {
-            MediaUpdate::TrackChanged(mut info) => {
-                info = parse_apple_music_field(info);
-                SmtcEvent::TrackChanged(info.into())
+            MediaUpdate::TrackChanged(info) | MediaUpdate::TrackChangedForced(info) => {
+                let dto = parse_apple_music_field(info.into());
+                SmtcEvent::TrackChanged(dto)
             }
-            MediaUpdate::TrackChangedForced(mut info) => {
-                info = parse_apple_music_field(info);
-                SmtcEvent::TrackChangedForced(info.into())
-            }
-            MediaUpdate::CoverData(bytes_opt) => {
-                let base64_payload = bytes_opt.map(|bytes| STANDARD.encode(bytes));
-                SmtcEvent::CoverData(base64_payload)
-            }
-            MediaUpdate::VolumeChanged {
-                volume, is_muted, ..
-            } => SmtcEvent::VolumeChanged { volume, is_muted },
             MediaUpdate::SessionsChanged(sessions) => SmtcEvent::SessionsChanged(
                 sessions.into_iter().map(SmtcSessionInfo::from).collect(),
             ),
-            MediaUpdate::SelectedSessionVanished(id) => SmtcEvent::SelectedSessionVanished(id),
             MediaUpdate::AudioData(bytes) => SmtcEvent::AudioData(bytes),
             MediaUpdate::Error(e) => SmtcEvent::Error(e),
+            MediaUpdate::VolumeChanged {
+                volume, is_muted, ..
+            } => SmtcEvent::VolumeChanged { volume, is_muted },
+            MediaUpdate::SelectedSessionVanished(id) => SmtcEvent::SelectedSessionVanished(id),
         };
 
         if let Err(e) = app_handle.emit("smtc_update", event_to_emit) {
@@ -314,7 +316,7 @@ fn event_receiver_loop<R: Runtime>(app_handle: AppHandle<R>, update_rx: Receiver
 }
 
 /// 特殊的解析逻辑，用于处理 Apple Music 的元数据。
-fn parse_apple_music_field(mut info: SmtcNowPlayingInfo) -> SmtcNowPlayingInfo {
+fn parse_apple_music_field(mut info: FrontendNowPlayingInfo) -> FrontendNowPlayingInfo {
     if let Some(original_artist_field) = info.artist.take() {
         if let Some((artist, album)) = original_artist_field.split_once(" — ") {
             info.artist = Some(artist.trim().to_string());

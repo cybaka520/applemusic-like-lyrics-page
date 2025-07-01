@@ -42,6 +42,7 @@ import {
 	type MusicQualityState,
 	musicQualityAtom,
 	fftDataRangeAtom,
+	type SongData,
 } from "@applemusic-like-lyrics/states";
 import chalk from "chalk";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -57,6 +58,7 @@ import {
 	emitAudioThreadRet,
 	listenAudioThreadEvent,
 } from "../../utils/player.ts";
+import md5 from "md5";
 
 export const FFTToLowPassContext: FC = () => {
 	const store = useStore();
@@ -168,7 +170,7 @@ function pairLyric(line: LyricLine, lines: CoreLyricLine[], key: TransLine) {
 			.trim(),
 		original: v,
 	}));
-	let nearestLine: PairedLine | undefined = undefined;
+	let nearestLine: PairedLine | undefined;
 	for (const coreLine of processed) {
 		if (coreLine.lineText.length > 0) {
 			if (coreLine.startTime === line.words[0].startTime) {
@@ -682,6 +684,34 @@ export const LocalMusicContext: FC = () => {
 				sampleFormat: quality.sampleFormat ?? "unknown",
 			});
 		};
+		const processAndSetPlaylist = async (playlistData: SongData[]) => {
+			if (!playlistData || playlistData.length === 0) {
+				store.set(currentPlaylistAtom, []);
+				return;
+			}
+
+			const fullPlaylistPromises = playlistData.map(
+				async (songData): Promise<SongData> => {
+					if (songData.type === "local") {
+						const songId = md5(songData.filePath);
+						const songInfoFromDb = await db.songs.get(songId);
+
+						if (songInfoFromDb) {
+							return {
+								type: "custom",
+								id: songInfoFromDb.id,
+								songJsonData: JSON.stringify(songInfoFromDb),
+								origOrder: songData.origOrder,
+							};
+						}
+					}
+					return songData;
+				},
+			);
+
+			const fullPlaylist: SongData[] = await Promise.all(fullPlaylistPromises);
+			store.set(currentPlaylistAtom, fullPlaylist);
+		};
 		const unlistenPromise = listenAudioThreadEvent((evt) => {
 			const evtData = evt.payload.data;
 			switch (evtData?.type) {
@@ -719,7 +749,9 @@ export const LocalMusicContext: FC = () => {
 					syncMusicId(evtData.data.musicId);
 					syncMusicQuality(evtData.data.quality);
 					syncMusicInfo(evtData.data.musicInfo);
-					store.set(currentPlaylistAtom, evtData.data.playlist);
+
+					processAndSetPlaylist(evtData.data.playlist);
+
 					store.set(
 						currentPlaylistMusicIndexAtom,
 						evtData.data.currentPlayIndex,
@@ -727,7 +759,8 @@ export const LocalMusicContext: FC = () => {
 					break;
 				}
 				case "playListChanged": {
-					store.set(currentPlaylistAtom, evtData.data.playlist);
+					processAndSetPlaylist(evtData.data.playlist);
+
 					store.set(
 						currentPlaylistMusicIndexAtom,
 						evtData.data.currentPlayIndex,

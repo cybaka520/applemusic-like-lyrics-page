@@ -13,7 +13,7 @@ import type {
 	LyricPlayerRef,
 } from "@applemusic-like-lyrics/react";
 
-import { type Update } from "@tauri-apps/plugin-updater";
+import type { Update } from "@tauri-apps/plugin-updater";
 import type { PlayerExtensionContext } from "../../player/src/components/ExtensionContext/ext-ctx";
 
 export type SongData =
@@ -91,6 +91,28 @@ export enum VerticalCoverLayout {
 	ForceNormal = "force-normal",
 	ForceImmersive = "force-immersive",
 }
+
+/**
+ * 控制能力：是否可以开始播放。
+ */
+export const smtcCanPlayAtom = atom<boolean>(true);
+
+/**
+ * 控制能力：是否可以暂停播放。
+ */
+export const smtcCanPauseAtom = atom<boolean>(true);
+
+/**
+ * 控制能力：是否可以跳到下一首。
+ */
+export const smtcCanSkipNextAtom = atom<boolean>(true);
+
+/**
+ * 控制能力：是否可以跳到上一首。
+ */
+export const smtcCanSkipPreviousAtom = atom<boolean>(true);
+
+export const musicCoverHashAtom = atom<number | null>(null);
 
 // ======================== 歌词效果配置 ========================
 
@@ -471,10 +493,10 @@ export const wsProtocolConnectedAddrsAtom = atom(new Set<string>());
 
 // ======================== 回调函数 ========================
 
-export interface Callback<Args extends any[], Result = void> {
+export interface Callback<Args extends unknown[], Result = void> {
 	onEmit?: (...args: Args) => Result;
 }
-const c = <Args extends any[], Result = void>(
+const c = <Args extends unknown[], Result = void>(
 	_onEmit: (...args: Args) => Result,
 ): Callback<Args, Result> => ({});
 

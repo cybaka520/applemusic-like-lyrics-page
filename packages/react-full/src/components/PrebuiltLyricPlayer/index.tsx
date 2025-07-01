@@ -523,7 +523,6 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 		}
 	}, [isLyricPageOpened]);
 
-
 	useEffect(() => {
 		const titlebarArea = document.getElementById("system-titlebar");
 		if (!titlebarArea) return;
@@ -532,30 +531,30 @@ export const PrebuiltLyricPlayer: FC<HTMLProps<HTMLDivElement>> = ({
 		const handleMouseLeave = () => setIsHoveringTitlebar(false);
 
 		if (isLyricPageOpened) {
-			titlebarArea.addEventListener('mouseenter', handleMouseEnter);
-			titlebarArea.addEventListener('mouseleave', handleMouseLeave);
+			titlebarArea.addEventListener("mouseenter", handleMouseEnter);
+			titlebarArea.addEventListener("mouseleave", handleMouseLeave);
 		} else {
-            setIsHoveringTitlebar(false);
-        }
+			setIsHoveringTitlebar(false);
+		}
 
 		return () => {
-			titlebarArea.removeEventListener('mouseenter', handleMouseEnter);
-			titlebarArea.removeEventListener('mouseleave', handleMouseLeave);
+			titlebarArea.removeEventListener("mouseenter", handleMouseEnter);
+			titlebarArea.removeEventListener("mouseleave", handleMouseLeave);
 		};
 	}, [isLyricPageOpened]);
-
 
 	useEffect(() => {
 		const titlebarButtons = document.getElementById("system-titlebar-buttons");
 		if (!titlebarButtons) return;
 
-		titlebarButtons.style.transition = "opacity 0.3s ease-in-out, pointer-events 0.3s";
-		
-		const shouldBeVisible = !isLyricPageOpened || isHoveringTitlebar || !isGracePeriodOver;
+		titlebarButtons.style.transition =
+			"opacity 0.3s ease-in-out, pointer-events 0.3s";
+
+		const shouldBeVisible =
+			!isLyricPageOpened || isHoveringTitlebar || !isGracePeriodOver;
 
 		titlebarButtons.style.opacity = shouldBeVisible ? "1" : "0";
 		titlebarButtons.style.pointerEvents = shouldBeVisible ? "auto" : "none";
-
 	}, [isLyricPageOpened, isHoveringTitlebar, isGracePeriodOver]);
 
 	const verticalImmerseCover =

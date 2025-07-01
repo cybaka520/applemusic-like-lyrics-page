@@ -41,9 +41,7 @@ async fn ws_close_connection(ws: AMLLWebSocketServerState<'_>) -> Result<(), Str
 }
 
 #[tauri::command]
-async fn ws_get_connections(
-    ws: AMLLWebSocketServerState<'_>,
-) -> Result<Vec<SocketAddr>, String> {
+async fn ws_get_connections(ws: AMLLWebSocketServerState<'_>) -> Result<Vec<SocketAddr>, String> {
     let server_guard = ws.read().await;
     let connections = server_guard.get_connections().await;
     Ok(connections)
@@ -95,7 +93,11 @@ impl From<AudioInfo> for MusicInfo {
             name: v.name,
             artist: v.artist,
             album: v.album,
-            lyric_format: if v.lyric.is_empty() { "".into() } else { "lrc".into() },
+            lyric_format: if v.lyric.is_empty() {
+                "".into()
+            } else {
+                "lrc".into()
+            },
             lyric: v.lyric,
             comment: v.comment,
             cover: v.cover.unwrap_or_default(),
@@ -178,16 +180,34 @@ async fn create_common_win<'a>(
         })
         .theme(None)
         .title({
-            #[cfg(target_os = "macos")] { "" }
-            #[cfg(not(target_os = "macos"))] { "AMLL Player" }
+            #[cfg(target_os = "macos")]
+            {
+                ""
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                "AMLL Player"
+            }
         })
         .visible({
-            #[cfg(target_os = "macos")] { true }
-            #[cfg(not(target_os = "macos"))] { false }
+            #[cfg(target_os = "macos")]
+            {
+                true
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                false
+            }
         })
         .decorations({
-            #[cfg(target_os = "macos")] { true }
-            #[cfg(not(target_os = "macos"))] { false }
+            #[cfg(target_os = "macos")]
+            {
+                true
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                false
+            }
         });
 
     #[cfg(target_os = "macos")]
@@ -199,7 +219,8 @@ async fn create_common_win<'a>(
 async fn recreate_window(app: &AppHandle, label: &str, path: Option<&str>) {
     info!("Recreating window: {}", label);
     if let Some(win) = app.get_webview_window(label) {
-        #[cfg(desktop)] {
+        #[cfg(desktop)]
+        {
             let _ = win.show();
             let _ = win.set_focus();
         }
@@ -223,7 +244,8 @@ async fn recreate_window(app: &AppHandle, label: &str, path: Option<&str>) {
 
     let win = win.build().expect("can't show original window");
 
-    #[cfg(desktop)] {
+    #[cfg(desktop)]
+    {
         let _ = win.set_focus();
         if let Ok(orig_size) = win.inner_size() {
             let _ = win.set_size(Size::Physical(PhysicalSize::new(0, 0)));
@@ -240,7 +262,8 @@ async fn open_screenshot_window(app: AppHandle) {
 }
 
 fn init_logging() {
-    #[cfg(not(debug_assertions))] {
+    #[cfg(not(debug_assertions))]
+    {
         let log_file = std::fs::File::create("amll-player.log");
         if let Ok(log_file) = log_file {
             tracing_subscriber::fmt()
@@ -256,9 +279,10 @@ fn init_logging() {
                 .init();
         }
     }
-    #[cfg(debug_assertions)] {
+    #[cfg(debug_assertions)]
+    {
         tracing_subscriber::fmt()
-            .with_env_filter("amll_player=trace,wry=info")
+            .with_env_filter("amll_player=trace,smtc_suite=debug,wry=info")
             .with_thread_names(true)
             .with_timer(tracing_subscriber::fmt::time::uptime())
             .init();
@@ -294,7 +318,8 @@ pub fn run() {
     #[cfg(not(mobile))]
     let builder = builder.plugin(tauri_plugin_updater::Builder::new().pubkey(pubkey).build());
 
-    #[cfg(mobile)] {
+    #[cfg(mobile)]
+    {
         context
             .config_mut()
             .app
@@ -309,6 +334,7 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             ws_reopen_connection,
             ws_get_connections,
@@ -328,7 +354,8 @@ pub fn run() {
         .setup(|app| {
             player::init_local_player(app.handle().clone());
 
-            #[cfg(target_os = "windows")] {
+            #[cfg(target_os = "windows")]
+            {
                 info!("正在初始化外部媒体控制器...");
                 let controller_state =
                     external_media_controller::start_listener(app.handle().clone());
@@ -342,7 +369,8 @@ pub fn run() {
             app.manage::<AMLLWebSocketServerWrapper>(RwLock::new(AMLLWebSocketServer::new(
                 app.handle().clone(),
             )));
-            #[cfg(not(mobile))] {
+            #[cfg(not(mobile))]
+            {
                 tauri::async_runtime::block_on(recreate_window(app.handle(), "main", None));
             }
             Ok(())

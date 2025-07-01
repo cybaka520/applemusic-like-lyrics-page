@@ -2,7 +2,7 @@ import { Box, Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
 import { platform, version } from "@tauri-apps/plugin-os";
 import classNames from "classnames";
-import { atom, useAtomValue, useSetAtom, useStore } from "jotai";
+import { atom, useAtomValue, useStore } from "jotai";
 import { StrictMode, Suspense, lazy, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router-dom";
@@ -29,7 +29,6 @@ import {
 	displayLanguageAtom,
 	isLyricPageOpenedAtom,
 	showStatJSFrameAtom,
-	wsLyricOnlyModeAtom,
 	enableWsLyricsInSmtcModeAtom,
 	audioQualityDialogOpenedAtom,
 	onClickAudioQualityTagAtom,
@@ -56,16 +55,9 @@ function App() {
 
 	const darkMode = useAtomValue(darkModeAtom);
 
-	const setWsLyricOnlyMode = useSetAtom(wsLyricOnlyModeAtom);
 	const enableWsLyrics = useAtomValue(enableWsLyricsInSmtcModeAtom);
 
 	const lyricSize = useAtomValue(lyricSizePresetAtom);
-
-	useEffect(() => {
-		const isSmtcAndWsEnabled =
-			musicContextMode === MusicContextMode.SystemListener && enableWsLyrics;
-		setWsLyricOnlyMode(isSmtcAndWsEnabled);
-	}, [musicContextMode, enableWsLyrics, setWsLyricOnlyMode]);
 
 	useEffect(() => {
 		const syncThemeToWindow = async () => {
@@ -171,7 +163,10 @@ function App() {
 			{(musicContextMode === MusicContextMode.WSProtocol ||
 				(musicContextMode === MusicContextMode.SystemListener &&
 					enableWsLyrics)) && (
-				<WSProtocolMusicContext key={MusicContextMode.WSProtocol} />
+				<WSProtocolMusicContext
+					key={MusicContextMode.WSProtocol}
+					isLyricOnly={musicContextMode === MusicContextMode.SystemListener}
+				/>
 			)}
 
 			<UpdateContext />
