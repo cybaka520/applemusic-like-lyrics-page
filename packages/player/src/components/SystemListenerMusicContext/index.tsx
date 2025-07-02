@@ -24,6 +24,12 @@ import {
 	smtcRepeatModeAtom,
 	smtcSessionsAtom,
 	smtcShuffleStateAtom,
+	enableWsLyricsInSmtcModeAtom,
+	onSeekPositionAtom,
+	onLyricLineClickAtom,
+	onClickControlThumbAtom,
+	isLyricPageOpenedAtom,
+	onRequestOpenMenuAtom,
 } from "@applemusic-like-lyrics/states";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
@@ -32,6 +38,7 @@ import { type FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
+import { useWsLyrics } from "../../../hooks/useWsLyrics.ts";
 
 type SmtcEvent =
 	| {
@@ -67,12 +74,12 @@ export const SystemListenerMusicContext: FC = () => {
 	const { t } = useTranslation();
 	const setSmtcSessions = useSetAtom(smtcSessionsAtom);
 	const musicContextMode = useAtomValue(musicContextModeAtom);
+	const isWsLyricsEnabled = useAtomValue(enableWsLyricsInSmtcModeAtom);
+	const setIsLyricPageOpened = useSetAtom(isLyricPageOpenedAtom);
+
+	useWsLyrics(isWsLyricsEnabled);
 
 	useEffect(() => {
-		if (musicContextMode !== MusicContextMode.SystemListener) {
-			return;
-		}
-
 		const toEmit = <T,>(onEmit: T) => ({ onEmit });
 
 		store.set(
@@ -106,15 +113,48 @@ export const SystemListenerMusicContext: FC = () => {
 				});
 			}),
 		);
+		store.set(
+			onSeekPositionAtom,
+			toEmit((time: number) => {
+				invoke("control_external_media", {
+					payload: {
+						type: "seekTo",
+						time_ms: Math.floor(time),
+					},
+				});
+			}),
+		);
+
+		store.set(
+			onLyricLineClickAtom,
+			toEmit((evt) => {
+				invoke("control_external_media", {
+					payload: {
+						type: "seekTo",
+						time_ms: Math.floor(evt.line.getLine().startTime),
+					},
+				});
+			}),
+		);
+		store.set(
+			onClickControlThumbAtom,
+			toEmit(() => {
+				setIsLyricPageOpened(false);
+			}),
+		);
 
 		return () => {
 			const doNothing = toEmit(() => {});
 			store.set(onPlayOrResumeAtom, doNothing);
 			store.set(onRequestNextSongAtom, doNothing);
 			store.set(onRequestPrevSongAtom, doNothing);
+			store.set(onSeekPositionAtom, doNothing);
+			store.set(onLyricLineClickAtom, doNothing);
 			store.set(onChangeVolumeAtom, doNothing);
+			store.set(onClickControlThumbAtom, doNothing);
+			store.set(onRequestOpenMenuAtom, doNothing);
 		};
-	}, [musicContextMode, store]);
+	}, [store, t, setIsLyricPageOpened]);
 
 	useEffect(() => {
 		if (musicContextMode !== MusicContextMode.SystemListener) {

@@ -798,6 +798,18 @@ export const LocalMusicContext: FC = () => {
 		emitAudioThreadRet("syncStatus");
 		return () => {
 			unlistenPromise.then((unlisten) => unlisten());
+
+			const doNothing = toEmit(() => {});
+			store.set(onRequestNextSongAtom, doNothing);
+			store.set(onRequestPrevSongAtom, doNothing);
+			store.set(onPlayOrResumeAtom, doNothing);
+			store.set(onClickControlThumbAtom, doNothing);
+			store.set(onSeekPositionAtom, doNothing);
+			store.set(onLyricLineClickAtom, doNothing);
+			store.set(onChangeVolumeAtom, doNothing);
+			store.set(onRequestOpenMenuAtom, doNothing);
+			store.set(onClickLeftFunctionButtonAtom, doNothing);
+			store.set(onClickRightFunctionButtonAtom, doNothing);
 		};
 	}, [store, t]);
 

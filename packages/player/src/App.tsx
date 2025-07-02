@@ -160,12 +160,10 @@ function App() {
 			{musicContextMode === MusicContextMode.SystemListener && (
 				<SystemListenerMusicContext key={MusicContextMode.SystemListener} />
 			)}
-			{(musicContextMode === MusicContextMode.WSProtocol ||
-				(musicContextMode === MusicContextMode.SystemListener &&
-					enableWsLyrics)) && (
+			{musicContextMode === MusicContextMode.WSProtocol && (
 				<WSProtocolMusicContext
 					key={MusicContextMode.WSProtocol}
-					isLyricOnly={musicContextMode === MusicContextMode.SystemListener}
+					isLyricOnly={false}
 				/>
 			)}
 
