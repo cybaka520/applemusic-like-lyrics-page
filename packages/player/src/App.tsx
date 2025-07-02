@@ -20,23 +20,25 @@ import { UpdateContext } from "./components/UpdateContext/index.tsx";
 import { WSProtocolMusicContext } from "./components/WSProtocolMusicContext/index.tsx";
 import "./i18n";
 import { router } from "./router.tsx";
-import {
-	DarkMode,
-	MusicContextMode,
-	musicContextModeAtom,
-	darkModeAtom,
-	isDarkThemeAtom,
-	displayLanguageAtom,
-	isLyricPageOpenedAtom,
-	showStatJSFrameAtom,
-	enableWsLyricsInSmtcModeAtom,
-	audioQualityDialogOpenedAtom,
-	onClickAudioQualityTagAtom,
-	lyricSizePresetAtom,
-	LyricSizePreset,
-} from "@applemusic-like-lyrics/states";
 import { invoke } from "@tauri-apps/api/core";
 import { StatsComponent } from "./components/StatsComponent/index.tsx";
+import {
+	isLyricPageOpenedAtom,
+	lyricSizePresetAtom,
+	onClickAudioQualityTagAtom,
+	LyricSizePreset,
+} from "@applemusic-like-lyrics/react-full";
+import {
+	showStatJSFrameAtom,
+	musicContextModeAtom,
+	displayLanguageAtom,
+	isDarkThemeAtom,
+	darkModeAtom,
+	DarkMode,
+	MusicContextMode,
+} from "./states/appAtoms.ts";
+import { audioQualityDialogOpenedAtom } from "./states/smtcAtoms.ts";
+import { StateConnector } from "./components/StateConnector/index.tsx";
 
 const ExtensionContext = lazy(() => import("./components/ExtensionContext"));
 const AMLLWrapper = lazy(() => import("./components/AMLLWrapper"));
@@ -54,8 +56,6 @@ function App() {
 	const { i18n } = useTranslation();
 
 	const darkMode = useAtomValue(darkModeAtom);
-
-	const enableWsLyrics = useAtomValue(enableWsLyricsInSmtcModeAtom);
 
 	const lyricSize = useAtomValue(lyricSizePresetAtom);
 
@@ -174,6 +174,7 @@ function App() {
 				<ExtensionContext />
 			</Suspense>
 			<ExtensionInjectPoint injectPointName="context" hideErrorCallout />
+			<StateConnector />
 
 			{/* UI渲染 */}
 			<StrictMode>

@@ -1,4 +1,3 @@
-import type { ExtensionMetaState } from "@applemusic-like-lyrics/states";
 import type * as TauriHttp from "@tauri-apps/plugin-http";
 import { fromObject, fromSource, removeComments } from "convert-source-map";
 import type { ComponentType } from "react";
@@ -6,6 +5,7 @@ import { SourceMapConsumer, SourceMapGenerator } from "source-map-js";
 import type { db } from "../../dexie.ts";
 import type ExtensionEnv from "../../extension-env.ts";
 import i18n from "../../i18n.ts";
+import type { ExtensionMetaState } from "../../states/extensionsAtoms.ts";
 
 export async function sourceMapOffsetLines(
 	code: string,
@@ -61,8 +61,8 @@ export class PlayerExtensionContext
 		[injectPointName: string]: ComponentType | undefined;
 	} = {};
 	constructor(
-		readonly playerStates: ExtensionEnv.ExtensionContext["playerStates"],
-		readonly amllStates: ExtensionEnv.ExtensionContext["amllStates"],
+		readonly playerStates: ExtensionEnv.PlayerStates,
+		readonly amllStates: ExtensionEnv.AMLLStates,
 		readonly i18n: ExtensionEnv.ExtensionContext["i18n"],
 		readonly jotaiStore: ExtensionEnv.ExtensionContext["jotaiStore"],
 		readonly extensionMeta: Readonly<ExtensionMetaState>,

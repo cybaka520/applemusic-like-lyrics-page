@@ -1,14 +1,14 @@
 import { parseTTML } from "@applemusic-like-lyrics/lyric";
-import {
-	hideLyricViewAtom,
-	musicLyricLinesAtom,
-	wsProtocolListenAddrAtom,
-} from "@applemusic-like-lyrics/states";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useAtomValue, useStore } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
+import { wsProtocolListenAddrAtom } from "../src/states/appAtoms";
+import {
+	hideLyricViewAtom,
+	musicLyricLinesAtom,
+} from "@applemusic-like-lyrics/react-full";
 
 interface WSLyricLine {
 	startTime: number;

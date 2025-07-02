@@ -1,4 +1,3 @@
-import { loadedExtensionAtom } from "@applemusic-like-lyrics/states";
 import {
 	ArrowLeftIcon,
 	Component1Icon,
@@ -24,6 +23,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { ExtensionTab } from "./extension.tsx";
 import { PlayerSettingsTab } from "./player.tsx";
+import { loadedExtensionAtom } from "../../states/extensionsAtoms.ts";
 
 const currentPageAtom = atom("player.general");
 

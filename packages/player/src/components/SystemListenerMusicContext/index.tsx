@@ -1,36 +1,4 @@
 import { FFTPlayer } from "@applemusic-like-lyrics/fft";
-import {
-	fftDataAtom,
-	MusicContextMode,
-	musicAlbumNameAtom,
-	musicArtistsAtom,
-	musicContextModeAtom,
-	musicCoverAtom,
-	musicCoverHashAtom,
-	musicDurationAtom,
-	musicNameAtom,
-	musicPlayingAtom,
-	musicPlayingPositionAtom,
-	musicVolumeAtom,
-	onChangeVolumeAtom,
-	onPlayOrResumeAtom,
-	onRequestNextSongAtom,
-	onRequestPrevSongAtom,
-	RepeatMode,
-	smtcCanPauseAtom,
-	smtcCanPlayAtom,
-	smtcCanSkipNextAtom,
-	smtcCanSkipPreviousAtom,
-	smtcRepeatModeAtom,
-	smtcSessionsAtom,
-	smtcShuffleStateAtom,
-	enableWsLyricsInSmtcModeAtom,
-	onSeekPositionAtom,
-	onLyricLineClickAtom,
-	onClickControlThumbAtom,
-	isLyricPageOpenedAtom,
-	onRequestOpenMenuAtom,
-} from "@applemusic-like-lyrics/states";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
@@ -39,6 +7,42 @@ import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
 import { useWsLyrics } from "../../../hooks/useWsLyrics.ts";
+import {
+	isLyricPageOpenedAtom,
+	onPlayOrResumeAtom,
+	musicPlayingAtom,
+	onRequestNextSongAtom,
+	onRequestPrevSongAtom,
+	onChangeVolumeAtom,
+	onSeekPositionAtom,
+	onLyricLineClickAtom,
+	onClickControlThumbAtom,
+	onRequestOpenMenuAtom,
+	fftDataAtom,
+	musicNameAtom,
+	musicArtistsAtom,
+	musicAlbumNameAtom,
+	musicDurationAtom,
+	musicPlayingPositionAtom,
+	musicCoverHashAtom,
+	musicCoverAtom,
+	musicVolumeAtom,
+} from "@applemusic-like-lyrics/react-full";
+import {
+	musicContextModeAtom,
+	enableWsLyricsInSmtcModeAtom,
+	MusicContextMode,
+} from "../../states/appAtoms.ts";
+import {
+	RepeatMode,
+	smtcSessionsAtom,
+	smtcShuffleStateAtom,
+	smtcRepeatModeAtom,
+	smtcCanPlayAtom,
+	smtcCanPauseAtom,
+	smtcCanSkipNextAtom,
+	smtcCanSkipPreviousAtom,
+} from "../../states/smtcAtoms.ts";
 
 type SmtcEvent =
 	| {
@@ -154,7 +158,7 @@ export const SystemListenerMusicContext: FC = () => {
 			store.set(onClickControlThumbAtom, doNothing);
 			store.set(onRequestOpenMenuAtom, doNothing);
 		};
-	}, [store, t, setIsLyricPageOpened]);
+	}, [store, setIsLyricPageOpened]);
 
 	useEffect(() => {
 		if (musicContextMode !== MusicContextMode.SystemListener) {

@@ -1,4 +1,3 @@
-import { ExtensionLoadResult } from "@applemusic-like-lyrics/states";
 import { ExclamationTriangleIcon, TrashIcon } from "@radix-ui/react-icons";
 import {
 	Avatar,
@@ -22,6 +21,7 @@ import type { FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { extensionDirAtom, extensionMetaAtom } from "../../states/extension.ts";
 import { restartApp } from "../../utils/player.ts";
+import { ExtensionLoadResult } from "../../states/extensionsAtoms.ts";
 
 const requireRestartAtom = atom(false);
 

@@ -1,12 +1,9 @@
 import * as lyric from "@applemusic-like-lyrics/lyric";
-import * as playerStates from "@applemusic-like-lyrics/states";
-import * as amllStates from "@applemusic-like-lyrics/states";
-import {
-	ExtensionLoadResult,
-	type ExtensionMetaState,
-	type LoadedExtension,
-	loadedExtensionAtom,
-} from "@applemusic-like-lyrics/states";
+import * as amllStates from "@applemusic-like-lyrics/react-full";
+import * as appAtoms from "../../states/appAtoms";
+import * as smtcAtoms from "../../states/smtcAtoms";
+import * as extensionsAtoms from "../../states/extensionsAtoms";
+
 import * as http from "@tauri-apps/plugin-http";
 import chalk from "chalk";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
@@ -15,8 +12,13 @@ import type * as JSXRuntime from "react/jsx-runtime";
 import { useTranslation } from "react-i18next";
 import { uid } from "uid";
 import { db } from "../../dexie.ts";
-import { extensionMetaAtom } from "../../states/extension.ts";
 import { PlayerExtensionContext, sourceMapOffsetLines } from "./ext-ctx.ts";
+import { extensionMetaAtom } from "../../states/extension.ts";
+import { ExtensionLoadResult } from "../../states/extensionsAtoms.ts";
+import type {
+	ExtensionMetaState,
+	LoadedExtension,
+} from "../../states/extensionsAtoms.ts";
 
 const AsyncFunction: FunctionConstructor = Object.getPrototypeOf(
 	async () => {},
@@ -66,17 +68,23 @@ const SingleExtensionContext: FC<{
 }> = ({ extensionMeta, waitForDependency, extPromise }) => {
 	const store = useStore();
 	const { i18n } = useTranslation();
-	const cancelRef = useRef<Notify>(undefined);
-	const setLoadedExtension = useSetAtom(loadedExtensionAtom);
+	const cancelRef = useRef<Notify | undefined>(undefined);
+	const setLoadedExtension = useSetAtom(extensionsAtoms.loadedExtensionAtom);
 	useEffect(() => {
 		let canceled = false;
 		const extI18n = i18n.cloneInstance({
 			ns: extensionMeta.id,
 		});
 
+		const playerStatesObject = Object.freeze({
+			...appAtoms,
+			...smtcAtoms,
+			...extensionsAtoms,
+		});
+
 		const context = new PlayerExtensionContext(
-			Object.freeze(Object.assign({}, playerStates)),
-			Object.freeze(Object.assign({}, amllStates)),
+			playerStatesObject,
+			Object.freeze({ ...amllStates }),
 			extI18n,
 			store,
 			extensionMeta,
@@ -208,14 +216,22 @@ export const ExtensionContext: FC = () => {
 	const loadableExtensions = useMemo(
 		() =>
 			extensionMeta.filter(
-				(v) => v.loadResult === ExtensionLoadResult.Loadable,
+				(v: ExtensionMetaState) =>
+					v.loadResult === ExtensionLoadResult.Loadable,
 			),
 		[extensionMeta],
 	);
+
+	type PromiseTuple = readonly [
+		Promise<void>,
+		() => void,
+		(err: Error) => void,
+	];
+
 	const loadingPromisesMap = useMemo(
 		() =>
-			new Map(
-				loadableExtensions.map((state) => {
+			new Map<string, PromiseTuple>(
+				loadableExtensions.map((state: ExtensionMetaState) => {
 					let resolve: () => void = () => {};
 					let reject: (err: Error) => void = () => {};
 					const p = new Promise<void>((res, rej) => {
@@ -240,7 +256,7 @@ export const ExtensionContext: FC = () => {
 		[loadingPromisesMap],
 	);
 
-	return loadableExtensions.map((metaState) => {
+	return loadableExtensions.map((metaState: ExtensionMetaState) => {
 		const extPromise = loadingPromisesMap.get(metaState.id);
 
 		if (!extPromise) {

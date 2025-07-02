@@ -40,52 +40,54 @@ import {
 	MeshGradientRenderer,
 	PixiRenderer,
 } from "@applemusic-like-lyrics/core";
-
 import {
-	PlayerControlsType,
-	VerticalCoverLayout,
+	lyricFontFamilyAtom,
+	enableLyricTranslationLineAtom,
+	enableLyricRomanLineAtom,
+	enableLyricSwapTransRomanLineAtom,
+	lyricPlayerImplementationAtom,
+	lyricSizePresetAtom,
+	LyricSizePreset,
+	type LyricSizePresetValue,
 	enableLyricLineBlurEffectAtom,
 	enableLyricLineScaleEffectAtom,
 	enableLyricLineSpringAnimationAtom,
-	enableLyricRomanLineAtom,
-	enableLyricSwapTransRomanLineAtom,
-	enableLyricTranslationLineAtom,
+	lyricWordFadeWidthAtom,
+	fftDataRangeAtom,
+	playerControlsTypeAtom,
+	verticalCoverLayoutAtom,
+	PlayerControlsType,
+	VerticalCoverLayout,
+	showMusicNameAtom,
+	showMusicArtistsAtom,
+	showMusicAlbumAtom,
+	showVolumeControlAtom,
+	showBottomControlAtom,
+	lyricBackgroundRendererAtom,
 	lyricBackgroundFPSAtom,
 	lyricBackgroundRenderScaleAtom,
 	lyricBackgroundStaticModeAtom,
-	lyricFontFamilyAtom,
+	cssBackgroundPropertyAtom,
 	lyricFontWeightAtom,
 	lyricLetterSpacingAtom,
-	lyricWordFadeWidthAtom,
-	LyricSizePreset,
-	lyricSizePresetAtom,
-	playerControlsTypeAtom,
-	showBottomControlAtom,
-	showMusicAlbumAtom,
-	showMusicArtistsAtom,
-	showMusicNameAtom,
-	showVolumeControlAtom,
-	verticalCoverLayoutAtom,
-	DarkMode,
 	LyricPlayerImplementation,
+} from "@applemusic-like-lyrics/react-full";
+import {
+	darkModeAtom,
+	DarkMode,
+	advanceLyricDynamicLyricTimeAtom,
+	showStatJSFrameAtom,
+	updateInfoAtom,
+	enableWsLyricsInSmtcModeAtom,
+} from "../../states/appAtoms.ts";
+import {
+	smtcSessionsAtom,
+	smtcSelectedSessionIdAtom,
+	smtcTextConversionModeAtom,
 	type SmtcSession,
 	TextConversionMode,
-	advanceLyricDynamicLyricTimeAtom,
-	lyricBackgroundRendererAtom,
-	cssBackgroundPropertyAtom,
-	darkModeAtom,
-	lyricPlayerImplementationAtom,
-	showStatJSFrameAtom,
-	smtcSelectedSessionIdAtom,
-	smtcSessionsAtom,
-	smtcTextConversionModeAtom,
-	enableWsLyricsInSmtcModeAtom,
 	smtcTimeOffsetAtom,
-	type LyricSizePresetValue,
-} from "@applemusic-like-lyrics/states";
-
-import { fftDataRangeAtom } from "@applemusic-like-lyrics/states";
-import { updateInfoAtom } from "@applemusic-like-lyrics/states";
+} from "../../states/smtcAtoms.ts";
 
 const SettingEntry: FC<
 	PropsWithChildren<{ label: string; description?: string }>
@@ -218,7 +220,7 @@ const LyricFontSetting: FC = () => {
 					onChange={(e) => setFontWeight(e.currentTarget.valueAsNumber)}
 				/>
 				<Slider
-					value={[fontWeight]}
+					value={[Number(fontWeight)]}
 					min={0}
 					max={1000}
 					style={{ maxWidth: "10em" }}
@@ -355,7 +357,7 @@ const GeneralSettings = () => {
 			value: "cimode",
 		});
 		return menu;
-	}, [t, i18n.language]);
+	}, [t, i18n.language, i18n.options.resources]);
 
 	const themeMenu = useMemo(
 		() => [

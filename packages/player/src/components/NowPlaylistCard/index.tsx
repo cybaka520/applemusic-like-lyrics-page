@@ -13,12 +13,12 @@ import {
 import { Trans } from "react-i18next";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { db, type Song } from "../../dexie.ts";
-import {
-	currentPlaylistAtom,
-	currentPlaylistMusicIndexAtom,
-} from "@applemusic-like-lyrics/states";
 import { type SongData, emitAudioThread } from "../../utils/player.ts";
 import styles from "./index.module.css";
+import {
+	currentPlaylistMusicIndexAtom,
+	currentPlaylistAtom,
+} from "@applemusic-like-lyrics/react-full";
 
 const PlaylistSongItem: FC<
 	{

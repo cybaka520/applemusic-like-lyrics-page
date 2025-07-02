@@ -1,38 +1,38 @@
 import { FFTPlayer } from "@applemusic-like-lyrics/fft";
 import { parseTTML } from "@applemusic-like-lyrics/lyric";
-import {
-	fftDataAtom,
-	hideLyricViewAtom,
-	musicAlbumNameAtom,
-	musicArtistsAtom,
-	musicCoverAtom,
-	musicDurationAtom,
-	musicLyricLinesAtom,
-	musicNameAtom,
-	musicPlayingAtom,
-	musicPlayingPositionAtom,
-	musicVolumeAtom,
-	onChangeVolumeAtom,
-	onLyricLineClickAtom,
-	onPlayOrResumeAtom,
-	onRequestNextSongAtom,
-	onRequestPrevSongAtom,
-	onSeekPositionAtom,
-} from "@applemusic-like-lyrics/states";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { type FC, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import {
-	fftDataRangeAtom,
-	musicIdAtom,
-	wsProtocolConnectedAddrsAtom,
-	wsProtocolListenAddrAtom,
-} from "@applemusic-like-lyrics/states";
 import { emitAudioThread } from "../../utils/player.ts";
 import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
+import {
+	fftDataRangeAtom,
+	fftDataAtom,
+	musicNameAtom,
+	musicAlbumNameAtom,
+	musicCoverAtom,
+	musicArtistsAtom,
+	onRequestNextSongAtom,
+	onRequestPrevSongAtom,
+	onPlayOrResumeAtom,
+	musicPlayingAtom,
+	onSeekPositionAtom,
+	onLyricLineClickAtom,
+	onChangeVolumeAtom,
+	musicIdAtom,
+	musicDurationAtom,
+	musicPlayingPositionAtom,
+	musicVolumeAtom,
+	hideLyricViewAtom,
+	musicLyricLinesAtom,
+} from "@applemusic-like-lyrics/react-full";
+import {
+	wsProtocolListenAddrAtom,
+	wsProtocolConnectedAddrsAtom,
+} from "../../states/appAtoms.ts";
 
 interface WSProtocolMusicContextProps {
 	isLyricOnly?: boolean;

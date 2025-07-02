@@ -19,7 +19,6 @@
 		"@applemusic-like-lyrics/lyric": "workspace:^",
 		"@applemusic-like-lyrics/react": "workspace:^",
 		"@applemusic-like-lyrics/react-full": "workspace:^",
-		"@applemusic-like-lyrics/states": "workspace:*",
 		"@applemusic-like-lyrics/ws-protocol": "workspace:^",
 		"@dnd-kit/core": "^6.3.1",
 		"@iconify/icons-fluent": "^1.2.38",
