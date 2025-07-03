@@ -74,6 +74,8 @@ dependencies = [
  "cpal",
  "crossbeam-channel",
  "futures",
+ "objc2 0.6.1",
+ "objc2-avf-audio",
  "serde",
  "serde_json",
  "smtc-suite",
@@ -105,6 +107,7 @@ dependencies = [
  "block2 0.6.1",
  "concat-string",
  "cpal",
+ "dispatch",
  "easer",
  "ffmpeg-next",
  "futures",
@@ -123,6 +126,7 @@ dependencies = [
  "serde_json",
  "spectrum-analyzer",
  "symphonia",
+ "tauri",
  "tempfile",
  "tokio",
  "tracing",
@@ -3042,6 +3046,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10cbe18d879e20a4aea544f8befe38bcf52255eb63d3f23eca2842f3319e4c07"
 dependencies = [
  "bitflags 2.9.1",
+ "block2 0.6.1",
  "libc",
  "objc2 0.6.1",
  "objc2-core-audio",
@@ -3058,6 +3063,20 @@ checksum = "2e085a2e16c61dadbad7a808fc9d5b5f8472b1b825b53d529c9f64ccac78e722"
 dependencies = [
  "bitflags 2.9.1",
  "objc2 0.6.1",
+ "objc2-foundation 0.3.1",
+]
+
+[[package]]
+name = "objc2-avf-audio"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfc1d11521c211a7ebe17739fc806719da41f56c6b3f949d9861b459188ce910"
+dependencies = [
+ "bitflags 2.9.1",
+ "block2 0.6.1",
+ "objc2 0.6.1",
+ "objc2-audio-toolbox",
+ "objc2-core-audio-types",
  "objc2-foundation 0.3.1",
 ]
 

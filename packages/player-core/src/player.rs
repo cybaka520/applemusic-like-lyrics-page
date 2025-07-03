@@ -10,7 +10,7 @@ use anyhow::Context;
 
 use easer::functions::*;
 use media_state::{MediaStateManager, MediaStateManagerBackend, MediaStateMessage};
-use output::create_audio_output_thread;
+use output::{AudioOutput, create_audio_output_thread};
 use symphonia::core::io::{MediaSource, MediaSourceStream, MediaSourceStreamOptions};
 use symphonia::core::{errors::Error as DecodeError, units::Time};
 use tokio::{
@@ -22,6 +22,8 @@ use tokio::{
 };
 use tracing::*;
 use utils::read_audio_info;
+
+use tauri::{AppHandle, Runtime};
 
 use crate::*;
 
@@ -129,7 +131,7 @@ pub struct AudioPlayer {
 pub struct AudioPlayerConfig {}
 
 impl AudioPlayer {
-    pub fn new(_config: AudioPlayerConfig) -> Self {
+    pub fn new(_config: AudioPlayerConfig, output_instance: Box<dyn AudioOutput>) -> Self {
         #[cfg(feature = "ffmpeg-next")]
         {
             if let Err(err) = ffmpeg_next::init() {
@@ -163,7 +165,7 @@ impl AudioPlayer {
         let (fft_has_data_sx, mut fft_rx) = tokio::sync::mpsc::unbounded_channel();
         let (play_pos_sx, mut play_pos_rx) = tokio::sync::mpsc::unbounded_channel();
 
-        let player = create_audio_output_thread();
+        let player = create_audio_output_thread(output_instance);
 
         let (media_state_manager, media_state_rx) = match MediaStateManager::new() {
             Ok((manager, ms_rx)) => {

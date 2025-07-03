@@ -13,12 +13,30 @@ use tauri_plugin_fs::OpenOptions;
 use tokio::sync::RwLock;
 use tracing::*;
 
+use amll_player_core::output::{StreamHandle, init_audio_player};
+
+#[cfg(target_os = "macos")]
+use objc2::rc::autoreleasepool;
+#[cfg(target_os = "macos")]
+use objc2_avf_audio::{AVAudioSession, AVAudioSessionCategoryPlayback};
+
 mod player;
 mod screen_capture;
 mod server;
 
 #[cfg(target_os = "windows")]
 mod external_media_controller;
+
+#[derive(Debug)]
+struct SetupError(String);
+
+impl std::fmt::Display for SetupError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for SetupError {}
 
 pub type AMLLWebSocketServerWrapper = RwLock<AMLLWebSocketServer>;
 pub type AMLLWebSocketServerState<'r> = State<'r, AMLLWebSocketServerWrapper>;
@@ -298,6 +316,7 @@ fn init_logging() {
 pub fn run() {
     init_logging();
     info!("AMLL Player is starting!");
+
     #[allow(unused_mut)]
     let mut context = tauri::generate_context!();
 
@@ -351,8 +370,38 @@ pub fn run() {
             external_media_controller::request_smtc_update,
             reset_window_theme,
         ])
-        .setup(|app| {
-            player::init_local_player(app.handle().clone());
+        .setup(move |app| {
+            #[cfg(target_os = "macos")]
+            autoreleasepool(|_| {
+                info!("正在激活 AVAudioSession...");
+                let session = unsafe { AVAudioSession::sharedInstance() };
+
+                if let Some(category) = unsafe { AVAudioSessionCategoryPlayback } {
+                    if let Err(e) = unsafe { session.setCategory_error(category) } {
+                        error!("设置 AVAudioSession 类别失败：{:?}", e);
+                    }
+                } else {
+                    error!("AVAudioSessionCategoryPlayback 常量为空。");
+                }
+
+                if let Err(e) = unsafe { session.setActive_error(true) } {
+                    error!("设置 AVAudioSession 激活状态失败：{:?}", e);
+                }
+                info!("AVAudioSession 已激活。");
+            });
+
+            let (stream_handle, output_instance) = match init_audio_player("", None) {
+                Ok((handle, instance)) => (handle, instance),
+                Err(e) => {
+                    let err_msg = format!("音频初始化失败：{}", e);
+                    error!("{}", err_msg);
+                    return Err(Box::new(SetupError(err_msg)));
+                }
+            };
+
+            let _keep_stream_alive = stream_handle;
+
+            player::init_local_player(app.handle().clone(), output_instance);
 
             #[cfg(target_os = "windows")]
             {
