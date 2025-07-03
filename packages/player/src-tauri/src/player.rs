@@ -1,4 +1,3 @@
-use amll_player_core::output::AudioOutput;
 use amll_player_core::*;
 use tauri::{Emitter, Manager, Runtime};
 use tokio::sync::RwLock;
@@ -15,12 +14,8 @@ pub async fn local_player_send_msg(msg: AudioThreadEventMessage<AudioThreadMessa
     }
 }
 
-#[cfg_attr(not(mobile), allow(unused_mut))]
-async fn local_player_main<R: Runtime>(
-    manager: impl Manager<R> + Clone + Send + Sync + 'static,
-    output_instance: Box<dyn AudioOutput>,
-) {
-    let mut player = AudioPlayer::new(AudioPlayerConfig {}, output_instance);
+async fn local_player_main<R: Runtime>(manager: impl Manager<R> + Clone + Send + Sync + 'static) {
+    let player = AudioPlayer::new(AudioPlayerConfig {});
     let handler = player.handler();
     PLAYER_HANDLER.write().await.replace(handler);
 
@@ -56,11 +51,8 @@ async fn local_player_main<R: Runtime>(
         .await;
 }
 
-pub fn init_local_player<R: Runtime>(
-    emitter: impl Manager<R> + Clone + Send + Sync + 'static,
-    output_instance: Box<dyn AudioOutput>,
-) {
+pub fn init_local_player<R: Runtime>(emitter: impl Manager<R> + Clone + Send + Sync + 'static) {
     tauri::async_runtime::spawn(async move {
-        local_player_main(emitter, output_instance).await;
+        local_player_main(emitter).await;
     });
 }

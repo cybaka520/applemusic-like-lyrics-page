@@ -13,33 +13,12 @@ use tauri_plugin_fs::OpenOptions;
 use tokio::sync::RwLock;
 use tracing::*;
 
-use amll_player_core::output::{StreamHandle, init_audio_player};
-use crate::player::init_local_player;
-
-
-#[cfg(target_os = "macos")]
-use objc2::rc::autoreleasepool;
-#[cfg(target_os = "macos")]
-use objc2_avf_audio::{AVAudioSession, AVAudioSessionCategoryPlayback};
-
 mod player;
 mod screen_capture;
 mod server;
 
 #[cfg(target_os = "windows")]
 mod external_media_controller;
-
-#[derive(Debug)]
-struct SetupError(String);
-
-
-impl std::fmt::Display for SetupError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl std::error::Error for SetupError {}
 
 pub type AMLLWebSocketServerWrapper = RwLock<AMLLWebSocketServer>;
 pub type AMLLWebSocketServerState<'r> = State<'r, AMLLWebSocketServerWrapper>;
@@ -62,7 +41,9 @@ async fn ws_close_connection(ws: AMLLWebSocketServerState<'_>) -> Result<(), Str
 }
 
 #[tauri::command]
-async fn ws_get_connections(ws: AMLLWebSocketServerState<'_>) -> Result<Vec<SocketAddr>, String> {
+async fn ws_get_connections(
+    ws: AMLLWebSocketServerState<'_>,
+) -> Result<Vec<SocketAddr>, String> {
     let server_guard = ws.read().await;
     let connections = server_guard.get_connections().await;
     Ok(connections)
@@ -114,11 +95,7 @@ impl From<AudioInfo> for MusicInfo {
             name: v.name,
             artist: v.artist,
             album: v.album,
-            lyric_format: if v.lyric.is_empty() {
-                "".into()
-            } else {
-                "lrc".into()
-            },
+            lyric_format: if v.lyric.is_empty() { "".into() } else { "lrc".into() },
             lyric: v.lyric,
             comment: v.comment,
             cover: v.cover.unwrap_or_default(),
@@ -201,34 +178,16 @@ async fn create_common_win<'a>(
         })
         .theme(None)
         .title({
-            #[cfg(target_os = "macos")]
-            {
-                ""
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                "AMLL Player"
-            }
+            #[cfg(target_os = "macos")] { "" }
+            #[cfg(not(target_os = "macos"))] { "AMLL Player" }
         })
         .visible({
-            #[cfg(target_os = "macos")]
-            {
-                true
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                false
-            }
+            #[cfg(target_os = "macos")] { true }
+            #[cfg(not(target_os = "macos"))] { false }
         })
         .decorations({
-            #[cfg(target_os = "macos")]
-            {
-                true
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                false
-            }
+            #[cfg(target_os = "macos")] { true }
+            #[cfg(not(target_os = "macos"))] { false }
         });
 
     #[cfg(target_os = "macos")]
@@ -240,8 +199,7 @@ async fn create_common_win<'a>(
 async fn recreate_window(app: &AppHandle, label: &str, path: Option<&str>) {
     info!("Recreating window: {}", label);
     if let Some(win) = app.get_webview_window(label) {
-        #[cfg(desktop)]
-        {
+        #[cfg(desktop)] {
             let _ = win.show();
             let _ = win.set_focus();
         }
@@ -265,8 +223,7 @@ async fn recreate_window(app: &AppHandle, label: &str, path: Option<&str>) {
 
     let win = win.build().expect("can't show original window");
 
-    #[cfg(desktop)]
-    {
+    #[cfg(desktop)] {
         let _ = win.set_focus();
         if let Ok(orig_size) = win.inner_size() {
             let _ = win.set_size(Size::Physical(PhysicalSize::new(0, 0)));
@@ -283,8 +240,7 @@ async fn open_screenshot_window(app: AppHandle) {
 }
 
 fn init_logging() {
-    #[cfg(not(debug_assertions))]
-    {
+    #[cfg(not(debug_assertions))] {
         let log_file = std::fs::File::create("amll-player.log");
         if let Ok(log_file) = log_file {
             tracing_subscriber::fmt()
@@ -300,10 +256,9 @@ fn init_logging() {
                 .init();
         }
     }
-    #[cfg(debug_assertions)]
-    {
+    #[cfg(debug_assertions)] {
         tracing_subscriber::fmt()
-            .with_env_filter("amll_player=trace,smtc_suite=debug,wry=info")
+            .with_env_filter("amll_player=trace,wry=info")
             .with_thread_names(true)
             .with_timer(tracing_subscriber::fmt::time::uptime())
             .init();
@@ -319,7 +274,6 @@ fn init_logging() {
 pub fn run() {
     init_logging();
     info!("AMLL Player is starting!");
-
     #[allow(unused_mut)]
     let mut context = tauri::generate_context!();
 
@@ -340,8 +294,7 @@ pub fn run() {
     #[cfg(not(mobile))]
     let builder = builder.plugin(tauri_plugin_updater::Builder::new().pubkey(pubkey).build());
 
-    #[cfg(mobile)]
-    {
+    #[cfg(mobile)] {
         context
             .config_mut()
             .app
@@ -356,7 +309,6 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             ws_reopen_connection,
             ws_get_connections,
@@ -373,65 +325,28 @@ pub fn run() {
             external_media_controller::request_smtc_update,
             reset_window_theme,
         ])
-        .setup(move |app| {
-            let app_handle = app.handle().clone();
-            #[cfg(target_os = "macos")]
-            autoreleasepool(|_| {
-                info!("正在激活 AVAudioSession...");
-                let session = unsafe { AVAudioSession::sharedInstance() };
-                
-                if let Some(category) = unsafe { AVAudioSessionCategoryPlayback } {
-                    if let Err(e) = unsafe { session.setCategory_error(category) } {
-                        error!("设置 AVAudioSession 类别失败：{:?}", e);
-                    }
-                } else {
-                    error!("AVAudioSessionCategoryPlayback 常量为空。");
-                }
+        .setup(|app| {
+            player::init_local_player(app.handle().clone());
 
-                if let Err(e) = unsafe { session.setActive_error(true) } {
-                    error!("设置 AVAudioSession 激活状态失败：{:?}", e);
-                }
-                info!("AVAudioSession 已激活。");
-            });
-
-            let result = init_audio_player("", None);
-            
-            match result {
-                Ok((stream_handle, output_instance)) => {
-                    info!("音频设备成功初始化。");
-                    
-                    let _ = Box::leak(Box::new(stream_handle));
-                    
-                    init_local_player(app_handle.clone(), output_instance);
-                },
-                Err(e) => {
-                    error!("音频初始化失败：{}", e);
-                }
-            };
-
-            #[cfg(target_os = "windows")]
-            {
+            #[cfg(target_os = "windows")] {
                 info!("正在初始化外部媒体控制器...");
                 let controller_state =
                     external_media_controller::start_listener(app.handle().clone());
-                app_handle.manage(controller_state);
+                app.manage(controller_state);
             }
 
             #[cfg(desktop)]
             let _ = app
                 .handle()
                 .plugin(tauri_plugin_global_shortcut::Builder::new().build());
-            app_handle.manage::<AMLLWebSocketServerWrapper>(RwLock::new(AMLLWebSocketServer::new(
-                app_handle.clone(),
+            app.manage::<AMLLWebSocketServerWrapper>(RwLock::new(AMLLWebSocketServer::new(
+                app.handle().clone(),
             )));
-            #[cfg(not(mobile))]
-            {
-                tauri::async_runtime::block_on(recreate_window(&app_handle, "main", None));
+            #[cfg(not(mobile))] {
+                tauri::async_runtime::block_on(recreate_window(app.handle(), "main", None));
             }
             Ok(())
         })
         .run(context)
         .expect("error while running tauri application");
 }
-
-
