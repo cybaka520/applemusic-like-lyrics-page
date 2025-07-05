@@ -42,6 +42,8 @@ import {
 	smtcCanPauseAtom,
 	smtcCanSkipNextAtom,
 	smtcCanSkipPreviousAtom,
+	smtcTextConversionModeAtom,
+	TextConversionMode,
 } from "../../states/smtcAtoms.ts";
 
 type SmtcEvent =
@@ -277,6 +279,19 @@ export const SystemListenerMusicContext: FC = () => {
 						payload: { type: "selectSession", session_id: savedSessionId },
 					}).catch((err) => {
 						console.warn(`恢复之前选择的会话 ${savedSessionId} 失败:`, err);
+					});
+				}
+
+				const savedConversionMode = store.get(smtcTextConversionModeAtom);
+				if (
+					savedConversionMode &&
+					savedConversionMode !== TextConversionMode.Off
+				) {
+					console.log(`恢复之前选择的简繁转换模式: ${savedConversionMode}`);
+					await invoke("control_external_media", {
+						payload: { type: "setTextConversion", mode: savedConversionMode },
+					}).catch((err) => {
+						console.warn(`恢复简繁转换模式 ${savedConversionMode} 失败:`, err);
 					});
 				}
 

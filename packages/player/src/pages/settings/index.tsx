@@ -7,6 +7,7 @@ import {
 	MagicWandIcon,
 	MixerHorizontalIcon,
 	QuestionMarkCircledIcon,
+	RocketIcon,
 	TextAlignJustifyIcon,
 } from "@radix-ui/react-icons";
 import { Box, Button, Flex, Separator, Text, Tooltip } from "@radix-ui/themes";
@@ -104,6 +105,11 @@ export const Component: FC = () => {
 				id: "others",
 				label: t("page.settings.others.subtitle"),
 				icon: <Component1Icon width={20} height={20} />,
+			},
+			{
+				id: "lyricProcessing",
+				label: t("page.settings.lyricProcessing.subtitle", "WS 歌词处理选项"),
+				icon: <RocketIcon width={20} height={20} />,
 			},
 		];
 
