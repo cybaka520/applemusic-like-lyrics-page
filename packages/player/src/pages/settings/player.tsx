@@ -1264,6 +1264,13 @@ const SmtcSettings = () => {
 
 	const handleTextConversionChange = (value: TextConversionMode) => {
 		setTextConversion(value);
+
+		if (value && value !== TextConversionMode.Off) {
+			localStorage.setItem("saved_smtc_text_conversion_mode", value);
+		} else {
+			localStorage.removeItem("saved_smtc_text_conversion_mode");
+		}
+
 		invoke("control_external_media", {
 			payload: { type: "setTextConversion", mode: value },
 		}).catch((err) => {
@@ -1397,6 +1404,13 @@ const LyricProcessingSettings = () => {
 				{t("page.settings.lyricProcessing.subtitle", "WS 歌词处理选项")}
 			</SubTitle>
 
+			<Text as="div" weight="medium" mb="1">
+				{t(
+					"page.settings.lyricProcessing.agentRecognizer.title",
+					"目前仅在 SMTC 监听模式下的 WS 歌词有效，而且非常不稳定。建议修改设置后重新启动应用以生效。",
+				)}
+			</Text>
+
 			<SettingEntry
 				label={t(
 					"page.settings.lyricProcessing.chineseConversion.label",
@@ -1431,7 +1445,7 @@ const LyricProcessingSettings = () => {
 				configAtom={applyAutoSplittingAtom}
 			/>
 
-			<Separator size="4" my="3" />
+			<Box height="1em" />
 
 			<SwitchSettings
 				label={t(
@@ -1447,7 +1461,7 @@ const LyricProcessingSettings = () => {
 				)}
 			/>
 
-			<Separator size="4" my="3" />
+			<Box height="1em" />
 
 			<SwitchSettings
 				label={t(
@@ -1463,7 +1477,7 @@ const LyricProcessingSettings = () => {
 				)}
 			/>
 
-			<Separator size="4" my="3" />
+			<Box height="1em" />
 
 			<SwitchSettings
 				label={t(
@@ -1505,10 +1519,8 @@ const LyricProcessingSettings = () => {
 				min={1}
 				max={20}
 				step={1}
-				configAtom={atom(
-					smoothingOptions.smoothing_iterations,
-					(_, set, val) =>
-						setSmoothingOptions((p) => ({ ...p, smoothing_iterations: val })),
+				configAtom={atom(smoothingOptions.smoothing_iterations, (_, set, val) =>
+					setSmoothingOptions((p) => ({ ...p, smoothing_iterations: val })),
 				)}
 			/>
 		</>

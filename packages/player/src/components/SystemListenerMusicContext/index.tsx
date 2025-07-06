@@ -48,28 +48,28 @@ import {
 
 type SmtcEvent =
 	| {
-			type: "trackChanged";
-			data: {
-				title: string | null;
-				artist: string | null;
-				albumTitle: string | null;
-				durationMs: number | null;
-				positionMs: number | null;
-				isPlaying: boolean | null;
-				isShuffleActive: boolean | null;
-				repeatMode: RepeatMode | null;
-				canPlay: boolean | null;
-				canPause: boolean | null;
-				canSkipNext: boolean | null;
-				canSkipPrevious: boolean | null;
-				coverData: string | null;
-				coverDataHash: number | null;
-			};
-	  }
+		type: "trackChanged";
+		data: {
+			title: string | null;
+			artist: string | null;
+			albumTitle: string | null;
+			durationMs: number | null;
+			positionMs: number | null;
+			isPlaying: boolean | null;
+			isShuffleActive: boolean | null;
+			repeatMode: RepeatMode | null;
+			canPlay: boolean | null;
+			canPause: boolean | null;
+			canSkipNext: boolean | null;
+			canSkipPrevious: boolean | null;
+			coverData: string | null;
+			coverDataHash: number | null;
+		};
+	}
 	| {
-			type: "sessionsChanged";
-			data: { sessionId: string; displayName: string }[];
-	  }
+		type: "sessionsChanged";
+		data: { sessionId: string; displayName: string }[];
+	}
 	| { type: "selectedSessionVanished"; data: string }
 	| { type: "error"; data: string }
 	| { type: "audioData"; data: number[] }
@@ -174,7 +174,7 @@ export const SystemListenerMusicContext: FC = () => {
 		);
 
 		return () => {
-			const doNothing = toEmit(() => {});
+			const doNothing = toEmit(() => { });
 			store.set(onPlayOrResumeAtom, doNothing);
 			store.set(onRequestNextSongAtom, doNothing);
 			store.set(onRequestPrevSongAtom, doNothing);
@@ -282,12 +282,16 @@ export const SystemListenerMusicContext: FC = () => {
 					});
 				}
 
-				const savedConversionMode = store.get(smtcTextConversionModeAtom);
+				const savedConversionMode = localStorage.getItem("saved_smtc_text_conversion_mode") as TextConversionMode | null;
+
 				if (
 					savedConversionMode &&
 					savedConversionMode !== TextConversionMode.Off
 				) {
 					console.log(`恢复之前选择的简繁转换模式: ${savedConversionMode}`);
+
+					store.set(smtcTextConversionModeAtom, savedConversionMode);
+
 					await invoke("control_external_media", {
 						payload: { type: "setTextConversion", mode: savedConversionMode },
 					}).catch((err) => {
