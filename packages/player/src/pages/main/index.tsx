@@ -23,10 +23,10 @@ import { PlaylistCard } from "../../components/PlaylistCard/index.tsx";
 import { db } from "../../dexie.ts";
 import { router } from "../../router.tsx";
 import {
-	MusicContextMode,
+	updateInfoAtom,
 	musicContextModeAtom,
-} from "@applemusic-like-lyrics/states";
-import { updateInfoAtom } from "@applemusic-like-lyrics/states";
+	MusicContextMode,
+} from "../../states/appAtoms.ts";
 
 export const Component: FC = () => {
 	const playlists = useLiveQuery(() => db.playlists.toArray());
@@ -44,7 +44,7 @@ export const Component: FC = () => {
 	const rowVirtualizer = useVirtualizer({
 		count: playlists?.length ?? 0,
 		getScrollElement: () => parentRef.current,
-		estimateSize: () => 96,
+		estimateSize: () => 105,
 		overscan: 5,
 	});
 

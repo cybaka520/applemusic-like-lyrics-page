@@ -1,54 +1,60 @@
 import { FFTPlayer } from "@applemusic-like-lyrics/fft";
 import { parseTTML } from "@applemusic-like-lyrics/lyric";
-import {
-	fftDataAtom,
-	hideLyricViewAtom,
-	musicAlbumNameAtom,
-	musicArtistsAtom,
-	musicCoverAtom,
-	musicDurationAtom,
-	musicLyricLinesAtom,
-	musicNameAtom,
-	musicPlayingAtom,
-	musicPlayingPositionAtom,
-	musicVolumeAtom,
-	onChangeVolumeAtom,
-	onLyricLineClickAtom,
-	onPlayOrResumeAtom,
-	onRequestNextSongAtom,
-	onRequestPrevSongAtom,
-	onSeekPositionAtom,
-	wsLyricOnlyModeAtom,
-} from "@applemusic-like-lyrics/states";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { type FC, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import {
-	fftDataRangeAtom,
-	musicIdAtom,
-	wsProtocolConnectedAddrsAtom,
-	wsProtocolListenAddrAtom,
-} from "@applemusic-like-lyrics/states";
 import { emitAudioThread } from "../../utils/player.ts";
 import { FFTToLowPassContext } from "../LocalMusicContext/index.tsx";
+import {
+	fftDataRangeAtom,
+	fftDataAtom,
+	musicNameAtom,
+	musicAlbumNameAtom,
+	musicCoverAtom,
+	musicArtistsAtom,
+	onRequestNextSongAtom,
+	onRequestPrevSongAtom,
+	onPlayOrResumeAtom,
+	musicPlayingAtom,
+	onSeekPositionAtom,
+	onLyricLineClickAtom,
+	onChangeVolumeAtom,
+	musicIdAtom,
+	musicDurationAtom,
+	musicPlayingPositionAtom,
+	musicVolumeAtom,
+	hideLyricViewAtom,
+	musicLyricLinesAtom,
+	isLyricPageOpenedAtom,
+	onClickControlThumbAtom,
+} from "@applemusic-like-lyrics/react-full";
+import {
+	wsProtocolListenAddrAtom,
+	wsProtocolConnectedAddrsAtom,
+} from "../../states/appAtoms.ts";
 
-export const WSProtocolMusicContext: FC = () => {
+interface WSProtocolMusicContextProps {
+	isLyricOnly?: boolean;
+}
+
+export const WSProtocolMusicContext: FC<WSProtocolMusicContextProps> = ({
+	isLyricOnly = false,
+}) => {
 	const wsProtocolListenAddr = useAtomValue(wsProtocolListenAddrAtom);
 	const setConnectedAddrs = useSetAtom(wsProtocolConnectedAddrsAtom);
+	const setIsLyricPageOpened = useSetAtom(isLyricPageOpenedAtom);
 	const store = useStore();
 	const { t } = useTranslation();
 	const fftPlayer = useRef<FFTPlayer | undefined>(undefined);
 
-	const isLyricOnlyMode = useAtomValue(wsLyricOnlyModeAtom);
-
 	useEffect(() => {
-		if (!isLyricOnlyMode) {
+		if (!isLyricOnly) {
 			emitAudioThread("pauseAudio");
 		}
-	}, [isLyricOnlyMode]);
+	}, [isLyricOnly]);
 
 	const fftDataRange = useAtomValue(fftDataRangeAtom);
 
@@ -76,13 +82,13 @@ export const WSProtocolMusicContext: FC = () => {
 	}, [fftDataRange, store]);
 
 	useEffect(() => {
-		if (!wsProtocolListenAddr && !isLyricOnlyMode) {
+		if (!wsProtocolListenAddr && !isLyricOnly) {
 			return;
 		}
 
 		setConnectedAddrs(new Set());
 
-		if (!isLyricOnlyMode) {
+		if (!isLyricOnly) {
 			store.set(musicNameAtom, "等待连接中");
 			store.set(musicAlbumNameAtom, "");
 			store.set(musicCoverAtom, "");
@@ -103,7 +109,7 @@ export const WSProtocolMusicContext: FC = () => {
 			});
 		}
 
-		if (!isLyricOnlyMode) {
+		if (!isLyricOnly) {
 			const toEmit = <T,>(onEmit: T) => ({ onEmit });
 			store.set(
 				onRequestNextSongAtom,
@@ -138,6 +144,12 @@ export const WSProtocolMusicContext: FC = () => {
 				onChangeVolumeAtom,
 				toEmit((volume) => {
 					sendWSMessage("setVolume", { volume });
+				}),
+			);
+			store.set(
+				onClickControlThumbAtom,
+				toEmit(() => {
+					setIsLyricPageOpened(false);
 				}),
 			);
 		}
@@ -208,7 +220,7 @@ export const WSProtocolMusicContext: FC = () => {
 				return;
 			}
 
-			if (isLyricOnlyMode) {
+			if (isLyricOnly) {
 				switch (payload.type) {
 					case "setLyric":
 					case "setLyricFromTTML":
@@ -332,25 +344,40 @@ export const WSProtocolMusicContext: FC = () => {
 		});
 		return () => {
 			unlistenConnected.then((u) => u());
-			// unlistenBody.then((u) => u());
 			unlistenDisconnected.then((u) => u());
+
 			invoke("ws_close_connection");
+
+			const doNothing = { onEmit: () => { } };
+			store.set(onRequestNextSongAtom, doNothing);
+			store.set(onRequestPrevSongAtom, doNothing);
+			store.set(onPlayOrResumeAtom, doNothing);
+			store.set(onSeekPositionAtom, doNothing);
+			store.set(onLyricLineClickAtom, doNothing);
+			store.set(onChangeVolumeAtom, doNothing);
+			store.set(onClickControlThumbAtom, doNothing);
+
 			if (curCoverBlobUrl) {
 				URL.revokeObjectURL(curCoverBlobUrl);
-				if (!isLyricOnlyMode) {
-					store.set(musicCoverAtom, "");
-				}
+				curCoverBlobUrl = "";
+			}
+
+			if (!isLyricOnly) {
+				store.set(musicNameAtom, "");
+				store.set(musicAlbumNameAtom, "");
+				store.set(musicCoverAtom, "");
+				store.set(musicArtistsAtom, []);
+				store.set(musicIdAtom, "");
+				store.set(musicDurationAtom, 0);
+				store.set(musicPlayingPositionAtom, 0);
+				store.set(musicPlayingAtom, false);
 			}
 		};
-	}, [wsProtocolListenAddr, setConnectedAddrs, store, t, isLyricOnlyMode]);
+	}, [wsProtocolListenAddr, setConnectedAddrs, store, t, isLyricOnly, setIsLyricPageOpened]);
 
-	if (isLyricOnlyMode) {
+	if (isLyricOnly) {
 		return null;
 	}
 
-	return (
-		<>
-			<FFTToLowPassContext />
-		</>
-	);
+	return <FFTToLowPassContext />;
 };
