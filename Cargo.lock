@@ -93,18 +93,18 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "arrayvec",
- "block2 0.5.1",
+ "block2 0.6.1",
  "concat-string",
- "cpal",
+ "cpal 0.16.0",
  "dispatch",
  "easer",
  "ffmpeg-next",
  "futures",
  "md5",
  "mpris-server",
- "objc2 0.5.2",
- "objc2-app-kit 0.2.2",
- "objc2-foundation 0.2.2",
+ "objc2 0.6.1",
+ "objc2-app-kit",
+ "objc2-foundation 0.3.1",
  "objc2-media-player",
  "once_cell",
  "rb",
@@ -791,6 +791,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "coreaudio-rs"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1aae284fbaf7d27aa0e292f7677dfbe26503b0d555026f702940805a630eac17"
+dependencies = [
+ "bitflags 1.3.2",
+ "libc",
+ "objc2-audio-toolbox",
+ "objc2-core-audio",
+ "objc2-core-audio-types",
+ "objc2-core-foundation",
+]
+
+[[package]]
 name = "coreaudio-sys"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -807,7 +821,7 @@ checksum = "873dab07c8f743075e57f524c583985fbaf745602acbe916a01539364369a779"
 dependencies = [
  "alsa",
  "core-foundation-sys",
- "coreaudio-rs",
+ "coreaudio-rs 0.11.3",
  "dasp_sample",
  "jni",
  "js-sys",
@@ -816,6 +830,32 @@ dependencies = [
  "ndk 0.8.0",
  "ndk-context",
  "oboe",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "windows 0.54.0",
+]
+
+[[package]]
+name = "cpal"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbd307f43cc2a697e2d1f8bc7a1d824b5269e052209e28883e5bc04d095aaa3f"
+dependencies = [
+ "alsa",
+ "coreaudio-rs 0.13.0",
+ "dasp_sample",
+ "jni",
+ "js-sys",
+ "libc",
+ "mach2",
+ "ndk 0.9.0",
+ "ndk-context",
+ "num-derive",
+ "num-traits",
+ "objc2-audio-toolbox",
+ "objc2-core-audio",
+ "objc2-core-audio-types",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -2503,7 +2543,7 @@ dependencies = [
  "gtk",
  "keyboard-types",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-foundation 0.3.1",
  "once_cell",
@@ -2715,22 +2755,6 @@ dependencies = [
 
 [[package]]
 name = "objc2-app-kit"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4e89ad9e3d7d297152b17d39ed92cd50ca8063a89a9fa569046d41568891eff"
-dependencies = [
- "bitflags 2.9.1",
- "block2 0.5.1",
- "libc",
- "objc2 0.5.2",
- "objc2-core-data 0.2.2",
- "objc2-core-image 0.2.2",
- "objc2-foundation 0.2.2",
- "objc2-quartz-core 0.2.2",
-]
-
-[[package]]
-name = "objc2-app-kit"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6f29f568bec459b0ddff777cec4fe3fd8666d82d5a40ebd0ff7e66134f89bcc"
@@ -2740,12 +2764,38 @@ dependencies = [
  "libc",
  "objc2 0.6.1",
  "objc2-cloud-kit",
- "objc2-core-data 0.3.1",
+ "objc2-core-data",
  "objc2-core-foundation",
  "objc2-core-graphics",
- "objc2-core-image 0.3.1",
+ "objc2-core-image",
  "objc2-foundation 0.3.1",
  "objc2-quartz-core 0.3.1",
+]
+
+[[package]]
+name = "objc2-audio-toolbox"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10cbe18d879e20a4aea544f8befe38bcf52255eb63d3f23eca2842f3319e4c07"
+dependencies = [
+ "bitflags 2.9.1",
+ "libc",
+ "objc2 0.6.1",
+ "objc2-core-audio",
+ "objc2-core-audio-types",
+ "objc2-core-foundation",
+ "objc2-foundation 0.3.1",
+]
+
+[[package]]
+name = "objc2-av-foundation"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e085a2e16c61dadbad7a808fc9d5b5f8472b1b825b53d529c9f64ccac78e722"
+dependencies = [
+ "bitflags 2.9.1",
+ "objc2 0.6.1",
+ "objc2-foundation 0.3.1",
 ]
 
 [[package]]
@@ -2760,15 +2810,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "objc2-core-data"
-version = "0.2.2"
+name = "objc2-core-audio"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "617fbf49e071c178c0b24c080767db52958f716d9eabdf0890523aeae54773ef"
+checksum = "ca44961e888e19313b808f23497073e3f6b3c22bb485056674c8b49f3b025c82"
+dependencies = [
+ "dispatch2",
+ "objc2 0.6.1",
+ "objc2-core-audio-types",
+ "objc2-core-foundation",
+]
+
+[[package]]
+name = "objc2-core-audio-types"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0f1cc99bb07ad2ddb6527ddf83db6a15271bb036b3eb94b801cd44fdc666ee1"
 dependencies = [
  "bitflags 2.9.1",
- "block2 0.5.1",
- "objc2 0.5.2",
- "objc2-foundation 0.2.2",
+ "objc2 0.6.1",
 ]
 
 [[package]]
@@ -2804,18 +2864,6 @@ dependencies = [
  "objc2 0.6.1",
  "objc2-core-foundation",
  "objc2-io-surface",
-]
-
-[[package]]
-name = "objc2-core-image"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55260963a527c99f1819c4f8e3b47fe04f9650694ef348ffd2227e8196d34c80"
-dependencies = [
- "block2 0.5.1",
- "objc2 0.5.2",
- "objc2-foundation 0.2.2",
- "objc2-metal",
 ]
 
 [[package]]
@@ -2881,15 +2929,17 @@ dependencies = [
 
 [[package]]
 name = "objc2-media-player"
-version = "0.2.2"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aeee7e398f352d50d8016c73969878942efb422030884a744180a2d2b8b341de"
+checksum = "e5fb6217df3aef0b6ffc5890e9f90adf6ca818810b68158d43ba922b77543e25"
 dependencies = [
  "bitflags 2.9.1",
- "block2 0.5.1",
- "objc2 0.5.2",
- "objc2-app-kit 0.2.2",
- "objc2-foundation 0.2.2",
+ "block2 0.6.1",
+ "objc2 0.6.1",
+ "objc2-app-kit",
+ "objc2-av-foundation",
+ "objc2-core-foundation",
+ "objc2-foundation 0.3.1",
 ]
 
 [[package]]
@@ -2949,7 +2999,7 @@ dependencies = [
  "bitflags 2.9.1",
  "block2 0.6.1",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-foundation 0.3.1",
 ]
@@ -3689,7 +3739,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7ceb6607dd738c99bc8cb28eff249b7cd5c8ec88b9db96c0608c1480d140fb1"
 dependencies = [
  "claxon",
- "cpal",
+ "cpal 0.15.3",
  "hound",
  "lewton",
  "symphonia",
@@ -4534,7 +4584,7 @@ dependencies = [
  "ndk-context",
  "ndk-sys 0.6.0+11769913",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-foundation 0.3.1",
  "once_cell",
  "parking_lot",
@@ -4588,7 +4638,7 @@ dependencies = [
  "mime",
  "muda",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-foundation 0.3.1",
  "objc2-ui-kit",
  "percent-encoding",
@@ -4712,7 +4762,7 @@ dependencies = [
  "jni",
  "log",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-foundation 0.3.1",
  "once_cell",
  "percent-encoding",
@@ -5143,7 +5193,7 @@ dependencies = [
  "libappindicator",
  "muda",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-core-graphics",
  "objc2-foundation 0.3.1",
@@ -5633,7 +5683,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d9bec5a31f3f9362f2258fd0e9c9dd61a9ca432e7306cc78c444258f0dce9a9c"
 dependencies = [
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-foundation 0.3.1",
  "raw-window-handle",
@@ -6140,7 +6190,7 @@ dependencies = [
  "libc",
  "ndk 0.9.0",
  "objc2 0.6.1",
- "objc2-app-kit 0.3.1",
+ "objc2-app-kit",
  "objc2-core-foundation",
  "objc2-foundation 0.3.1",
  "objc2-ui-kit",
