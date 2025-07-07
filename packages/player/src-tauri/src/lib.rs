@@ -1,7 +1,12 @@
 use crate::server::AMLLWebSocketServer;
 use amll_player_core::AudioInfo;
+use anyhow::Context;
+use anyhow::anyhow;
+use claxon::FlacReader;
+use rodio::OutputStream;
 use serde::*;
 use serde_json::Value;
+use std::fs::File;
 use std::net::SocketAddr;
 use symphonia::core::io::{MediaSourceStream, MediaSourceStreamOptions};
 use tauri::ipc::Channel;
@@ -112,52 +117,55 @@ async fn read_local_music_metadata(
     file_path: tauri_plugin_fs::FilePath,
     fs: State<'_, tauri_plugin_fs::Fs<tauri::Wry>>,
 ) -> Result<MusicInfo, String> {
-    let mut opt = OpenOptions::new();
-    opt.read(true);
-    let file = fs
-        .open(file_path.clone(), opt)
-        .map_err(|e| format!("文件打开失败 {e}"))?;
-    let result = tokio::task::spawn_blocking(move || -> Result<MusicInfo, String> {
-        let probe = symphonia::default::get_probe();
-        let mut format_result = probe
-            .format(
-                &Default::default(),
-                MediaSourceStream::new(Box::new(file), MediaSourceStreamOptions::default()),
-                &Default::default(),
-                &Default::default(),
-            )
-            .map_err(|e| e.to_string())?;
+    let path_clone = file_path
+        .as_path()
+        .context("Invalid file path")
+        .map_err(|e| e.to_string())?
+        .to_path_buf();
 
-        Ok(amll_player_core::utils::read_audio_info(&mut format_result).into())
-    })
-    .await;
+    let audio_info = tokio::task::spawn_blocking(move || -> anyhow::Result<AudioInfo> {
+        let src = File::open(&path_clone)
+            .with_context(|| format!("无法打开文件: {}", path_clone.display()))?;
+        let mss = MediaSourceStream::new(Box::new(src), Default::default());
 
-    const LYRIC_FILE_EXTENSIONS: &[&str] = &["ttml", "lys", "yrc", "qrc", "eslrc", "lrc"];
-
-    match result {
-        Ok(Ok(mut result)) => {
-            if !result.lyric.is_empty() {
-                result.lyric_format = "lrc".into();
+        match symphonia::default::get_probe().format(
+            &Default::default(),
+            mss,
+            &Default::default(),
+            &Default::default(),
+        ) {
+            Ok(mut probed) => Ok(amll_player_core::utils::read_audio_info(&mut probed)),
+            Err(err) => {
+                tracing::error!("读取文件 {} 失败: {}", path_clone.display(), err);
+                Err(anyhow!("Probe failed: {}", err))
             }
-            if let Some(file_path) = file_path.as_path() {
-                for ext in LYRIC_FILE_EXTENSIONS {
-                    let lyric_file_path = file_path.with_extension(ext);
-                    if lyric_file_path.exists() {
-                        if let Ok(lyric) = fs.read_to_string(&lyric_file_path) {
-                            result.lyric_format = ext.to_string();
-                            result.lyric = lyric;
-                            break;
-                        } else {
-                            warn!("歌词文件存在但读取失败: {}", lyric_file_path.display());
-                        }
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())?
+    .map_err(|e| e.to_string())?;
+
+    let mut music_info: MusicInfo = audio_info.into();
+
+    if let Some(file_path_ref) = file_path.as_path() {
+        if music_info.lyric.is_empty() {
+            const LYRIC_FILE_EXTENSIONS: &[&str] = &["ttml", "lys", "yrc", "qrc", "eslrc", "lrc"];
+            for ext in LYRIC_FILE_EXTENSIONS {
+                let lyric_file_path = file_path_ref.with_extension(ext);
+                if lyric_file_path.exists() {
+                    if let Ok(lyric) = fs.read_to_string(&lyric_file_path) {
+                        music_info.lyric_format = ext.to_string();
+                        music_info.lyric = lyric;
+                        break;
+                    } else {
+                        warn!("歌词文件存在但读取失败: {}", lyric_file_path.display());
                     }
                 }
             }
-            Ok(result)
         }
-        Ok(Err(e)) => Err(e),
-        Err(e) => Err(e.to_string()),
     }
+
+    Ok(music_info)
 }
 
 async fn create_common_win<'a>(
@@ -354,6 +362,15 @@ pub fn run() {
             ttml_processor::processor::parse_ttml_for_amll_player,
         ])
         .setup(|app| {
+            info!("正在初始化音频输出流...");
+            let (_stream, stream_handle) =
+                OutputStream::try_default().expect("无法创建默认的音频输出流");
+
+            app.manage(stream_handle);
+
+            std::mem::forget(_stream);
+            info!("音频输出流初始化成功。");
+
             player::init_local_player(app.handle().clone());
 
             #[cfg(target_os = "windows")]
