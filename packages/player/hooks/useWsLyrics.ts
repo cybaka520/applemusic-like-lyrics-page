@@ -1,16 +1,12 @@
+import { parseTTML } from "@applemusic-like-lyrics/lyric";
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { useAtomValue, useStore } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import {
-	metadataStripperOptionsAtom,
-	syllableSmoothingOptionsAtom,
-	agentRecognizerOptionsAtom,
-	applyAutoSplittingAtom,
 	wsProtocolListenAddrAtom,
 	advanceLyricDynamicLyricTimeAtom,
-	chineseConversionModeAtom,
 } from "../src/states/appAtoms";
 import {
 	hideLyricViewAtom,
@@ -42,11 +38,6 @@ export const useWsLyrics = (isEnabled: boolean) => {
 	const advanceLyricTime = useAtomValue(advanceLyricDynamicLyricTimeAtom);
 	const store = useStore();
 	const { t } = useTranslation();
-	const metadataStripper = useAtomValue(metadataStripperOptionsAtom);
-	const smoothing = useAtomValue(syllableSmoothingOptionsAtom);
-	const agentRecognizer = useAtomValue(agentRecognizerOptionsAtom);
-	const applyAutoSplitting = useAtomValue(applyAutoSplittingAtom);
-	const conversionMode = useAtomValue(chineseConversionModeAtom);
 
 	useEffect(() => {
 		if (!isEnabled) {
@@ -114,7 +105,7 @@ export const useWsLyrics = (isEnabled: boolean) => {
 
 		const onBodyChannel = new Channel<WSBodyMap[keyof WSBodyMessageMap]>();
 
-		async function onBody(payload: WSBodyMap[keyof WSBodyMessageMap]) {
+		function onBody(payload: WSBodyMap[keyof WSBodyMessageMap]) {
 			switch (payload.type) {
 				case "ping":
 					invoke("ws_boardcast_message", { data: { type: "pong" } });
@@ -139,19 +130,7 @@ export const useWsLyrics = (isEnabled: boolean) => {
 				}
 				case "setLyricFromTTML": {
 					try {
-						const processorOptions = {
-							metadataStripper,
-							smoothing: smoothing.enabled ? smoothing : null,
-							agentRecognizer,
-							applyAutoSplitting,
-							chineseConversionMode: conversionMode,
-						};
-
-						const data = await invoke("parse_ttml_for_amll_player", {
-							src: payload.value.data,
-							options: processorOptions,
-						});
-
+						const data = parseTTML(payload.value.data);
 						let processed = data.lines.map((line) => ({
 							...line,
 							words: line.words.map((word) => ({ ...word, obscene: false })),
@@ -185,5 +164,5 @@ export const useWsLyrics = (isEnabled: boolean) => {
 		return () => {
 			invoke("ws_close_connection");
 		};
-	}, [isEnabled, wsProtocolListenAddr, store, t, advanceLyricTime, metadataStripper, smoothing, agentRecognizer, applyAutoSplitting, conversionMode]);
+	}, [isEnabled, wsProtocolListenAddr, store, t, advanceLyricTime]);
 };
