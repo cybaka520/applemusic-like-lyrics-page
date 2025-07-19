@@ -192,7 +192,7 @@ pub fn parse_ttml<'a>(data: impl BufRead) -> std::result::Result<TTMLLyric<'a>, 
                                 if let Ok(Event::Text(text_event)) =
                                     reader.read_event_into(&mut Vec::new())
                                 {
-                                    if let Ok(unescaped_text) = text_event.unescape() {
+                                    if let Ok(unescaped_text) = text_event.decode() {
                                         itunes_translations
                                             .insert(k, unescaped_text.into_owned().into_bytes());
                                     }
@@ -573,7 +573,7 @@ pub fn parse_ttml<'a>(data: impl BufRead) -> std::result::Result<TTMLLyric<'a>, 
                 //     status
                 // );
             }
-            Ok(Event::Text(e)) => match e.unescape() {
+            Ok(Event::Text(e)) => match e.decode() {
                 Ok(txt) => {
                     // println!("  text: {:?}", txt);
                     match status {
@@ -614,7 +614,7 @@ pub fn parse_ttml<'a>(data: impl BufRead) -> std::result::Result<TTMLLyric<'a>, 
                         _ => {}
                     }
                 }
-                Err(err) => return Err(TTMLError::XmlError(read_len, err)),
+                Err(err) => return Err(TTMLError::XmlError(read_len, quick_xml::Error::Encoding(err))),
             },
             Err(err) => return Err(TTMLError::XmlError(read_len, err)),
             _ => (),
@@ -667,9 +667,9 @@ fn test_ttml() {
     let t = t.elapsed();
     match r {
         Ok(ttml) => {
-            println!("ttml: {:#?}", ttml);
+            println!("ttml: {ttml:#?}");
             let lys = crate::lys::stringify_lys(&ttml.lines);
-            println!("lys:\n{}", lys);
+            println!("lys:\n{lys}");
         }
         Err(e) => {
             // output line number and column number
@@ -683,7 +683,7 @@ fn test_ttml() {
             }
         }
     }
-    println!("ttml: {:?}", t);
+    println!("ttml: {t:?}");
 }
 
 use nom::{bytes::complete::*, combinator::*, sequence::tuple, *};

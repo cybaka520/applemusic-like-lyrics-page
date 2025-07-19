@@ -1,6 +1,6 @@
 [package]
 name = "amll-lyric"
-version = "0.2.4"
+version = "0.3.0"
 authors = ["SteveXMH <39523898+Steve-xmh@users.noreply.github.com>"]
 edition = "2024"
 repository = "https://github.com/Steve-xmh/applemusic-like-lyrics"
@@ -23,12 +23,12 @@ eqrc = ["dep:miniz_oxide", "dep:cc"]
 serde = ["dep:serde"]
 
 [dependencies]
-nom = { version = "7.1", optional = true }
-serde = { version = "1.0", features = ["derive"], optional = true }
+nom = { version = "^7.1", optional = true }
+serde = { version = "^1.0", features = ["derive"], optional = true }
 cipher = { version = "0.4", optional = true }
-miniz_oxide = { version = "0.7", optional = true }
-quick-xml = { version = "0.31", optional = true }
-thiserror = { version = "1", optional = true }
+miniz_oxide = { version = "^0.8", optional = true }
+quick-xml = { version = "^0.38", optional = true }
+thiserror = { version = "^2", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { version = "0.2" }

@@ -23,6 +23,7 @@ pub fn decrypt_qrc_raw(data: &mut [u8]) -> String {
     let mut c = qdec::TripleQDES::new(DEC_KEY, true);
 
     for chunk in data.chunks_exact_mut(8) {
+        let chunk = chunk.try_into().unwrap();
         c.crypt_inplace(chunk);
     }
 

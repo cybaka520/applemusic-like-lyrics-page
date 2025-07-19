@@ -267,7 +267,7 @@ pub fn stringify_lrc_js(lrc: JsValue) -> String {
 
 #[test]
 fn lrc_max_num() {
-    dbg!(parse_line("[999:99.999]Test"));
+    let _ = dbg!(parse_line("[999:99.999]Test"));
 }
 
 #[test]
