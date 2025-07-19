@@ -19,11 +19,11 @@ qrc = ["dep:nom"]
 lys = ["dep:nom"]
 eslrc = ["dep:nom", "lrc"]
 ttml = ["dep:quick-xml", "dep:thiserror", "dep:nom"]
-eqrc = ["dep:miniz_oxide", "dep:cc"]
+eqrc = ["dep:miniz_oxide"]
 serde = ["dep:serde"]
 
 [dependencies]
-nom = { version = "^7.1", optional = true }
+nom = { version = "^8.0", optional = true }
 serde = { version = "^1.0", features = ["derive"], optional = true }
 cipher = { version = "0.4", optional = true }
 miniz_oxide = { version = "^0.8", optional = true }
@@ -36,9 +36,6 @@ serde-wasm-bindgen = { version = "0.6" }
 console_error_panic_hook = { version = "0.1", optional = true }
 wee_alloc = { version = "0.4", optional = true }
 js-sys = { version = "0.3", optional = true }
-
-[build-dependencies]
-cc = { version = "1.0", optional = true }
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false

@@ -614,7 +614,12 @@ pub fn parse_ttml<'a>(data: impl BufRead) -> std::result::Result<TTMLLyric<'a>, 
                         _ => {}
                     }
                 }
-                Err(err) => return Err(TTMLError::XmlError(read_len, quick_xml::Error::Encoding(err))),
+                Err(err) => {
+                    return Err(TTMLError::XmlError(
+                        read_len,
+                        quick_xml::Error::Encoding(err),
+                    ));
+                }
             },
             Err(err) => return Err(TTMLError::XmlError(read_len, err)),
             _ => (),
@@ -686,7 +691,7 @@ fn test_ttml() {
     println!("ttml: {t:?}");
 }
 
-use nom::{bytes::complete::*, combinator::*, sequence::tuple, *};
+use nom::{bytes::complete::*, combinator::*, *};
 use std::str::FromStr;
 
 use super::TTMLLyric;
@@ -704,7 +709,7 @@ pub fn parse_minutes_or_seconds(input: &[u8]) -> IResult<&[u8], u64> {
 }
 
 pub fn parse_fraction(input: &[u8]) -> IResult<&[u8], u64> {
-    let (input, _) = tag(b".")(input)?;
+    let (input, _) = tag(b".".as_slice()).parse(input)?;
     let (input, result) = take_while1(|x: u8| x.is_dec_digit())(input)?;
     let frac_str = std::str::from_utf8(result).unwrap();
     let result = match frac_str.len() {
@@ -720,15 +725,16 @@ pub fn parse_fraction(input: &[u8]) -> IResult<&[u8], u64> {
 // HH:MM:SS.MS
 // or MM:SS.MS
 pub fn parse_timestamp(input: &[u8]) -> IResult<&[u8], u64> {
-    match tuple((
+    match (
         parse_hour,
-        tag(b":"),
+        tag(b":".as_slice()),
         parse_minutes_or_seconds,
-        tag(b":"),
+        tag(b":".as_slice()),
         parse_minutes_or_seconds,
         opt(parse_fraction),
         eof,
-    ))(input)
+    )
+        .parse(input)
     {
         Ok((input, result)) => {
             let time = result.0 * 60 * 60 * 1000 + result.2 * 60 * 1000 + result.4 * 1000;
@@ -739,13 +745,14 @@ pub fn parse_timestamp(input: &[u8]) -> IResult<&[u8], u64> {
                 Ok((input, time))
             }
         }
-        Err(_) => match tuple((
+        Err(_) => match (
             parse_minutes_or_seconds,
-            tag(b":"),
+            tag(b":".as_slice()),
             parse_minutes_or_seconds,
             opt(parse_fraction),
             eof,
-        ))(input)
+        )
+            .parse(input)
         {
             Ok((input, result)) => {
                 let time = result.0 * 60 * 1000 + result.2 * 1000;
@@ -755,7 +762,7 @@ pub fn parse_timestamp(input: &[u8]) -> IResult<&[u8], u64> {
                     Ok((input, time))
                 }
             }
-            Err(_) => match tuple((parse_minutes_or_seconds, opt(parse_fraction), eof))(input) {
+            Err(_) => match (parse_minutes_or_seconds, opt(parse_fraction), eof).parse(input) {
                 Ok((input, result)) => {
                     let time = result.0 * 1000;
                     if let Some(frac) = result.1 {
