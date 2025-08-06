@@ -8,11 +8,11 @@ English / [简体中文](./README-CN.md)
 
 <div align=center>
 
-A lyric player component library aims to look similar to iPad version of Apple Music. Also with[ DOM](./packages/core/README.md),[ React ](./packages/react/README.md)and[ Vue ](./packages/react/README.md)bindings. [Also there's a local player based on it!](./packages/player/README.md)
+A lyric player component library that aims to look similar to iPad version of Apple Music. With [DOM](./packages/core/README.md), [React](./packages/react/README.md) and [Vue](./packages/vue/README.md) bindings. [Also there's a standalone player based on it!](./packages/player/README.md)
 
-This's maybe the most like iPad Apple Music style lyric page you've seen in frontend.
+This is perhaps the most iPad Apple Music-like lyric page you've seen in frontend.
 
-Although the goal of this project is not to imitate it completely, it will polish some details better to be better than currently the best lyric players.
+Although the goal of this project is not to imitate it completely, it will polish some details to be better than the current best lyric players.
 
 **—— AMLL Series Projects ——**
 
@@ -26,32 +26,15 @@ Although the goal of this project is not to imitate it completely, it will polis
 
 ### Main modules
 
--   [![AMLL-Core](https://img.shields.io/badge/Core-%233178c6?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/core/README.md)：AMLL Core Component Library，以 DOM Written natively，Provides a lyric display component and a dynamic fluid background component
-
--   [![AMLL-React](https://img.shields.io/badge/React-%23149eca?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/react/README.md)：AMLL React bind**，Provision React Lyrics in the form of components display components and dynamic fluid background components
-
--   [![AMLL-Vue](https://img.shields.io/badge/Vue-%2342d392?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/vue/README.md)：AMLL Vue bind，Provision Vue Lyrics in the form of components display components and dynamic fluid background components
-  
--   [![AMLL-Lyric](https://img.shields.io/badge/Lyric-%23FB8C84?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/lyric/README.md)：AMLL The lyrics parsing module provides parsing and serialization support for various lyric formats of LyRiC, YRC, QRC, Lyricify Syllable
+-   [![AMLL-Core](https://img.shields.io/badge/Core-%233178c6?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/core/README.md): AMLL Core Component Library, written natively with DOM, provides lyric display component and dynamic fluid background component
+-   [![AMLL-React](https://img.shields.io/badge/React-%23149eca?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/react/README.md): AMLL React binding, provides React component forms of lyric display and dynamic fluid background components
+-   [![AMLL-Vue](https://img.shields.io/badge/Vue-%2342d392?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/vue/README.md): AMLL Vue binding, provides Vue component forms of lyric display and dynamic fluid background components
+-   [![AMLL-Lyric](https://img.shields.io/badge/Lyric-%23FB8C84?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/lyric/README.md): AMLL lyric parsing module, provides parsing and serialization support for various lyric formats including LyRiC, YRC, QRC, and Lyricify Syllable
 ### External tools
 
--   [AMLL Player](./packages/player/README.md)：AMLL External Player provides an independent external lyrics player, and communicates with AMLL's programs that implement any protocol through the unique WebSocket protocol to display lyrics
-
--   [AMLL TTML Tool](https://github.com/Steve-xmh/amll-ttml-tool)： AMLL TTML Editor with editing support for lyrics in TTML format and real-time preview using AMLL Core
-  
-=======
-
-### Main modules
-
--   [![AMLL-Core](https://img.shields.io/badge/Core-%233178c6?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/core/README.md)：AMLL Core Component Library powered by native DOM，Provides a lyric display component and a dynamic fluid background component
--   [![AMLL-React](https://img.shields.io/badge/React-%23149eca?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/react/README.md)：AMLL React bind**，Provision React Lyrics in the form of components display components and dynamic fluid background components
--   [![AMLL-Vue](https://img.shields.io/badge/Vue-%2342d392?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/vue/README.md)：AMLL Vue bind，Provision Vue Lyrics in the form of components display components and dynamic fluid background components
--   [![AMLL-Lyric](https://img.shields.io/badge/Lyric-%23FB8C84?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)](./packages/lyric/README.md)：AMLL The lyrics parsing module provides parsing and serialization support for various lyric formats of LyRiC, YRC, QRC, Lyricify Syllable
-### External tools
-
--   [AMLL Player](./packages/player/README.md)：AMLL External Player provides an independent external lyrics player, and communicates with AMLL's programs that implement any protocol through the unique WebSocket protocol to display lyrics
--   [AMLL TTML Tool](https://github.com/Steve-xmh/amll-ttml-tool)： AMLL TTML Editor with editing support for lyrics in TTML format and real-time preview using AMLL Core
--   [AMLL TTML Database](https://github.com/Steve-xmh/amll-ttml-db)： AMLL TTML database, which provides a TTML lyrics repository so that all kinds of lyric players can use community-made TTML word-for-word lyrics
+-   [AMLL Player](./packages/player/README.md): AMLL External Player provides an independent external lyrics player, and communicates with any program that implements the AMLL WebSocket protocol to display lyrics
+-   [AMLL TTML Tool](https://github.com/Steve-xmh/amll-ttml-tool): AMLL TTML Editor provides editing support for TTML format lyrics and real-time preview using AMLL Core
+-   [AMLL TTML Database](https://github.com/Steve-xmh/amll-ttml-db): AMLL TTML Database provides a repository of TTML lyrics so that various lyric players can use community-made word-by-word lyrics
 
 ## AMLL Player Preview Gallery
 
@@ -59,56 +42,56 @@ Although the goal of this project is not to imitate it completely, it will polis
 
 ## Browser compatibility alerts
 
-This component framework requires the following browsers or newer versions at a minimum：
+This component framework requires the following browsers or newer versions at a minimum:
 
--   Chromuim/Edge 91+
+-   Chromium/Edge 91+
 -   Firefox 100+
 -   Safari 9.1+
 
-The following browser or newer version is required to render all effects of the component：
+To fully render all component effects, the following browser versions or newer are required:
 
--   Chromuim 120+
+-   Chromium 120+
 -   Firefox 100+
 -   Safari 15.4+
 
-Reference Links：
+Reference Links:
 
 -   [https://caniuse.com/mdn-css_properties_mask-image](https://caniuse.com/mdn-css_properties_mask-image)
 -   [https://caniuse.com/mdn-css_properties_mix-blend-mode_plus-lighter](https://caniuse.com/mdn-css_properties_mix-blend-mode_plus-lighter)
 
 ## Performance configuration reference
 
-PERFORMANCE BENCHMARKS HAVE SHOWN THAT ALL MAJOR CPU PROCESSORS WITHIN FIVE YEARS CAN DRIVE THE LYRICS COMPONENT AT 30FPS, BUT IF YOU WANT TO RUN SMOOTHLY AT 60FPS, MAKE SURE THE CPU FREQUENCY IS AT LEAST 3.0Ghz OR ABOVE. If you need smooth operation above 144FPS, make sure the CPU frequency is at least 4.2Ghz or above.
+Performance benchmarks have shown that mainstream CPU processors from the last five years can run the lyric component at 30FPS. However, if you need smooth 60FPS operation, ensure your CPU frequency is at least 3.0GHz or higher. For 144FPS or above, a CPU frequency of at least 4.2GHz is recommended.
 
-GPU performance is capable of running at full 60 fps at the expected size under the following conditions:
+GPU performance capable of running at full 60 fps at the expected sizes under the following conditions:
 
 -   `1080p (1920x1080)`: NVIDIA GTX 10 series and above
 -   `2160p (3840x2160)`: NVIDIA RTX 2070 and above
 
 ## Code contributions
 
-Due to the author's limited energy, he is no longer able to deal with the problems that arise during the use of the code, so the Issues section is closed, but any pull requests that contribute positively to the code are welcome!
+Due to limited time and energy, the author is no longer able to handle issues that arise during usage, so the Issues section has been closed. However, any pull requests that make positive contributions to the code are welcome!
 
 ## Development/build/packaging process
 
-Install it `yarn`, `rustc`, `wasm-pack`，Clone the repository into any folder and enter the following command in the terminal to build it:：
+Install `yarn`, `rustc`, and `wasm-pack`, then clone this repository to any folder and enter the following commands in the terminal to build:
 
 ```bash
 yarn
-yarn lerna run build:dev --scope "@applemusic-like-lyrics/*" # 开发构建
-yarn lerna run build --scope "@applemusic-like-lyrics/*" # 发行构建
+yarn lerna run build:dev --scope "@applemusic-like-lyrics/*" # Development build
+yarn lerna run build --scope "@applemusic-like-lyrics/*" # Production build
 ```
 
-## Acknowledgement
+## Acknowledgements
 
 -   [woshizja/sound-processor](https://github.com/woshizja/sound-processor)
--   There are also many frameworks and libraries that are used by AMLL, thank you very much!
+-   And many other frameworks and libraries used by AMLL, thank you very much!
 
-### Special thanks to you
+### Special Thanks
 
 <div align="center">
 <image src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg"></image>
 <div>
-thank <a href=https://jb.gg/OpenSourceSupport>JetBrains</a> A series of development tools to support the AMLL project
+Thanks to <a href=https://jb.gg/OpenSourceSupport>JetBrains</a> for their development tools that provide great support to the AMLL project
 </div>
 </div>

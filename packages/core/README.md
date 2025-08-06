@@ -1,46 +1,48 @@
 # AMLL Core
 
-> 警告：此为个人项目，且尚未完成开发，可能仍有大量问题，所以请勿直接用于生产环境！
+English / [简体中文](./README-CN.md)
+
+> Warning: This is a personal project and is still under development. There may still be many issues, so please do not use it directly in production environments!
 
 ![AMLL-Core](https://img.shields.io/badge/Core-%233178c6?label=Apple%20Music-like%20Lyrics&labelColor=%23FB5C74)
 [![npm](https://img.shields.io/npm/dt/%40applemusic-like-lyrics/core)](https://www.npmjs.com/package/@applemusic-like-lyrics/core)
 [![npm](https://img.shields.io/npm/v/%40applemusic-like-lyrics%2Fcore)](https://www.npmjs.com/package/@applemusic-like-lyrics/core)
 
-AMLL 的纯 JS 核心组件框架，包括歌词显示组件和背景组件等其它可以复用的组件。
+AMLL's pure JS core component framework, including lyric display components and background components and other reusable components.
 
-此处的东西都是 UI 框架无关的，所以可以间接在各种动态页面框架下引用。
+Everything here is UI framework-independent, so it can be indirectly referenced under various dynamic page frameworks.
 
-或者如果你需要使用组件绑定的话，这里有 [React 绑定版本](../react/README.md) 和 [Vue 绑定版本](../vue/README.md)
+Or if you need to use component bindings, there's a [React binding version](../react/README.md) and a [Vue binding version](../vue/README.md)
 
-## 安装
+## Installation
 
-安装使用的依赖（如果以下列出的依赖包没有安装的话需要自行安装）：
+Install the required dependencies (if the dependencies listed below are not installed, you need to install them yourself):
 ```bash
-npm install @pixi/app @pixi/core @pixi/display @pixi/filter-blur @pixi/filter-bulge-pinch @pixi/filter-color-matrix @pixi/sprite # 使用 npm
-yarn add @pixi/app @pixi/core @pixi/display @pixi/filter-blur @pixi/filter-bulge-pinch @pixi/filter-color-matrix @pixi/sprite # 使用 yarn
+npm install @pixi/app @pixi/core @pixi/display @pixi/filter-blur @pixi/filter-bulge-pinch @pixi/filter-color-matrix @pixi/sprite # using npm
+yarn add @pixi/app @pixi/core @pixi/display @pixi/filter-blur @pixi/filter-bulge-pinch @pixi/filter-color-matrix @pixi/sprite # using yarn
 ```
 
-安装本体框架：
+Install the framework:
 ```bash
-npm install @applemusic-like-lyrics/core # 使用 npm
-yarn add @applemusic-like-lyrics/core # 使用 yarn
+npm install @applemusic-like-lyrics/core # using npm
+yarn add @applemusic-like-lyrics/core # using yarn
 ```
 
-## 使用方式摘要
+## Usage Summary
 
-详细的 API 文档请参考 [./docs/modules.md](./docs/modules.md)
+For detailed API documentation, please refer to [./docs/modules.md](./docs/modules.md)
 
-一个测试用途的程序可以在 [./src/test.ts](./src/test.ts) 里找到。
+A test program can be found in [./src/test.ts](./src/test.ts).
 
 ```typescript
 import { LyricPlayer } from "@applemusic-like-lyrics/core";
-import "@applemusic-like-lyrics/core/style.css"; // 导入需要的样式
+import "@applemusic-like-lyrics/core/style.css"; // Import required styles
 
-const player = new LyricPlayer(); // 创建歌词播放组件
-document.body.appendChild(player.getElement()); // 将组件的元素添加到页面
-player.setLyricLines([]) // 设置歌词
-player.setCurrentTime(0) // 设定当前播放时间（需要逐帧调用）
-player.update(0) // 更新歌词组件动画（需要逐帧调用）
+const player = new LyricPlayer(); // Create a lyric player component
+document.body.appendChild(player.getElement()); // Add the component's element to the page
+player.setLyricLines([]) // Set lyrics
+player.setCurrentTime(0) // Set current playback time (needs to be called every frame)
+player.update(0) // Update lyric component animation (needs to be called every frame)
 ```
 
-每次通过 `LyricPlayer.setLyricLines` 设置的歌词是一个 `LyricLine[]` 参数，具体可以参考 [./src/interfaces.ts](./src/interfaces.ts) 中的代码。
+The lyrics set through `LyricPlayer.setLyricLines` is a `LyricLine[]` parameter. For details, please refer to the code in [./src/interfaces.ts](./src/interfaces.ts).

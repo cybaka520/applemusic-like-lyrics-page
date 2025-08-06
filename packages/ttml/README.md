@@ -1,5 +1,7 @@
 # Lyric parser/writer for AMLL
 
-> 警告：此为个人项目，且尚未完成开发，可能仍有大量问题，所以请勿直接用于生产环境！
+English / [简体中文](./README-CN.md)
 
-一个 AMLL 的 TTML 格式解析/导出模块，使用纯 TypeScript 编写。
+> Warning: This is a personal project and is still under development. There may still be many issues, so please do not use it directly in production environments!
+
+A TTML format parser/exporter module for AMLL, written in pure TypeScript.
