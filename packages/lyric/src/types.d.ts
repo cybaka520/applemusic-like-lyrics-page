@@ -91,6 +91,8 @@ export interface LyricWord {
 	endTime: number;
 	/** 单词 */
 	word: string;
+	/** 单词的音译 */
+	romanWord: string;
 }
 
 /**
