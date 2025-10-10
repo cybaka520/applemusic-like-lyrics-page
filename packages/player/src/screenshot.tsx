@@ -6,7 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import "./i18n.ts";
 import "./styles.css";
 import "./utils/player.ts";
-import "./utils/merge-raf.ts";
+// import "./utils/merge-raf.ts";
 import { ScreenshotApp } from "./pages/screenshot/index.tsx";
 
 const ErrorRender = (props: FallbackProps) => {
