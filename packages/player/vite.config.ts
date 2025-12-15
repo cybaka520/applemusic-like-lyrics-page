@@ -90,7 +90,6 @@ export default defineConfig({
 			shimMissingExports: true,
 			input: {
 				index: resolve(__dirname, "index.html"),
-				screenshot: resolve(__dirname, "screenshot.html"),
 			},
 		},
 		sourcemap: "inline",
