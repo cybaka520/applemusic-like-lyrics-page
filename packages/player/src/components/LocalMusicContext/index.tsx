@@ -13,6 +13,7 @@ import {
 	hideLyricViewAtom,
 	isLyricPageOpenedAtom,
 	type MusicQualityState,
+	musicDurationAtom,
 	musicIdAtom,
 	musicLyricLinesAtom,
 	musicPlayingAtom,
@@ -490,9 +491,25 @@ export const LocalMusicContext: FC = () => {
 		const onVolumeChange = (volume: number) =>
 			store.set(musicVolumeAtom, volume);
 
+		const onLoaded = () => {
+			const durationSec = webPlayer.duration;
+			const durationMs = (durationSec * 1000) | 0;
+
+			store.set(musicDurationAtom, durationMs);
+
+			const currentMusicId = store.get(musicIdAtom);
+			if (currentMusicId && durationMs > 0) {
+				db.songs
+					.update(currentMusicId, { duration: durationMs })
+					.then(() => console.log(`更新时长信息: ${durationMs}ms`))
+					.catch((e) => console.warn("更新时长失败", e));
+			}
+		};
+
 		webPlayer.on("play", onPlay);
 		webPlayer.on("pause", onPause);
 		webPlayer.on("volumechange", onVolumeChange);
+		webPlayer.on("loaded", onLoaded);
 
 		const timer = setInterval(() => {
 			store.set(musicPlayingPositionAtom, (webPlayer.currentTime * 1000) | 0);
@@ -503,6 +520,7 @@ export const LocalMusicContext: FC = () => {
 			webPlayer.off("play", onPlay);
 			webPlayer.off("pause", onPause);
 			webPlayer.off("volumechange", onVolumeChange);
+			webPlayer.off("loaded", onLoaded);
 
 			const doNothing = toEmit(() => {});
 			store.set(onRequestNextSongAtom, doNothing);
