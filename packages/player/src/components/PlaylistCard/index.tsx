@@ -1,8 +1,8 @@
 import { Card, ContextMenu, Flex, Text } from "@radix-ui/themes";
-import { type PropsWithChildren, forwardRef, useMemo } from "react";
+import { forwardRef, type PropsWithChildren, useMemo } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { type Playlist, db } from "../../dexie.ts";
+import { db, type Playlist } from "../../dexie.ts";
 import { PlaylistCover } from "../PlaylistCover/index.tsx";
 
 export const PlaylistCard = forwardRef<

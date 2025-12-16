@@ -91,11 +91,13 @@ export const AudioFFTVisualizer: FC<
 						const desiredSpacing = 8 * dpr; // 目标线间距（设备像素）
 						let desiredCount = Math.floor(width / Math.max(1, desiredSpacing));
 						desiredCount = Math.max(8, desiredCount);
-						const lineCount = buf.length > 0 ? Math.min(buf.length, desiredCount) : 0;
+						const lineCount =
+							buf.length > 0 ? Math.min(buf.length, desiredCount) : 0;
 
 						const display = lineCount > 0 ? resampleLinear(buf, lineCount) : [];
 
-						const targetMaxValue = display.length > 0 ? Math.max.apply(Math, display) : 0;
+						const targetMaxValue =
+							display.length > 0 ? Math.max.apply(Math, display) : 0;
 						maxValue = Math.max(targetMaxValue * 0.1 + maxValue * 0.9, 100);
 
 						const len = Math.max(1, display.length);
@@ -112,10 +114,7 @@ export const AudioFFTVisualizer: FC<
 							const x = barWidth * (i + 0.5);
 							ctx.moveTo(x, barBeginY);
 							const norm = Math.min(1, Math.max(0, display[i] / maxValue));
-							ctx.lineTo(
-								x,
-								barBeginY - norm ** 2 * (height - barWidth * 2),
-							);
+							ctx.lineTo(x, barBeginY - norm ** 2 * (height - barWidth * 2));
 						}
 
 						ctx.stroke();

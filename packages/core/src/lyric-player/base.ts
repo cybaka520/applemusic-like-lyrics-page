@@ -476,7 +476,7 @@ export abstract class LyricPlayerBase
 		}
 
 		this.hasDuetLine = this.processedLines.some((line) => line.isDuet);
-		
+
 		// 将行开始时间提早最多一秒
 		for (let i = this.processedLines.length - 1; i >= 0; i--) {
 			const line = this.processedLines[i];
