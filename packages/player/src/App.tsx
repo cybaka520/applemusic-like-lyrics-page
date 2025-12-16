@@ -91,7 +91,6 @@ function App() {
         `;
 	}, [lyricSize]);
 
-	// 渲染逻辑
 	return (
 		<>
 			{/* 上下文组件均不建议被 StrictMode 包含，以免重复加载扩展程序发生问题  */}
@@ -104,7 +103,6 @@ function App() {
 			<SpeedInsights />
 			<Analytics />
 
-			{/* UI渲染 */}
 			<StrictMode>
 				<Theme
 					appearance={isDarkTheme ? "dark" : "light"}
