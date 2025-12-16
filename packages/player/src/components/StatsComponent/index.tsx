@@ -5,7 +5,7 @@ export const StatsComponent = () => {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 
 	useEffect(() => {
-		const StatsConstructor = (Stats as any).default || Stats;
+		const StatsConstructor = Stats.default || Stats;
 		if (typeof StatsConstructor !== "function") {
 			console.error("Failed to load stats.js constructor.");
 			return;

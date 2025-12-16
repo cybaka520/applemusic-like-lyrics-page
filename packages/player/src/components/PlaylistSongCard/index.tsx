@@ -15,7 +15,7 @@ import type { Loadable } from "jotai/vanilla/utils/loadable";
 import { type CSSProperties, forwardRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { type Song, db } from "../../dexie.ts";
+import { db, type Song } from "../../dexie.ts";
 import { router } from "../../router.tsx";
 import { useSongCover } from "../../utils/use-song-cover.ts";
 

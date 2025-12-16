@@ -278,8 +278,8 @@ declare global {
 	interface Window {
 		globalLyricPlayer: DomLyricPlayer;
 		globalBackground:
-		| BackgroundRender<PixiRenderer>
-		| BackgroundRender<MeshGradientRenderer>;
+			| BackgroundRender<PixiRenderer>
+			| BackgroundRender<MeshGradientRenderer>;
 	}
 }
 

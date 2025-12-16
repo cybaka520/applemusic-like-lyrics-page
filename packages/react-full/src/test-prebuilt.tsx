@@ -169,7 +169,7 @@ const App: FC = () => {
 		[store],
 	);
 
-	useLayoutEffect(() => { }, []);
+	useLayoutEffect(() => {}, []);
 
 	useLayoutEffect(() => {
 		store.set(onRequestOpenMenuAtom, {

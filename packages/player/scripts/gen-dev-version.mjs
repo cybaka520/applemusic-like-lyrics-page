@@ -9,8 +9,8 @@ import { exit } from "node:process";
 import { fileURLToPath } from "node:url";
 
 const tauriConfPath = resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    "../src-tauri/tauri.conf.json",
+	dirname(fileURLToPath(import.meta.url)),
+	"../src-tauri/tauri.conf.json",
 );
 
 console.log("Reading tauri.conf.json from", tauriConfPath);
@@ -22,8 +22,8 @@ console.log("tauri.conf.json content:", tauriConf);
 const baseVersion = tauriConf.version;
 
 if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(baseVersion)) {
-    console.error(`Invalid base version: ${baseVersion}`);
-    exit(1);
+	console.error(`Invalid base version: ${baseVersion}`);
+	exit(1);
 }
 
 // const branch = execSync('git rev-parse --abbrev-ref HEAD').toString().trim();
