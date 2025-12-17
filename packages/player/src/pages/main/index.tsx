@@ -15,26 +15,30 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 const platform = () => "web";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { type FC, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { NewPlaylistButton } from "../../components/NewPlaylistButton/index.tsx";
 import { PageContainer } from "../../components/PageContainer/index.tsx";
 import { PlaylistCard } from "../../components/PlaylistCard/index.tsx";
-import { db } from "../../dexie.ts";
+import { AUDIT_PLAYLIST_ID, db } from "../../dexie.ts";
 import { router } from "../../router.tsx";
 import {
 	MusicContextMode,
 	musicContextModeAtom,
 } from "../../states/appAtoms.ts";
+import { enableAuditModeAtom } from "../../states/auditAtoms.ts";
 
 export const Component: FC = () => {
-	const playlists = useLiveQuery(() => db.playlists.toArray());
+	const playlists = useLiveQuery(() =>
+		db.playlists.filter((p) => p.id !== AUDIT_PLAYLIST_ID).toArray(),
+	);
 	const parentRef = useRef<HTMLDivElement>(null);
 
 	const [musicContextMode, setMusicContextMode] = useAtom(musicContextModeAtom);
 	const [currentPlatform, setCurrentPlatform] = useState<string>("");
+	const isAuditModeEnabled = useAtomValue(enableAuditModeAtom);
 	const { t } = useTranslation();
 
 	useEffect(() => {
@@ -124,6 +128,17 @@ export const Component: FC = () => {
 										</DropdownMenu.Item>
 									</DropdownMenu.SubContent>
 								</DropdownMenu.Sub>
+
+								{isAuditModeEnabled && (
+									<DropdownMenu.Item asChild>
+										<Link to="/audit">
+											<Trans i18nKey="page.main.menu.auditMode">
+												歌词审核模式
+											</Trans>
+										</Link>
+									</DropdownMenu.Item>
+								)}
+
 								<DropdownMenu.Item asChild>
 									<Link to="/settings">
 										<Trans i18nKey="page.main.menu.settings">设置</Trans>

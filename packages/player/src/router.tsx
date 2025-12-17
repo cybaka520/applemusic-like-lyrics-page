@@ -43,6 +43,11 @@ export const router = createBrowserRouter(
 				lazy={() => import("./pages/amll-dev/index.tsx")}
 				errorElement={<ErrorPage />}
 			/>
+			<Route
+				path="/audit"
+				lazy={() => import("./pages/audit/index.tsx")}
+				errorElement={<ErrorPage />}
+			/>
 		</>,
 	),
 );

@@ -77,6 +77,7 @@
         "enterWSProtocolMode": "Vào chế độ WS Protocol",
         "asWSProtocolReceiver": "Trạng thái nhận WS Protocol",
         "asWSProtocolSenderWIP": "Gửi trạng thái WS Protocol (đang triển khai)",
+        "auditMode": "歌词审核模式",
         "settings": "Cài đặt"
       },
       "noPlaylistTip": "Không có danh sách phát, hãy tạo một danh sách mới!",
@@ -273,6 +274,16 @@
         "lyricBackgroundStaticMode": {
           "label": "Chế độ nền tĩnh",
           "description": "Giúp nền giữ nguyên khi chuyển đổi bài hát. Nếu gặp vấn đề về hiệu suất, có thể cân nhắc bật tùy chọn này.\nLưu ý: Bật tùy chọn này có thể làm mất hiệu ứng nền."
+        }
+      },
+      "audit": {
+        "subtitle": "审核模式",
+        "enable": {
+          "label": "启用歌词审核模式",
+          "description": "是否要在主页的菜单中显示审核模式入口"
+        },
+        "githubToken": {
+          "label": "GitHub Personal Access Token"
         }
       },
       "others": {

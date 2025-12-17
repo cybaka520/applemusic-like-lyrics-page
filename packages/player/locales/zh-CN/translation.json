@@ -77,6 +77,7 @@
         "enterWSProtocolMode": "进入 WS Protocol 模式",
         "asWSProtocolReceiver": "作为状态接收者",
         "asWSProtocolSenderWIP": "作为状态发送者（施工中）",
+        "auditMode": "歌词审核模式",
         "settings": "设置"
       },
       "noPlaylistTip": "没有播放列表，快去新建一个吧！",
@@ -273,6 +274,16 @@
         "lyricBackgroundStaticMode": {
           "label": "背景静态模式",
           "description": "让背景会在除了切换歌曲变换封面的情况下保持静止，如果遇到了性能问题，可以考虑开启此项。\n注意：启用此项会导致背景跳动效果失效。"
+        }
+      },
+      "audit": {
+        "subtitle": "审核模式",
+        "enable": {
+          "label": "启用歌词审核模式",
+          "description": "是否要在主页的菜单中显示审核模式入口"
+        },
+        "githubToken": {
+          "label": "GitHub Personal Access Token"
         }
       },
       "others": {
