@@ -1,5 +1,6 @@
 import {
 	ArrowLeftIcon,
+	ClipboardIcon,
 	Component1Icon,
 	DesktopIcon,
 	GearIcon,
@@ -102,6 +103,11 @@ const SidebarContent: FC<{ onNavigate: (pageId: string) => void }> = ({
 				id: "lyricBackground",
 				label: t("page.settings.lyricBackground.subtitle"),
 				icon: <MixerHorizontalIcon width={20} height={20} />,
+			},
+			{
+				id: "audit",
+				label: t("page.settings.audit.subtitle", "审核模式"),
+				icon: <ClipboardIcon width={20} height={20} />,
 			},
 			{
 				id: "others",

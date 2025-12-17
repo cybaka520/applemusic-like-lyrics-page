@@ -39,7 +39,6 @@ import {
 import chalk from "chalk";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
-import { parseBlob } from "music-metadata";
 import { type FC, useEffect, useLayoutEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -50,6 +49,7 @@ import {
 	currentMusicQueueAtom,
 	onRequestPlaySongByIndexAtom,
 } from "../../states/appAtoms.ts";
+import { extractMusicMetadata } from "../../utils/music-file.ts";
 import { mapMetadataToQuality } from "../../utils/quality.ts";
 import { webPlayer } from "../../utils/web-player.ts";
 
@@ -469,7 +469,7 @@ export const LocalMusicContext: FC = () => {
 			}
 
 			try {
-				const metadata = await parseBlob(song.file);
+				const { metadata } = await extractMusicMetadata(song.file);
 				const qualityState = mapMetadataToQuality(metadata);
 
 				store.set(musicQualityAtom, qualityState);

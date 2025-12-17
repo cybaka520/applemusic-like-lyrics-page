@@ -18,7 +18,6 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { motion, useMotionTemplate, useScroll } from "framer-motion";
 import { useAtomValue, useSetAtom } from "jotai";
 import md5 from "md5";
-import { parseBlob, selectCover } from "music-metadata";
 import { type FC, useCallback, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
@@ -32,6 +31,7 @@ import {
 	currentMusicQueueAtom,
 	onRequestPlaySongByIndexAtom,
 } from "../../states/appAtoms.ts";
+import { extractMusicMetadata } from "../../utils/music-file.ts";
 import styles from "./index.module.css";
 
 export type Loadable<Value> =
@@ -135,45 +135,22 @@ export const Component: FC = () => {
 			const transformed = await Promise.all(
 				files.map(async (file): Promise<Song | null> => {
 					try {
-						const metadata = await parseBlob(file);
-
-						const { title, artist, album, picture, lyrics } = metadata.common;
-
-						let lyric = "";
-
-						if (lyrics && lyrics.length > 0) {
-							const lyricData = lyrics[0];
-
-							if (lyricData.syncText && lyricData.syncText.length > 0) {
-								lyric = lyricData.syncText.join("\n");
-							} else if (lyricData.text) {
-								lyric = lyricData.text;
-							}
-						}
-
-						const coverImage = selectCover(picture);
+						const extracted = await extractMusicMetadata(file);
 
 						const pathMd5 = md5(file.name + file.size);
-
-						let coverBlob = new Blob([], { type: "image/png" });
-						if (coverImage) {
-							coverBlob = new Blob([coverImage.data as BlobPart], {
-								type: coverImage.format,
-							});
-						}
 
 						success += 1;
 						return {
 							id: pathMd5,
 							filePath: file.name,
-							songName: title || file.name,
-							songArtists: artist || "Unknown Artist",
-							songAlbum: album || "Unknown Album",
-							lyricFormat: "",
-							lyric: lyric,
-							cover: coverBlob,
+							songName: extracted.title || file.name,
+							songArtists: extracted.artist,
+							songAlbum: extracted.album,
+							lyricFormat: extracted.lyric ? "lrc" : "",
+							lyric: extracted.lyric,
+							cover: extracted.cover,
 							file: file,
-							duration: metadata.format.duration || 0,
+							duration: extracted.duration,
 						};
 					} catch (err) {
 						errored += 1;

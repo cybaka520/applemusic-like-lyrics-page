@@ -71,6 +71,10 @@ import {
 	darkModeAtom,
 	showStatJSFrameAtom,
 } from "../../states/appAtoms.ts";
+import {
+	enableAuditModeAtom,
+	githubTokenAtom,
+} from "../../states/auditAtoms.ts";
 import styles from "./index.module.css";
 
 const restartApp = () => window.location.reload();
@@ -1029,6 +1033,39 @@ const LyricBackgroundSettings = () => {
 	);
 };
 
+const AuditSettings = () => {
+	const { t } = useTranslation();
+	const [token, setToken] = useAtom(githubTokenAtom);
+
+	return (
+		<>
+			<SubTitle>{t("page.settings.audit.subtitle", "审核模式")}</SubTitle>
+			<SwitchSettings
+				label={t("page.settings.audit.enable.label", "启用歌词审核模式")}
+				description={t(
+					"page.settings.audit.enable.description",
+					"是否要在主页的菜单中显示审核模式入口",
+				)}
+				configAtom={enableAuditModeAtom}
+			/>
+			<SettingEntry
+				label={t(
+					"page.settings.audit.githubToken.label",
+					"GitHub Personal Access Token",
+				)}
+			>
+				<TextField.Root
+					value={token}
+					onChange={(e) => setToken(e.currentTarget.value)}
+					placeholder="ghp_..."
+					type="password"
+					style={{ minWidth: "20em" }}
+				/>
+			</SettingEntry>
+		</>
+	);
+};
+
 const OthersSettings = () => {
 	const { t } = useTranslation();
 	return (
@@ -1100,6 +1137,8 @@ export const PlayerSettingsTab: FC<{ category: string }> = ({ category }) => {
 			return <MusicInfoAppearanceSettings />;
 		case "lyricBackground":
 			return <LyricBackgroundSettings />;
+		case "audit":
+			return <AuditSettings />;
 		case "others":
 			return <OthersSettings />;
 		case "about":

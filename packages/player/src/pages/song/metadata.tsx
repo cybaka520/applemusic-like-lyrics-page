@@ -8,19 +8,9 @@ import {
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { db } from "../../dexie.ts";
+import { extractMusicMetadata } from "../../utils/music-file.ts";
 import { Option } from "./common.tsx";
 import { SongContext } from "./song-ctx.ts";
-
-const readLocalMusicMetadata = (_path: string) =>
-	Promise.resolve({
-		name: "",
-		artist: "",
-		album: "",
-		lyricFormat: "none",
-		lyric: "",
-		cover: [],
-		duration: 0,
-	});
 
 const MetaInput: FC<
 	TextField.RootProps & {
@@ -69,10 +59,10 @@ export const MetadataTabContent: FC = () => {
 
 	const readMetadataFromFile = useCallback(async () => {
 		if (song === undefined) return;
-		const newInfo = await readLocalMusicMetadata(song.filePath);
+		const newInfo = await extractMusicMetadata(song.file);
 
 		db.songs.update(song.id, (song) => {
-			song.songName = newInfo.name;
+			song.songName = newInfo.title;
 			song.songAlbum = newInfo.album;
 			song.songArtists = newInfo.artist;
 			if (newInfo.lyric) {
@@ -80,10 +70,7 @@ export const MetadataTabContent: FC = () => {
 				song.lyric = newInfo.lyric;
 			}
 			if (newInfo.cover) {
-				const coverData = new Uint8Array(newInfo.cover);
-				const coverBlob = new Blob([coverData], { type: "image" });
-
-				song.cover = coverBlob;
+				song.cover = newInfo.cover;
 				song.cachedThumbnail = undefined;
 			}
 		});
