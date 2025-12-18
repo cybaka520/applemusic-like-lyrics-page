@@ -16,6 +16,7 @@ import {
 	Heading,
 	IconButton,
 	Skeleton,
+	Spinner,
 	Tabs,
 	Text,
 	Tooltip,
@@ -356,7 +357,12 @@ export const Component = () => {
 								取消
 							</Button>
 						</Dialog.Close>
-						<Button color="red" onClick={confirmDialog.onConfirm}>
+						<Button
+							color="red"
+							onClick={confirmDialog.onConfirm}
+							disabled={actionLoading}
+						>
+							{actionLoading && <Spinner style={{ marginRight: 8 }} />}
 							{confirmDialog.actionLabel || "确认"}
 						</Button>
 					</Flex>
