@@ -195,7 +195,6 @@ importers:
       sharp:
         specifier: 'catalog:'
         version: 0.34.4
-    devDependencies:
       typedoc:
         specifier: 'catalog:'
         version: 0.28.13(typescript@5.9.3)

@@ -135,12 +135,12 @@ export class CanvasLyricLine extends LyricLineBase {
 			);
 		}
 	}
-	private enabled = false;
+	// private enabled = false;
 	override enable(): void {
-		this.enabled = true;
+		// this.enabled = true;
 	}
 	override disable(): void {
-		this.enabled = false;
+		// this.enabled = false;
 	}
 	override resume(): void {}
 	override pause(): void {}
