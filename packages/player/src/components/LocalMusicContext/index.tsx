@@ -12,6 +12,7 @@ import {
 	fftDataRangeAtom,
 	hideLyricViewAtom,
 	isLyricPageOpenedAtom,
+	isShuffleActiveAtom,
 	type MusicQualityState,
 	musicArtistsAtom,
 	musicCoverAtom,
@@ -26,12 +27,17 @@ import {
 	musicVolumeAtom,
 	onChangeVolumeAtom,
 	onClickControlThumbAtom,
+	onCycleRepeatModeAtom,
 	onLyricLineClickAtom,
 	onPlayOrResumeAtom,
 	onRequestNextSongAtom,
 	onRequestOpenMenuAtom,
 	onRequestPrevSongAtom,
 	onSeekPositionAtom,
+	onToggleShuffleAtom,
+	originalQueueAtom,
+	RepeatMode,
+	repeatModeAtom,
 } from "@applemusic-like-lyrics/react-full";
 import chalk from "chalk";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -55,6 +61,15 @@ import { extractMusicMetadata } from "../../utils/music-file.ts";
 import { parseTTML } from "../../utils/parseTTML.ts";
 import { mapMetadataToQuality } from "../../utils/quality.ts";
 import { webPlayer } from "../../utils/web-player.ts";
+
+function shuffleArray<T>(array: T[]): T[] {
+	const arr = [...array];
+	for (let i = arr.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[arr[i], arr[j]] = [arr[j], arr[i]];
+	}
+	return arr;
+}
 
 export const FFTToLowPassContext: FC = () => {
 	const fftDataRange = useAtomValue(fftDataRangeAtom);
@@ -168,7 +183,10 @@ const LyricContext: FC = () => {
 	const setLyricLines = useSetAtom(musicLyricLinesAtom);
 	const setHideLyricView = useSetAtom(hideLyricViewAtom);
 	const lastCommit = useAtomValue(lyricDBVersionAtom);
-	const song = useLiveQuery(() => db.songs.get(musicId), [musicId]);
+	const song = useLiveQuery(
+		() => (musicId ? db.songs.get(musicId) : undefined),
+		[musicId],
+	);
 	const store = useStore();
 
 	console.debug(LYRIC_LOG_TAG, `歌词版本号:`, lastCommit);
@@ -318,6 +336,48 @@ export const LocalMusicContext: FC = () => {
 	const store = useStore();
 	const { t } = useTranslation();
 	const [musicPlaying, setMusicPlaying] = useAtom(musicPlayingAtom);
+	const [, setOriginalQueue] = useAtom(originalQueueAtom);
+
+	useEffect(() => {
+		const restorePlaybackState = async () => {
+			const savedMusicId = store.get(musicIdAtom);
+			const savedPosition = store.get(musicPlayingPositionAtom);
+			const savedVolume = store.get(musicVolumeAtom);
+
+			webPlayer.setVolume(savedVolume);
+
+			if (savedMusicId) {
+				const song = await db.songs.get(savedMusicId);
+				if (song && song.file instanceof Blob) {
+					try {
+						const file = new File([song.file], song.filePath, {
+							type: song.file.type,
+						});
+
+						store.set(musicNameAtom, song.songName);
+						store.set(
+							musicArtistsAtom,
+							song.songArtists.split(",").map((v) => ({ name: v, id: v })),
+						);
+						store.set(musicCoverAtom, URL.createObjectURL(song.cover));
+						store.set(musicDurationAtom, (song.duration || 0) * 1000);
+
+						await webPlayer.load(file);
+
+						if (savedPosition > 0) {
+							webPlayer.seek(savedPosition / 1000);
+						}
+
+						store.set(musicPlayingAtom, false);
+					} catch (e) {
+						console.warn("恢复播放状态失败:", e);
+					}
+				}
+			}
+		};
+
+		restorePlaybackState();
+	}, []);
 
 	useEffect(() => {
 		const toEmit = <T,>(onEmit: T) => ({ onEmit });
@@ -371,16 +431,6 @@ export const LocalMusicContext: FC = () => {
 			store.set(musicPlayingAtom, true);
 		};
 
-		const playNext = () => {
-			const currentIndex = store.get(currentMusicIndexAtom);
-			playSongByIndex(currentIndex + 1);
-		};
-
-		const playPrev = () => {
-			const currentIndex = store.get(currentMusicIndexAtom);
-			playSongByIndex(currentIndex - 1);
-		};
-
 		store.set(
 			onPlayOrResumeAtom,
 			toEmit(() => {
@@ -391,9 +441,6 @@ export const LocalMusicContext: FC = () => {
 				}
 			}),
 		);
-
-		store.set(onRequestNextSongAtom, toEmit(playNext));
-		store.set(onRequestPrevSongAtom, toEmit(playPrev));
 
 		store.set(
 			onClickControlThumbAtom,
@@ -462,9 +509,98 @@ export const LocalMusicContext: FC = () => {
 			stopRafLoop();
 		};
 
-		const handleEnded = () => {
-			playNext();
+		const playNextManual = () => {
+			const currentIndex = store.get(currentMusicIndexAtom);
+			playSongByIndex(currentIndex + 1);
 		};
+
+		const playPrevManual = () => {
+			const currentIndex = store.get(currentMusicIndexAtom);
+			playSongByIndex(currentIndex - 1);
+		};
+
+		const handleEnded = () => {
+			const repeatMode = store.get(repeatModeAtom);
+			const currentIndex = store.get(currentMusicIndexAtom);
+			const queue = store.get(currentMusicQueueAtom);
+
+			if (repeatMode === RepeatMode.One) {
+				playSongByIndex(currentIndex);
+			} else if (repeatMode === RepeatMode.All) {
+				playSongByIndex(currentIndex + 1);
+			} else {
+				if (currentIndex < queue.length - 1) {
+					playSongByIndex(currentIndex + 1);
+				} else {
+					setMusicPlaying(false);
+					store.set(musicPlayingAtom, false);
+					webPlayer.seek(0);
+					store.set(musicPlayingPositionAtom, 0);
+				}
+			}
+		};
+
+		store.set(
+			onToggleShuffleAtom,
+			toEmit(() => {
+				const isShuffle = store.get(isShuffleActiveAtom);
+				const nextShuffleState = !isShuffle;
+
+				const currentQueue = store.get(currentMusicQueueAtom);
+				const currentSongId = store.get(musicIdAtom);
+
+				if (nextShuffleState) {
+					setOriginalQueue([...currentQueue]);
+
+					const shuffledQueue = shuffleArray(currentQueue);
+					store.set(currentMusicQueueAtom, shuffledQueue);
+
+					if (currentSongId) {
+						const newIndex = shuffledQueue.indexOf(currentSongId);
+						if (newIndex !== -1) store.set(currentMusicIndexAtom, newIndex);
+					}
+				} else {
+					const savedOriginalQueue = store.get(originalQueueAtom);
+
+					if (savedOriginalQueue) {
+						store.set(currentMusicQueueAtom, savedOriginalQueue);
+
+						if (currentSongId) {
+							const newIndex = savedOriginalQueue.indexOf(currentSongId);
+							if (newIndex !== -1) store.set(currentMusicIndexAtom, newIndex);
+						}
+
+						setOriginalQueue(null);
+					}
+				}
+				store.set(isShuffleActiveAtom, nextShuffleState);
+			}),
+		);
+
+		store.set(
+			onCycleRepeatModeAtom,
+			toEmit(() => {
+				const currentMode = store.get(repeatModeAtom);
+				let nextMode: RepeatMode;
+				switch (currentMode) {
+					case RepeatMode.Off:
+						nextMode = RepeatMode.All;
+						break;
+					case RepeatMode.All:
+						nextMode = RepeatMode.One;
+						break;
+					case RepeatMode.One:
+						nextMode = RepeatMode.Off;
+						break;
+					default:
+						nextMode = RepeatMode.Off;
+				}
+				store.set(repeatModeAtom, nextMode);
+			}),
+		);
+
+		store.set(onRequestNextSongAtom, toEmit(playNextManual));
+		store.set(onRequestPrevSongAtom, toEmit(playPrevManual));
 
 		const handleVolumeChange = (e: CustomEvent<number>) => {
 			store.set(musicVolumeAtom, e.detail);
@@ -515,6 +651,8 @@ export const LocalMusicContext: FC = () => {
 			store.set(onChangeVolumeAtom, doNothing);
 			store.set(onRequestPlaySongByIndexAtom, doNothing);
 			store.set(onRequestOpenMenuAtom, doNothing);
+			store.set(onToggleShuffleAtom, doNothing);
+			store.set(onCycleRepeatModeAtom, doNothing);
 		};
 	}, [store, t, musicPlaying, setMusicPlaying]);
 

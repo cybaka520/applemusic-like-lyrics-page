@@ -154,12 +154,18 @@ export const hideNowPlayingBarAtom = atom(false);
 /**
  * @description 存储 Song ID 列表
  */
-export const currentMusicQueueAtom = atom<string[]>([]);
+export const currentMusicQueueAtom = atomWithStorage<string[]>(
+	"amll-player.queue",
+	[],
+);
 
 /**
  * @description 当前播放索引
  */
-export const currentMusicIndexAtom = atom<number>(-1);
+export const currentMusicIndexAtom = atomWithStorage<number>(
+	"amll-player.index",
+	0,
+);
 
 /**
  * @description 请求播放指定索引的歌曲
