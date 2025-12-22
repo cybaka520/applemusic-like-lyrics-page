@@ -19,7 +19,6 @@ import {
 } from "@applemusic-like-lyrics/react-full";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { StateConnector } from "./components/StateConnector/index.tsx";
 import { StatsComponent } from "./components/StatsComponent/index.tsx";
 import { URLParamsHandler } from "./components/URLParamsHandler/index.tsx";
 import { router } from "./router.tsx";
@@ -115,7 +114,6 @@ function App() {
 			)}
 
 			<URLParamsHandler />
-			<StateConnector />
 			<SpeedInsights />
 			<Analytics />
 
