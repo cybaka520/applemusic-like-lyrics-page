@@ -96,7 +96,7 @@
 	font-weight: 500;
 	font-size: max(1.2vh, 0.8em);
 	opacity: 0.5;
-	margin-top: -4px;
+	margin-top: 4px;
 
 	@media screen and (max-height: 768px) {
 		margin-top: 0;

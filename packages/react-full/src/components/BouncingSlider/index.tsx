@@ -1,235 +1,236 @@
 import classNames from "classnames";
-import React, {
-	type HTMLProps,
-	type JSX,
-	useEffect,
-	useLayoutEffect,
-	useRef,
-	useState,
-} from "react";
-import { Spring } from "../../utils/spring";
+import {
+	animate,
+	motion,
+	type PanInfo,
+	useAnimationFrame,
+	useMotionTemplate,
+	useMotionValue,
+	useSpring,
+	useTransform,
+} from "framer-motion";
+import type React from "react";
+import { useEffect, useRef } from "react";
 import styles from "./index.module.css";
 
-export interface SliderProps
-	extends Omit<HTMLProps<HTMLDivElement>, "onChange" | "onSeeking"> {
-	onAfterChange?: (v: number) => void;
-	onBeforeChange?: () => void;
-	onChange?: (v: number) => void;
-	onSeeking?: (v: boolean) => void;
+export interface SliderProps {
+	className?: string;
+	style?: React.CSSProperties;
 	value: number;
 	min: number;
 	max: number;
-	beforeIcon?: JSX.Element;
-	afterIcon?: JSX.Element;
-	disabled?: boolean;
+	isPlaying?: boolean;
+	onChange?: (v: number) => void;
+	onAfterChange?: (v: number) => void;
+	onBeforeChange?: () => void;
+	onSeeking?: (v: boolean) => void;
+	beforeIcon?: React.ReactNode;
+	afterIcon?: React.ReactNode;
+	changeOnDrag?: boolean;
 }
 
-export const BouncingSlider: React.FC<SliderProps> = (props) => {
-	const {
-		className,
-		style,
-		value,
-		onAfterChange,
-		onBeforeChange,
-		onChange,
-		onSeeking,
-		min,
-		max,
-		beforeIcon,
-		afterIcon,
-		disabled = false,
-		...others
-	} = props;
+const MAX_HEIGHT = 20;
+const MIN_HEIGHT = 8;
+const INITIAL_INSET = (MAX_HEIGHT - MIN_HEIGHT) / 2;
 
-	const [curValue, setCurValue] = useState(value);
+const MAX_BOUNCE_DISTANCE = 12;
 
-	const outerRef = useRef<HTMLDivElement>(null);
+export const BouncingSlider: React.FC<SliderProps> = ({
+	className,
+	style,
+	value,
+	min,
+	max,
+	isPlaying = false,
+	onChange,
+	onAfterChange,
+	onBeforeChange,
+	onSeeking,
+	beforeIcon,
+	afterIcon,
+	changeOnDrag = false,
+}) => {
+	const containerRef = useRef<HTMLDivElement>(null);
 	const innerRef = useRef<HTMLDivElement>(null);
+	const rectRef = useRef<DOMRect | null>(null);
+	const isHoveringRef = useRef(false);
 
-	const isSeekingRef = useRef(false);
-	const draggingRef = useRef(false);
-	const hasMovedRef = useRef(false);
+	const progressMv = useMotionValue(0);
+	const scaleX = useTransform(progressMv, [0, 1], [0, 1]);
 
-	const latestProps = useRef(props);
-	useLayoutEffect(() => {
-		latestProps.current = props;
+	const insetMv = useMotionValue(INITIAL_INSET);
+
+	const clipPath = useMotionTemplate`inset(${insetMv}px 0px round 100px)`;
+
+	const bounceXSpring = useSpring(0, { damping: 12, stiffness: 300 });
+
+	const isDraggingRef = useRef(false);
+	const localTimeRef = useRef(value);
+
+	useEffect(() => {
+		if (isDraggingRef.current) return;
+
+		localTimeRef.current = value;
+		const newProgress = Math.max(0, Math.min(1, (value - min) / (max - min)));
+		progressMv.set(newProgress);
+	}, [value, min, max, progressMv]);
+
+	useAnimationFrame((_time, delta) => {
+		if (isPlaying && !isDraggingRef.current) {
+			localTimeRef.current += delta;
+
+			if (localTimeRef.current > max) localTimeRef.current = max;
+
+			const newProgress = Math.max(
+				0,
+				Math.min(1, (localTimeRef.current - min) / (max - min)),
+			);
+			progressMv.set(newProgress);
+		}
 	});
 
-	useEffect(() => {
-		if (!isSeekingRef.current) {
-			setCurValue(value);
+	const expand = () => {
+		animate(insetMv, 0, { type: "tween", ease: "easeOut", duration: 0.28 });
+	};
+
+	const collapse = () => {
+		animate(insetMv, INITIAL_INSET, {
+			type: "spring",
+			damping: 12,
+			stiffness: 200,
+		});
+	};
+
+	const handlePanStart = (_event: MouseEvent | TouchEvent | PointerEvent) => {
+		isDraggingRef.current = true;
+
+		if (innerRef.current) {
+			rectRef.current = innerRef.current.getBoundingClientRect();
 		}
-	}, [value]);
 
-	useEffect(() => {
-		const outer = outerRef.current;
-		const inner = innerRef.current;
+		expand();
 
-		if (outer && inner) {
-			const heightSpring = new Spring(80);
-			const bounceSpring = new Spring(0);
-			heightSpring.updateParams({ stiffness: 150, mass: 1, damping: 10 });
-			bounceSpring.updateParams({ stiffness: 150 });
+		onBeforeChange?.();
+		onSeeking?.(true);
+	};
 
-			let lastTime: number | null = null;
-			let handler = 0;
+	const handlePan = (
+		_event: MouseEvent | TouchEvent | PointerEvent,
+		info: PanInfo,
+	) => {
+		const rect = rectRef.current;
+		if (!rect) return;
 
-			const onFrame = (dt: number) => {
-				lastTime ??= dt;
-				const delta = (dt - lastTime) / 1000;
+		const relPos = (info.point.x - rect.left) / rect.width;
 
-				bounceSpring.update(delta);
-				heightSpring.update(delta);
-				outer.style.transform = `translateX(${
-					bounceSpring.getCurrentPosition() / 100
-				}px)`;
-				if (innerHeight <= 1000)
-					inner.style.height = `${heightSpring.getCurrentPosition() * 0.08}px`;
-				else inner.style.height = `${heightSpring.getCurrentPosition() / 10}px`;
-
-				lastTime = dt;
-
-				if (heightSpring.arrived() && bounceSpring.arrived()) {
-					if (handler) {
-						cancelAnimationFrame(handler);
-						handler = 0;
-					}
-				} else {
-					handler = requestAnimationFrame(onFrame);
-				}
-			};
-
-			const startAnimation = () => {
-				if (!handler) {
-					lastTime = null;
-					handler = requestAnimationFrame(onFrame);
-				}
-			};
-
-			const setValue = (evt: MouseEvent) => {
-				const { onChange, onSeeking, min, max } = latestProps.current;
-				const rect = inner.getBoundingClientRect();
-				const relPos = (evt.clientX - rect.left) / rect.width;
-
-				if (relPos > 1) {
-					const o = (relPos - 1) * 900;
-					bounceSpring.setPosition(o);
-					bounceSpring.setTargetPosition(o);
-				} else if (relPos < 0) {
-					const o = relPos * 900;
-					bounceSpring.setPosition(o);
-					bounceSpring.setTargetPosition(o);
-				} else {
-					bounceSpring.setPosition(0);
-					bounceSpring.setTargetPosition(0);
-				}
-
-				const v = Math.min(max, Math.max(min, min + (max - min) * relPos));
-				onChange?.(v);
-				onSeeking?.(true);
-				setCurValue(v);
-				startAnimation();
-			};
-
-			const onMouseEnter = (evt: MouseEvent) => {
-				heightSpring.setTargetPosition(189);
-				evt.stopImmediatePropagation();
-				evt.stopPropagation();
-				evt.preventDefault();
-				startAnimation();
-			};
-
-			const onMouseLeave = (evt: MouseEvent) => {
-				if (!draggingRef.current) {
-					heightSpring.setTargetPosition(80);
-					evt.stopImmediatePropagation();
-					evt.stopPropagation();
-					evt.preventDefault();
-					startAnimation();
-					const { onSeeking } = latestProps.current;
-					onSeeking?.(false);
-				}
-			};
-
-			const onMouseDown = (evt: MouseEvent) => {
-				evt.stopImmediatePropagation();
-				evt.stopPropagation();
-				evt.preventDefault();
-				heightSpring.setTargetPosition(189);
-				draggingRef.current = true;
-				hasMovedRef.current = false;
-				isSeekingRef.current = true;
-				window.addEventListener("mousemove", onMouseMove);
-				window.addEventListener("mouseup", onMouseUp);
-				const { onBeforeChange } = latestProps.current;
-				onBeforeChange?.();
-				startAnimation();
-			};
-
-			const onMouseUp = (evt: MouseEvent) => {
-				evt.stopImmediatePropagation();
-				evt.stopPropagation();
-				evt.preventDefault();
-
-				if (!hasMovedRef.current) {
-					setValue(evt);
-				}
-
-				if (!outer.contains(evt.target as Node)) {
-					heightSpring.setTargetPosition(80);
-				}
-
-				draggingRef.current = false;
-				isSeekingRef.current = false;
-				window.removeEventListener("mousemove", onMouseMove);
-				window.removeEventListener("mouseup", onMouseUp);
-				bounceSpring.setTargetPosition(0);
-
-				const { onSeeking, onAfterChange } = latestProps.current;
-				onSeeking?.(false);
-				onAfterChange?.(curValue);
-				startAnimation();
-			};
-
-			const onMouseMove = (evt: MouseEvent) => {
-				hasMovedRef.current = true;
-				setValue(evt);
-			};
-
-			inner.addEventListener("mousedown", onMouseDown);
-			outer.addEventListener("mouseenter", onMouseEnter);
-			outer.addEventListener("mouseleave", onMouseLeave);
-
-			return () => {
-				if (handler) {
-					cancelAnimationFrame(handler);
-				}
-				inner.removeEventListener("mousedown", onMouseDown);
-				outer.removeEventListener("mouseenter", onMouseEnter);
-				outer.removeEventListener("mouseleave", onMouseLeave);
-				window.removeEventListener("mouseup", onMouseUp);
-				window.removeEventListener("mousemove", onMouseMove);
-			};
+		if (relPos < 0) {
+			bounceXSpring.set(Math.tanh(relPos * 2) * MAX_BOUNCE_DISTANCE);
+		} else if (relPos > 1) {
+			bounceXSpring.set(Math.tanh((relPos - 1) * 2) * MAX_BOUNCE_DISTANCE);
+		} else {
+			bounceXSpring.set(0);
 		}
-	}, []);
+
+		const clampedPos = Math.max(0, Math.min(1, relPos));
+		const NewValue = min + clampedPos * (max - min);
+
+		localTimeRef.current = NewValue;
+
+		progressMv.set(clampedPos);
+
+		if (changeOnDrag) {
+			onChange?.(NewValue);
+		}
+	};
+
+	const handlePanEnd = () => {
+		isDraggingRef.current = false;
+		rectRef.current = null;
+
+		if (isHoveringRef.current) {
+			expand();
+		} else {
+			collapse();
+		}
+
+		bounceXSpring.set(0);
+
+		onSeeking?.(false);
+
+		onChange?.(localTimeRef.current);
+
+		onAfterChange?.(localTimeRef.current);
+	};
+
+	const handleHoverStart = () => {
+		isHoveringRef.current = true;
+		if (!isDraggingRef.current) {
+			expand();
+		}
+	};
+
+	const handleHoverEnd = () => {
+		isHoveringRef.current = false;
+		if (!isDraggingRef.current) {
+			collapse();
+		}
+	};
+
+	const handleTap = (
+		_event: MouseEvent | TouchEvent | PointerEvent,
+		info: PanInfo,
+	) => {
+		const rect = innerRef.current?.getBoundingClientRect();
+		if (!rect) return;
+
+		const relPos = Math.max(
+			0,
+			Math.min(1, (info.point.x - rect.left) / rect.width),
+		);
+
+		const NewValue = min + relPos * (max - min);
+
+		localTimeRef.current = NewValue;
+		progressMv.set(relPos);
+
+		onBeforeChange?.();
+		onChange?.(NewValue);
+		onAfterChange?.(NewValue);
+	};
 
 	return (
-		<div
-			ref={outerRef}
+		<motion.div
+			ref={containerRef}
 			className={classNames(styles.nowPlayingSlider, className)}
-			style={style}
-			{...others}
+			style={{
+				...style,
+				x: bounceXSpring,
+			}}
+			onPanStart={handlePanStart}
+			onPan={handlePan}
+			onPanEnd={handlePanEnd}
+			onTap={handleTap}
+			onHoverStart={handleHoverStart}
+			onHoverEnd={handleHoverEnd}
 		>
 			{beforeIcon}
-			<div ref={innerRef} className={styles.inner}>
-				<div
+			<motion.div
+				ref={innerRef}
+				className={styles.inner}
+				style={{
+					clipPath: clipPath,
+				}}
+			>
+				<motion.div
 					className={styles.thumb}
 					style={{
-						width: `${((curValue - min) / (max - min)) * 100}%`,
+						scaleX: scaleX,
+						originX: 0,
 					}}
 				/>
-			</div>
+			</motion.div>
+
 			{afterIcon}
-		</div>
+		</motion.div>
 	);
 };

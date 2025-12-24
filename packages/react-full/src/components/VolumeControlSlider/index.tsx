@@ -32,6 +32,7 @@ export const VolumeControl: React.FC<SliderProps> = (props) => {
 			className={styles.volumeControl}
 			beforeIcon={<IconSpeaker ref={minSpeakerRef} color="#FFFFFF" />}
 			afterIcon={<IconSpeaker3 ref={maxSpeakerRef} color="#FFFFFF" />}
+			changeOnDrag={true}
 			{...props}
 		/>
 	);
