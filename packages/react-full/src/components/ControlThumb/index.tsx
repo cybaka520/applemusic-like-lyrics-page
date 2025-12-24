@@ -12,8 +12,8 @@ export const ControlThumb: FC<
 	const containerRef = useRef<HTMLDivElement>(null);
 	const hoveringRef = useRef(false);
 	const [thumbOffset, setThumbOffset] = useState({
-		marginLeft: -25,
-		marginTop: -4,
+		x: -25,
+		y: -4,
 	});
 	const onMouseMove = (e: MouseEvent) => {
 		const container = containerRef.current;
@@ -23,17 +23,18 @@ export const ControlThumb: FC<
 			const top = (e.clientY - rect.top) / 2;
 			if (Math.abs(left) > 25 || Math.abs(top) > 25) {
 				setThumbOffset({
-					marginLeft: -25,
-					marginTop: -4,
+					x: -25,
+					y: -4,
 				});
 			} else {
 				setThumbOffset({
-					marginLeft: left - 25 / 2,
-					marginTop: top - 25 / 2,
+					x: left - 25 / 2,
+					y: top - 25 / 2,
 				});
 			}
 		}
 	};
+
 	return (
 		<div
 			className={classNames(styles.controlThumb, className)}
@@ -52,7 +53,9 @@ export const ControlThumb: FC<
 						height: 25,
 					},
 				}}
-				animate={thumbOffset}
+				animate={{
+					...thumbOffset,
+				}}
 				whileTap={{
 					scale: 0.9,
 				}}
@@ -72,8 +75,8 @@ export const ControlThumb: FC<
 				onHoverEnd={() => {
 					hoveringRef.current = false;
 					setThumbOffset({
-						marginLeft: -25,
-						marginTop: -4,
+						x: -25,
+						y: -4,
 					});
 				}}
 				onClick={onClick}
@@ -84,15 +87,15 @@ export const ControlThumb: FC<
 							height: 0,
 							width: 0,
 							marginTop: 0,
-							marginLeft: 50 / 2,
-							transform: "rotate(0)",
+							marginLeft: 25,
+							rotate: 0,
 						},
 						hover: {
 							height: 2,
 							width: 15,
 							marginTop: -1,
 							marginLeft: 5,
-							transform: "rotate(45deg)",
+							rotate: 45,
 						},
 					}}
 					transition={{
@@ -106,15 +109,15 @@ export const ControlThumb: FC<
 							height: 0,
 							width: 0,
 							marginTop: 0,
-							marginLeft: 50 / 2,
-							transform: "rotate(0)",
+							marginLeft: 25,
+							rotate: 0,
 						},
 						hover: {
 							height: 2,
 							width: 15,
 							marginTop: -1,
 							marginLeft: 5,
-							transform: "rotate(-45deg)",
+							rotate: -45,
 						},
 					}}
 					transition={{
