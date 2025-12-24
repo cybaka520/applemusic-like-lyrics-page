@@ -246,72 +246,67 @@ const TotalDurationLabel: FC = () => {
 	return <>{time}</>;
 };
 
-const PrebuiltProgressBar: FC<{ disabled?: boolean }> = React.memo(
-	({ disabled }) => {
-		const musicDuration = useAtomValue(musicDurationAtom);
-		const musicPosition = useAtomValue(musicPlayingPositionAtom);
-		const musicQualityTag = useAtomValue(musicQualityTagAtom);
-		const onClickAudioQualityTag = useAtomValue(
-			onClickAudioQualityTagAtom,
-		).onEmit;
-		const onSeekPosition = useAtomValue(onSeekPositionAtom).onEmit;
+const PrebuiltProgressBar: FC = React.memo(() => {
+	const musicDuration = useAtomValue(musicDurationAtom);
+	const musicPosition = useAtomValue(musicPlayingPositionAtom);
+	const musicIsPlaying = useAtomValue(musicPlayingAtom);
+	const musicQualityTag = useAtomValue(musicQualityTagAtom);
+	const onClickAudioQualityTag = useAtomValue(
+		onClickAudioQualityTagAtom,
+	).onEmit;
+	const onSeekPosition = useAtomValue(onSeekPositionAtom).onEmit;
 
-		const [showRemaining, setShowRemaining] = useAtom(showRemainingTimeAtom);
+	const [showRemaining, setShowRemaining] = useAtom(showRemainingTimeAtom);
 
-		const fontFamily = useAtomValue(lyricFontFamilyAtom);
-		const fontWeight = useAtomValue(lyricFontWeightAtom);
-		const letterSpacing = useAtomValue(lyricLetterSpacingAtom);
+	const fontFamily = useAtomValue(lyricFontFamilyAtom);
+	const fontWeight = useAtomValue(lyricFontWeightAtom);
+	const letterSpacing = useAtomValue(lyricLetterSpacingAtom);
 
-		const fontStyle = useMemo(
-			() => ({
-				fontFamily: fontFamily || undefined,
-				fontWeight: fontWeight || undefined,
-				letterSpacing: letterSpacing || undefined,
-			}),
-			[fontFamily, fontWeight, letterSpacing],
-		);
+	const fontStyle = useMemo(
+		() => ({
+			fontFamily: fontFamily || undefined,
+			fontWeight: fontWeight || undefined,
+			letterSpacing: letterSpacing || undefined,
+		}),
+		[fontFamily, fontWeight, letterSpacing],
+	);
 
-		const throttledSeek = useThrottle((position: number) => {
-			onSeekPosition?.(position);
-		}, 100);
-
-		return (
-			<div>
-				<BouncingSlider
-					min={0}
-					max={musicDuration}
-					value={musicPosition}
-					onChange={throttledSeek}
-					disabled={disabled}
-				/>
-				<div className={styles.progressBarLabels}>
-					<div style={fontStyle}>
-						<TimeLabel />
-					</div>
-					<div>
-						<AnimatePresence mode="popLayout">
-							{musicQualityTag && (
-								<AudioQualityTag
-									className={styles.qualityTag}
-									isDolbyAtmos={musicQualityTag.isDolbyAtmos}
-									tagText={musicQualityTag.tagText}
-									tagIcon={musicQualityTag.tagIcon}
-									onClick={onClickAudioQualityTag}
-								/>
-							)}
-						</AnimatePresence>
-					</div>
-					<div
-						style={{ ...fontStyle, cursor: "pointer", userSelect: "none" }}
-						onClick={() => setShowRemaining(!showRemaining)}
-					>
-						{showRemaining ? <TimeLabel isRemaining /> : <TotalDurationLabel />}
-					</div>
+	return (
+		<div>
+			<BouncingSlider
+				isPlaying={musicIsPlaying}
+				min={0}
+				max={musicDuration}
+				value={musicPosition}
+				onChange={onSeekPosition}
+			/>
+			<div className={styles.progressBarLabels}>
+				<div style={fontStyle}>
+					<TimeLabel />
+				</div>
+				<div>
+					<AnimatePresence mode="popLayout">
+						{musicQualityTag && (
+							<AudioQualityTag
+								className={styles.qualityTag}
+								isDolbyAtmos={musicQualityTag.isDolbyAtmos}
+								tagText={musicQualityTag.tagText}
+								tagIcon={musicQualityTag.tagIcon}
+								onClick={onClickAudioQualityTag}
+							/>
+						)}
+					</AnimatePresence>
+				</div>
+				<div
+					style={{ ...fontStyle, cursor: "pointer", userSelect: "none" }}
+					onClick={() => setShowRemaining(!showRemaining)}
+				>
+					{showRemaining ? <TimeLabel isRemaining /> : <TotalDurationLabel />}
 				</div>
 			</div>
-		);
-	},
-);
+		</div>
+	);
+});
 
 const PrebuiltCoreLyricPlayer: FC<{
 	alignPosition: number;
