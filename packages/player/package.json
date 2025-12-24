@@ -14,11 +14,9 @@
 	},
 	"dependencies": {
 		"@applemusic-like-lyrics/core": "workspace:^",
-		"@applemusic-like-lyrics/fft": "workspace:^",
 		"@applemusic-like-lyrics/lyric": "workspace:^",
 		"@applemusic-like-lyrics/react": "workspace:^",
 		"@applemusic-like-lyrics/react-full": "workspace:^",
-		"@applemusic-like-lyrics/ws-protocol": "workspace:^",
 		"@dnd-kit/core": "^6.3.1",
 		"@iconify/icons-fluent": "^1.2.38",
 		"@iconify/icons-ic": "^1.2.13",

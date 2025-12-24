@@ -121,7 +121,6 @@ export default defineConfig({
 		alias: {
 			"@applemusic-like-lyrics/core": resolve(__dirname, "../core/src"),
 			"@applemusic-like-lyrics/react": resolve(__dirname, "../react/src"),
-			"@applemusic-like-lyrics/ttml": resolve(__dirname, "../ttml/src"),
 			"@applemusic-like-lyrics/react-full": resolve(
 				__dirname,
 				"../react-full/src",
