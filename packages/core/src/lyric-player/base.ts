@@ -743,8 +743,10 @@ export abstract class LyricPlayerBase
 		let curPos = -this.scrollOffset;
 		let targetAlignIndex = this.scrollToIndex;
 		let interludeDuration = 0;
+		let isNextDuet = false;
 		if (interlude) {
 			interludeDuration = interlude[1] - interlude[0];
+			isNextDuet = interlude[3];
 			if (interludeDuration >= 4000) {
 				const nextLine = this.currentLyricLineObjects[interlude[2] + 1];
 				if (nextLine) {
@@ -799,7 +801,15 @@ export abstract class LyricPlayerBase
 
 			if (!setDots && shouldShowDots) {
 				setDots = true;
-				this.interludeDots.setTransform(0, curPos);
+
+				let targetX = 0;
+
+				if (isNextDuet) {
+					targetX = this.size[0] - this.interludeDotsSize[0];
+				}
+
+				this.interludeDots.setTransform(targetX, curPos);
+
 				if (interlude) {
 					this.interludeDots.setInterlude([interlude[0], interlude[1]]);
 				}
