@@ -34,8 +34,6 @@ jobs:
 
       - name: 安装 PNPM
         uses: pnpm/action-setup@v4
-        with:
-          version: 10.18.3
 
       - name: 安装 Node.js
         uses: actions/setup-node@v4
@@ -134,3 +132,4 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           du -sh packages/player/dist/* 2>/dev/null || echo "无法获取文件大小" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
