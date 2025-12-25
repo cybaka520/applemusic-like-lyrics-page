@@ -392,60 +392,36 @@ export abstract class LyricPlayerBase
 	protected getCurrentInterlude():
 		| [number, number, number, boolean]
 		| undefined {
-		if (this.bufferedLines.size > 0) return undefined;
 		const currentTime = this.currentTime + 20;
-		const i = this.scrollToIndex;
-		if (i === 0) {
-			if (this.processedLines[0]?.startTime) {
-				if (this.processedLines[0].startTime > currentTime) {
-					return [
-						currentTime,
-						Math.max(currentTime, this.processedLines[0].startTime - 250),
-						-2,
-						this.processedLines[0].isDuet,
-					];
-				}
-				if (
-					this.processedLines[1].startTime > currentTime &&
-					this.processedLines[0].endTime < currentTime
-				) {
-					return [
-						Math.max(this.processedLines[0].endTime, currentTime),
-						this.processedLines[1].startTime,
-						0,
-						this.processedLines[1].isDuet,
-					];
-				}
+		const currentIndex = this.scrollToIndex;
+		const lines = this.processedLines;
+
+		const checkGap = (
+			k: number,
+		): [number, number, number, boolean] | undefined => {
+			if (k < -1 || k >= lines.length - 1) return undefined;
+
+			const prevLine = k === -1 ? null : lines[k];
+			const nextLine = lines[k + 1];
+
+			const gapStart = prevLine ? prevLine.endTime : 0;
+			const gapEnd = Math.max(gapStart, nextLine.startTime - 250);
+
+			if (gapEnd - gapStart < 4000) {
+				return undefined;
 			}
-		} else if (
-			this.processedLines[i]?.endTime &&
-			this.processedLines[i + 1]?.startTime
-		) {
-			if (
-				this.processedLines[i + 1].startTime > currentTime &&
-				this.processedLines[i].endTime < currentTime
-			) {
-				return [
-					Math.max(this.processedLines[i].endTime, currentTime),
-					this.processedLines[i + 1].startTime,
-					i,
-					this.processedLines[i + 1].isDuet,
-				];
+
+			if (gapEnd > currentTime && gapStart < currentTime) {
+				return [Math.max(gapStart, currentTime), gapEnd, k, nextLine.isDuet];
 			}
-			if (
-				this.processedLines[i + 2]?.startTime &&
-				this.processedLines[i + 2].startTime > currentTime &&
-				this.processedLines[i + 1].endTime < currentTime
-			) {
-				return [
-					Math.max(this.processedLines[i + 1].endTime, currentTime),
-					this.processedLines[i + 2].startTime,
-					i + 1,
-					this.processedLines[i + 2].isDuet,
-				];
-			}
-		}
-		return undefined;
+			return undefined;
+		};
+
+		return (
+			checkGap(currentIndex - 1) ||
+			checkGap(currentIndex) ||
+			checkGap(currentIndex + 1)
+		);
 	}
 	/**
 	 * 设置当前播放歌词，要注意传入后这个数组内的信息不得修改，否则会发生错误
@@ -749,12 +725,10 @@ export abstract class LyricPlayerBase
 			const isActive =
 				hasBuffered || (i >= this.scrollToIndex && i < latestIndex);
 			const line = lineObj.getLine();
-			if (
-				!setDots &&
-				interludeDuration >= 4000 &&
-				((i === this.scrollToIndex && interlude?.[2] === -2) ||
-					i === this.scrollToIndex + 1)
-			) {
+
+			const shouldShowDots = interlude && i === interlude[2] + 1;
+
+			if (!setDots && shouldShowDots) {
 				setDots = true;
 				this.interludeDots.setTransform(0, curPos);
 				if (interlude) {
@@ -762,6 +736,7 @@ export abstract class LyricPlayerBase
 				}
 				curPos += this.interludeDotsSize[1];
 			}
+
 			let targetOpacity: number;
 
 			if (this.hidePassedLines) {
