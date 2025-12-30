@@ -72,12 +72,6 @@
 				"delete": "Xóa danh sách phát"
 			},
 			"menu": {
-				"systemListenerActive": "",
-				"exitSystemListenerMode": "",
-				"enterSystemListenerMode": "",
-				"enterWSProtocolMode": "Vào chế độ WS Protocol",
-				"asWSProtocolReceiver": "Trạng thái nhận WS Protocol",
-				"asWSProtocolSenderWIP": "Gửi trạng thái WS Protocol (đang triển khai)",
 				"auditMode": "歌词审核模式",
 				"settings": "Cài đặt"
 			},
@@ -198,10 +192,6 @@
 				"enableLyricLineSpringAnimation": {
 					"label": "Bật hiệu ứng hoạt hình co giãn dòng lời bài hát",
 					"description": "Ảnh hưởng đến hiệu năng, nếu gặp vấn đề về hiệu suất, có thể thử tắt tùy chọn này. Mặc định được bật."
-				},
-				"advanceLyricDynamicLyricTime": {
-					"label": "Thời gian bắt đầu phát lời bài hát sớm hơn",
-					"description": "Điều chỉnh thời gian ban đầu của lời bài hát để bắt đầu sớm hơn, giúp cho việc phát bài hát kịp thời (dần dần). Hành vi này tương tự như hiệu ứng được nâng cao trong Apple Music, nhưng trong một số trường hợp sẽ không ảnh hưởng đến việc chuyển đổi lời bài hát ở cuối."
 				},
 				"lyricWordFadeWidth": {
 					"label": "Điều chỉnh độ rộng của hiệu ứng làm mờ dần cho từng từ trong lời bài hát",

@@ -35,7 +35,6 @@ import {
 	onRequestPrevSongAtom,
 	onSeekPositionAtom,
 	onToggleShuffleAtom,
-	originalQueueAtom,
 	RepeatMode,
 	repeatModeAtom,
 } from "@applemusic-like-lyrics/react-full";
@@ -48,10 +47,10 @@ import { toast } from "react-toastify";
 import { db } from "../../dexie.ts";
 import { useMediaSession } from "../../hooks/useMediaSession.ts";
 import {
-	advanceLyricDynamicLyricTimeAtom,
 	currentMusicIndexAtom,
 	currentMusicQueueAtom,
 	onRequestPlaySongByIndexAtom,
+	originalQueueAtom,
 } from "../../states/appAtoms.ts";
 import {
 	SyncStatus,
@@ -177,9 +176,6 @@ const LYRIC_LOG_TAG = chalk.bgHex("#FF4444").hex("#FFFFFF")(" LYRIC ");
 
 const LyricContext: FC = () => {
 	const musicId = useAtomValue(musicIdAtom);
-	const advanceLyricDynamicLyricTime = useAtomValue(
-		advanceLyricDynamicLyricTimeAtom,
-	);
 	const setLyricLines = useSetAtom(musicLyricLinesAtom);
 	const setHideLyricView = useSetAtom(hideLyricViewAtom);
 	const song = useLiveQuery(
@@ -307,12 +303,6 @@ const LyricContext: FC = () => {
 					}
 				}
 				const processedLines: CoreLyricLine[] = compatibleLyricLines;
-				if (advanceLyricDynamicLyricTime) {
-					for (const line of processedLines) {
-						line.startTime = Math.max(0, line.startTime - 400);
-						line.endTime = Math.max(0, line.endTime - 400);
-					}
-				}
 				setLyricLines(processedLines);
 				setHideLyricView(processedLines.length === 0);
 			} catch (e) {
@@ -324,7 +314,7 @@ const LyricContext: FC = () => {
 			setLyricLines([]);
 			setHideLyricView(true);
 		}
-	}, [song, advanceLyricDynamicLyricTime, setLyricLines, setHideLyricView]);
+	}, [song, setLyricLines, setHideLyricView]);
 
 	return null;
 };
@@ -333,7 +323,7 @@ export const LocalMusicContext: FC = () => {
 	const store = useStore();
 	const { t } = useTranslation();
 	const [musicPlaying, setMusicPlaying] = useAtom(musicPlayingAtom);
-	const [, setOriginalQueue] = useAtom(originalQueueAtom);
+	const setOriginalQueue = useSetAtom(originalQueueAtom);
 
 	const savedMusicId = useAtomValue(musicIdAtom);
 	const savedPosition = useAtomValue(musicPlayingPositionAtom);

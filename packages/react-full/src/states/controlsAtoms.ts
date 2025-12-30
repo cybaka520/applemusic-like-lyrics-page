@@ -16,12 +16,6 @@ export const repeatModeAtom = atomWithStorage<RepeatMode>(
 	"amll-react-full.repeat_mode",
 	RepeatMode.Off,
 );
-export const isShuffleEnabledAtom = atom<boolean>(false);
-export const isRepeatEnabledAtom = atom<boolean>(false);
-export const originalQueueAtom = atomWithStorage<string[] | null>(
-	"amll-react-full.original_queue",
-	null,
-);
 
 export const toggleShuffleActionAtom = atom(null, (get) => {
 	const callback = get(onToggleShuffleAtom);

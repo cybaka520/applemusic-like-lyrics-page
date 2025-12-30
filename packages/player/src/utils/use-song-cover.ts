@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState } from "react";
-import { type Song, db } from "../dexie.ts";
+import { db, type Song } from "../dexie.ts";
 import { getVideoThumbnail } from "./video-thumbnail.ts";
 
 export const useSongCover = (song?: Song) => {

@@ -14,18 +14,6 @@ export enum DarkMode {
 	Dark = "dark",
 }
 
-/**
- * 定义了应用的音乐数据来源模式枚举。
- * - `local`: 本地文件播放模式。
- * - `ws-protocol`: WebSocket 协议模式。
- * - `system-listener`: SMTC 监听模式。
- */
-export enum MusicContextMode {
-	Local = "local",
-	WSProtocol = "ws-protocol",
-	SystemListener = "system-listener",
-}
-
 // ==================================================================
 //                        应用核心配置
 // ==================================================================
@@ -49,15 +37,6 @@ export const darkModeAtom = atomWithStorage(
 );
 
 /**
- * 应用的音乐上下文（数据源）模式。
- * @default MusicContextMode.Local
- */
-export const musicContextModeAtom = atomWithStorage(
-	"amll-player.musicContextMode",
-	MusicContextMode.Local,
-);
-
-/**
  * 歌词库的版本号，从 version.json 的 commit 字段获得
  */
 export const lyricDBVersionAtom = atomWithStorage<string | null>(
@@ -65,24 +44,6 @@ export const lyricDBVersionAtom = atomWithStorage<string | null>(
 	null,
 	undefined,
 	{ getOnInit: true },
-);
-
-/**
- * 是否启用提前歌词行时序的功能。
- * 即将原歌词行的初始时间时序提前，以便在歌词滚动结束后刚好开始播放（逐词）歌词效果。这个行为更加接近 Apple Music 的效果，
- * 但是大部分情况下会导致歌词行末尾的歌词尚未播放完成便被切换到下一行。
- */
-export const advanceLyricDynamicLyricTimeAtom = atomWithStorage(
-	"amll-player.advanceLyricDynamicLyricTimeAtom",
-	false,
-);
-
-/**
- * WebSocket 协议的监听地址和端口。
- */
-export const wsProtocolListenAddrAtom = atomWithStorage(
-	"amll-player.wsProtocolListenAddr",
-	"localhost:11444",
 );
 
 /**
@@ -159,6 +120,13 @@ export const hideNowPlayingBarAtom = atom(false);
 export const currentMusicQueueAtom = atomWithStorage<string[]>(
 	"amll-player.queue",
 	[],
+	undefined,
+	{ getOnInit: true },
+);
+
+export const originalQueueAtom = atomWithStorage<string[] | null>(
+	"amll-player.original_queue",
+	null,
 	undefined,
 	{ getOnInit: true },
 );

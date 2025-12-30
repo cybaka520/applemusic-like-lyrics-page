@@ -66,7 +66,6 @@ import React, {
 import { Trans, useTranslation } from "react-i18next";
 import { router } from "../../router.tsx";
 import {
-	advanceLyricDynamicLyricTimeAtom,
 	DarkMode,
 	darkModeAtom,
 	showStatJSFrameAtom,
@@ -656,17 +655,6 @@ const LyricAppearanceSettings = () => {
 					"对性能影响较高，如果遇到性能问题，可以尝试关闭此项。默认开启。",
 				)}
 				configAtom={enableLyricLineSpringAnimationAtom}
-			/>
-			<SwitchSettings
-				label={t(
-					"page.settings.lyricAppearance.advanceLyricDynamicLyricTime.label",
-					"提前歌词行时序",
-				)}
-				description={t(
-					"page.settings.lyricAppearance.advanceLyricDynamicLyricTime.description",
-					"即将原歌词行的初始时间时序提前，以便在歌词滚动结束后刚好开始播放（逐词）歌词效果。这个行为更加接近 Apple Music 的效果，但是大部分情况下会导致歌词行末尾的歌词尚未播放完成便被切换到下一行。",
-				)}
-				configAtom={advanceLyricDynamicLyricTimeAtom}
 			/>
 			<NumberSettings
 				placeholder="0.5"

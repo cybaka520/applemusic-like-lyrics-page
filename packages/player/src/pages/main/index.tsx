@@ -1,6 +1,5 @@
 import { HamburgerMenuIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import {
-	Badge,
 	Box,
 	DropdownMenu,
 	Flex,
@@ -10,24 +9,15 @@ import {
 	Text,
 } from "@radix-ui/themes";
 import { useVirtualizer } from "@tanstack/react-virtual";
-
-// import { platform } from "@tauri-apps/plugin-os";
-const platform = () => "web";
-
 import { useLiveQuery } from "dexie-react-hooks";
-import { useAtom, useAtomValue } from "jotai";
-import { type FC, useEffect, useRef, useState } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useAtomValue } from "jotai";
+import { type FC, useRef } from "react";
+import { Trans } from "react-i18next";
 import { Link } from "react-router-dom";
 import { NewPlaylistButton } from "../../components/NewPlaylistButton/index.tsx";
 import { PageContainer } from "../../components/PageContainer/index.tsx";
 import { PlaylistCard } from "../../components/PlaylistCard/index.tsx";
 import { AUDIT_PLAYLIST_ID, db } from "../../dexie.ts";
-import { router } from "../../router.tsx";
-import {
-	MusicContextMode,
-	musicContextModeAtom,
-} from "../../states/appAtoms.ts";
 import { enableAuditModeAtom } from "../../states/auditAtoms.ts";
 
 export const Component: FC = () => {
@@ -36,14 +26,7 @@ export const Component: FC = () => {
 	);
 	const parentRef = useRef<HTMLDivElement>(null);
 
-	const [musicContextMode, setMusicContextMode] = useAtom(musicContextModeAtom);
-	const [currentPlatform, setCurrentPlatform] = useState<string>("");
 	const isAuditModeEnabled = useAtomValue(enableAuditModeAtom);
-	const { t } = useTranslation();
-
-	useEffect(() => {
-		setCurrentPlatform(platform());
-	}, []);
 
 	const rowVirtualizer = useVirtualizer({
 		count: playlists?.length ?? 0,
@@ -52,9 +35,6 @@ export const Component: FC = () => {
 		overscan: 5,
 	});
 
-	const isSystemListenerMode =
-		musicContextMode === MusicContextMode.SystemListener;
-
 	return (
 		<PageContainer>
 			<Flex direction="column" height="100%">
@@ -62,17 +42,6 @@ export const Component: FC = () => {
 					<Box asChild flexGrow="1">
 						<Heading wrap="nowrap" my="4">
 							AMLL Player
-							{isSystemListenerMode && (
-								<Badge
-									radius="full"
-									style={{ cursor: "pointer" }}
-									color="green"
-									ml="2"
-									onClick={() => router.navigate("/settings#player")}
-								>
-									{t("page.main.menu.systemListenerActive")}
-								</Badge>
-							)}
 						</Heading>
 					</Box>
 					<Flex gap="1" wrap="wrap">
@@ -89,46 +58,6 @@ export const Component: FC = () => {
 								</IconButton>
 							</DropdownMenu.Trigger>
 							<DropdownMenu.Content>
-								{currentPlatform === "windows" && (
-									<DropdownMenu.Item
-										color={isSystemListenerMode ? "green" : undefined}
-										onClick={() => {
-											setMusicContextMode(
-												isSystemListenerMode
-													? MusicContextMode.Local // 如果已是监听模式，则切换回本地模式
-													: MusicContextMode.SystemListener, // 否则，切换到监听模式
-											);
-										}}
-									>
-										{isSystemListenerMode
-											? t("page.main.menu.exitSystemListenerMode")
-											: t("page.main.menu.enterSystemListenerMode")}
-									</DropdownMenu.Item>
-								)}
-								{currentPlatform === "windows" && <DropdownMenu.Separator />}
-
-								<DropdownMenu.Sub>
-									<DropdownMenu.SubTrigger>
-										<Trans i18nKey="page.main.menu.enterWSProtocolMode">
-											进入 WS Protocol 模式
-										</Trans>
-									</DropdownMenu.SubTrigger>
-									<DropdownMenu.SubContent>
-										<DropdownMenu.Item asChild>
-											<Link to="/ws/recv">
-												<Trans i18nKey="page.main.menu.asWSProtocolReceiver">
-													作为状态接收者
-												</Trans>
-											</Link>
-										</DropdownMenu.Item>
-										<DropdownMenu.Item disabled>
-											<Trans i18nKey="page.main.menu.asWSProtocolSenderWIP">
-												作为状态发送者（施工中）
-											</Trans>
-										</DropdownMenu.Item>
-									</DropdownMenu.SubContent>
-								</DropdownMenu.Sub>
-
 								{isAuditModeEnabled && (
 									<DropdownMenu.Item asChild>
 										<Link to="/audit">

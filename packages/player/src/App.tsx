@@ -26,8 +26,6 @@ import {
 	audioQualityDialogOpenedAtom,
 	displayLanguageAtom,
 	isDarkThemeAtom,
-	MusicContextMode,
-	musicContextModeAtom,
 	showStatJSFrameAtom,
 } from "./states/appAtoms.ts";
 import { ensureLoaded } from "./utils/parseTTML.ts";
@@ -40,7 +38,6 @@ function App() {
 	const store = useStore();
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const showStatJSFrame = useAtomValue(showStatJSFrameAtom);
-	const musicContextMode = useAtomValue(musicContextModeAtom);
 	const displayLanguage = useAtomValue(displayLanguageAtom);
 	const isDarkTheme = useAtomValue(isDarkThemeAtom);
 	const hasBackground = useAtomValue(hasBackgroundAtom);
@@ -107,12 +104,8 @@ function App() {
 
 	return (
 		<>
-			{/* 上下文组件均不建议被 StrictMode 包含，以免重复加载扩展程序发生问题  */}
 			{showStatJSFrame && <StatsComponent />}
-			{musicContextMode === MusicContextMode.Local && (
-				<LocalMusicContext key={MusicContextMode.Local} />
-			)}
-
+			<LocalMusicContext />
 			<URLParamsHandler />
 			<SpeedInsights />
 			<Analytics />

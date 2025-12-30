@@ -2,18 +2,10 @@ import type { LyricLineMouseEvent } from "@applemusic-like-lyrics/core";
 import type { LyricPlayerRef } from "@applemusic-like-lyrics/react";
 import { atom } from "jotai";
 
-/**
- * 定义一个通用的回调函数结构。
- * 这是一个辅助类型，用于创建回调 Atom。
- */
 export interface Callback<Args extends unknown[], Result = void> {
 	onEmit?: (...args: Args) => Result;
 }
 
-/**
- * 一个辅助函数，用于创建具有正确类型的空回调对象。
- * 主要用于类型推断和初始化。
- */
 const c = <Args extends unknown[], Result = void>(
 	_onEmit: (...args: Args) => Result,
 ): Callback<Args, Result> => ({});
@@ -61,15 +53,15 @@ export const onRequestNextSongAtom = atom(c(() => {}));
 
 /**
  * 当用户通过拖动进度条等方式请求跳转到指定播放位置时触发。
- * @param {number} position - 目标播放位置，单位为毫秒。
+ * @param position - 目标播放位置，单位为毫秒。
  */
 export const onSeekPositionAtom = atom(c((_position: number) => {}));
 
 /**
  * 当用户点击某一行歌词时触发。
  * 通常用于跳转到该行歌词的起始时间。
- * @param {LyricLineMouseEvent} _evt - 歌词行事件对象。
- * @param {LyricPlayerRef | null} _playerRef - 播放器引用。
+ * @param _evt - 歌词行事件对象。
+ * @param _playerRef - 播放器引用。
  */
 export const onLyricLineClickAtom = atom(
 	c((_evt: LyricLineMouseEvent, _playerRef: LyricPlayerRef | null) => {}),
@@ -77,8 +69,8 @@ export const onLyricLineClickAtom = atom(
 
 /**
  * 当用户试图对歌词行打开上下文菜单（例如右键点击）时触发。
- * @param {LyricLineMouseEvent} _evt - 歌词行事件对象。
- * @param {LyricPlayerRef | null} _playerRef - 播放器引用。
+ * @param _evt - 歌词行事件对象。
+ * @param _playerRef - 播放器引用。
  */
 export const onLyricLineContextMenuAtom = atom(
 	c((_evt: LyricLineMouseEvent, _playerRef: LyricPlayerRef | null) => {}),
@@ -86,7 +78,7 @@ export const onLyricLineContextMenuAtom = atom(
 
 /**
  * 当用户通过音量滑块请求改变音量时触发。
- * @param {number} volume - 目标音量，取值范围为 [0-100]。
+ * @param volume - 目标音量，取值范围为 [0-100]。
  */
 export const onChangeVolumeAtom = atom(c((_volume: number) => {}));
 

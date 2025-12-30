@@ -72,12 +72,6 @@
 				"delete": "Delete"
 			},
 			"menu": {
-				"systemListenerActive": "SMTC Listener Mode",
-				"exitSystemListenerMode": "Exit SMTC Listener Mode",
-				"enterSystemListenerMode": "Enter SMTC Listener Mode",
-				"enterWSProtocolMode": "Start WS Protocol mode",
-				"asWSProtocolReceiver": "As WS Protocol Receiver",
-				"asWSProtocolSenderWIP": "As WS Protocol Sender (On development)",
 				"auditMode": "Lyric Audit Mode",
 				"settings": "Settings"
 			},
@@ -198,10 +192,6 @@
 				"enableLyricLineSpringAnimation": {
 					"label": "Enable Text Spring Animation Effect",
 					"description": "Significantly impacts performance. If you encounter any performance issues, try to disable this option. Enabled by default."
-				},
-				"advanceLyricDynamicLyricTime": {
-					"label": "Advance Lyric Timing",
-					"description": "Advance the initial time sequence of the original lyrics line, so that the lyrics effect starts playing (word by word) just after the lyrics scroll ends. This behavior is closer to the effect of Apple Music, but in most cases, it will cause the lyrics at the end of the line to be switched to the next line before they have been played completely."
 				},
 				"lyricWordFadeWidth": {
 					"label": "Gradient Transition Width of Each Word",

@@ -3,15 +3,6 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 
 /**
- * 播放列表中歌曲的数据结构
- * - `local`: 代表本地文件歌曲
- * - `custom`: 代表通过自定义数据源（如API）获取的歌曲
- */
-export type SongData =
-	| { type: "local"; filePath: string; origOrder: number }
-	| { type: "custom"; id: string; songJsonData: string; origOrder: number };
-
-/**
  * 艺术家信息的标准结构
  */
 export interface ArtistStateEntry {
@@ -134,16 +125,6 @@ export const musicQualityTagAtom = atom<{
 	tagText: string;
 	isDolbyAtmos: boolean;
 } | null>(null);
-
-/**
- * 当前的播放列表
- */
-export const currentPlaylistAtom = atom<SongData[]>([]);
-
-/**
- * 当前歌曲在播放列表中的索引
- */
-export const currentPlaylistMusicIndexAtom = atom(0);
 
 // ==================================================================
 //                        音频可视化相关原子状态
