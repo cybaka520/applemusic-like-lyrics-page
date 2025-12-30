@@ -18,6 +18,10 @@ export class WebPlayer extends TypedEventTarget<WebPlayerEventMap> {
 	private gainNode: GainNode;
 	private currentObjectUrl: string | null = null;
 
+	private targetVolume: number = 1.0;
+	private readonly FADE_DURATION = 0.2;
+	private fadeOutTimer: number | null = null;
+
 	constructor() {
 		super();
 		this.audioContext = new AudioContext();
@@ -67,6 +71,8 @@ export class WebPlayer extends TypedEventTarget<WebPlayerEventMap> {
 		this.currentObjectUrl = URL.createObjectURL(audioFile);
 		this.audioElement.src = this.currentObjectUrl;
 
+		this.gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+
 		return new Promise<void>((resolve, reject) => {
 			const onCanPlay = () => {
 				cleanup();
@@ -90,18 +96,49 @@ export class WebPlayer extends TypedEventTarget<WebPlayerEventMap> {
 	}
 
 	async play() {
+		this.emit("play", undefined);
+
 		if (this.audioContext.state === "suspended") {
 			await this.audioContext.resume();
 		}
+
+		if (this.fadeOutTimer) {
+			clearTimeout(this.fadeOutTimer);
+			this.fadeOutTimer = null;
+		}
+
 		try {
+			const now = this.audioContext.currentTime;
+
+			this.gainNode.gain.cancelScheduledValues(now);
+			this.gainNode.gain.setValueAtTime(0, now);
+
 			await this.audioElement.play();
+
+			this.gainNode.gain.linearRampToValueAtTime(
+				this.targetVolume,
+				now + this.FADE_DURATION,
+			);
 		} catch (err) {
-			console.error(err);
+			console.error("播放失败", err);
+			this.emit("pause", undefined);
 		}
 	}
 
 	pause() {
-		this.audioElement.pause();
+		this.emit("pause", undefined);
+
+		const now = this.audioContext.currentTime;
+		this.gainNode.gain.cancelScheduledValues(now);
+		this.gainNode.gain.setValueAtTime(this.gainNode.gain.value, now);
+		this.gainNode.gain.linearRampToValueAtTime(0, now + this.FADE_DURATION);
+
+		if (this.fadeOutTimer) clearTimeout(this.fadeOutTimer);
+
+		this.fadeOutTimer = window.setTimeout(() => {
+			this.audioElement.pause();
+			this.fadeOutTimer = null;
+		}, this.FADE_DURATION * 1000);
 	}
 
 	seek(time: number) {
@@ -115,7 +152,13 @@ export class WebPlayer extends TypedEventTarget<WebPlayerEventMap> {
 	}
 
 	setVolume(volume: number) {
-		this.gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+		this.targetVolume = volume;
+		const now = this.audioContext.currentTime;
+
+		if (!this.audioElement.paused && !this.fadeOutTimer) {
+			this.gainNode.gain.cancelScheduledValues(now);
+			this.gainNode.gain.setTargetAtTime(volume, now, 0.05);
+		}
 		this.emit("volumechange", volume);
 	}
 
