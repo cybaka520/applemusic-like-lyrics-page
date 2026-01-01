@@ -10,6 +10,7 @@ import styles from "./App.module.css";
 import { AppContainer } from "./components/AppContainer/index.tsx";
 import { LocalMusicContext } from "./components/LocalMusicContext/index.tsx";
 import { NowPlayingBar } from "./components/NowPlayingBar/index.tsx";
+import { WebSocketClientContext } from "./components/WebSocketClientContext/index.tsx";
 import "./i18n";
 import {
 	isLyricPageOpenedAtom,
@@ -23,6 +24,8 @@ import { StatsComponent } from "./components/StatsComponent/index.tsx";
 import { URLParamsHandler } from "./components/URLParamsHandler/index.tsx";
 import { router } from "./router.tsx";
 import {
+	AppMode,
+	appModeAtom,
 	audioQualityDialogOpenedAtom,
 	displayLanguageAtom,
 	isDarkThemeAtom,
@@ -41,6 +44,7 @@ function App() {
 	const displayLanguage = useAtomValue(displayLanguageAtom);
 	const isDarkTheme = useAtomValue(isDarkThemeAtom);
 	const hasBackground = useAtomValue(hasBackgroundAtom);
+	const appMode = useAtomValue(appModeAtom);
 	const { i18n } = useTranslation();
 
 	const lyricSize = useAtomValue(lyricSizePresetAtom);
@@ -105,7 +109,13 @@ function App() {
 	return (
 		<>
 			{showStatJSFrame && <StatsComponent />}
-			<LocalMusicContext />
+
+			{appMode === AppMode.WebSocket ? (
+				<WebSocketClientContext />
+			) : (
+				<LocalMusicContext />
+			)}
+
 			<URLParamsHandler />
 			<SpeedInsights />
 			<Analytics />

@@ -153,3 +153,26 @@ export const onRequestPlaySongByIndexAtom = atom<{
  * 控制音质详情对话框是否打开
  */
 export const audioQualityDialogOpenedAtom = atom(false);
+
+export enum AppMode {
+	Local = "local",
+	WebSocket = "websocket",
+}
+
+export const appModeAtom = atom<AppMode>(AppMode.Local);
+
+export enum WebSocketConnectionStatus {
+	Disconnected = "disconnected",
+	Connecting = "connecting",
+	Connected = "connected",
+	Error = "error",
+}
+
+export const wsConnectionStatusAtom = atom<WebSocketConnectionStatus>(
+	WebSocketConnectionStatus.Disconnected,
+);
+
+export const wsServerUrlAtom = atomWithStorage<string>(
+	"amll-player.wsServerUrl",
+	"ws://localhost:11455",
+);

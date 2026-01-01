@@ -33,6 +33,26 @@
 			"tip": "在上方輸入搜尋關鍵字，點選候選項即可將歌詞內容直接匯入歌詞資料。",
 			"supportText": "AMLL TTML DB 是由 AMLL 社群愛好者們一同建立的開源無版權歌詞資料庫，想為 AMLL TTML DB 貢獻歌詞嗎？前往<1>GitHub 倉庫</1>即可了解提交歌詞流程！",
 			"noResults": "無結果"
+		},
+		"ws": {
+			"connectionError": "连接到 WS 服务器失败",
+			"connected": "已连接到 WS 服务器",
+			"status": {
+				"connected": "已连接",
+				"connecting": "连接中...",
+				"error": "连接失败",
+				"disconnected": "未连接",
+				"not_connected": "未连接"
+			},
+			"title": "WS Protocol 模式",
+			"description": "接收并显示来自其他应用的播放信息",
+			"connection_status": "连接状态",
+			"server_address": "服务器地址",
+			"action": {
+				"disconnect": "断开连接",
+				"connect": "连接",
+				"reconnect": "重新连接"
+			}
 		}
 	},
 	"common": {
@@ -73,6 +93,7 @@
 			},
 			"menu": {
 				"auditMode": "歌词审核模式",
+				"wsMode": "进入 WS Protocol 模式",
 				"settings": "設定"
 			},
 			"noPlaylistTip": "沒有播放清單，快去新建一個吧！",

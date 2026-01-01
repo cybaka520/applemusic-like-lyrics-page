@@ -1,4 +1,10 @@
-import { HamburgerMenuIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import {
+	GearIcon,
+	HamburgerMenuIcon,
+	Link1Icon,
+	MagnifyingGlassIcon,
+	PersonIcon,
+} from "@radix-ui/react-icons";
 import {
 	Box,
 	DropdownMenu,
@@ -61,16 +67,33 @@ export const Component: FC = () => {
 								{isAuditModeEnabled && (
 									<DropdownMenu.Item asChild>
 										<Link to="/audit">
-											<Trans i18nKey="page.main.menu.auditMode">
-												歌词审核模式
-											</Trans>
+											<Flex align="center" gap="2">
+												<PersonIcon />
+												<Trans i18nKey="page.main.menu.auditMode">
+													歌词审核模式
+												</Trans>
+											</Flex>
 										</Link>
 									</DropdownMenu.Item>
 								)}
 
 								<DropdownMenu.Item asChild>
+									<Link to="/ws-mode">
+										<Flex align="center" gap="2">
+											<Link1Icon />
+											<Trans i18nKey="page.main.menu.wsMode">
+												WS Protocol 模式
+											</Trans>
+										</Flex>
+									</Link>
+								</DropdownMenu.Item>
+
+								<DropdownMenu.Item asChild>
 									<Link to="/settings">
-										<Trans i18nKey="page.main.menu.settings">设置</Trans>
+										<Flex align="center" gap="2">
+											<GearIcon />
+											<Trans i18nKey="page.main.menu.settings">设置</Trans>
+										</Flex>
 									</Link>
 								</DropdownMenu.Item>
 							</DropdownMenu.Content>
