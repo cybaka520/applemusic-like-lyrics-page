@@ -33,6 +33,26 @@
 			"tip": "Type your search keywords above, and click on a suggestion to import the lyrics into the database directly.",
 			"supportText": "AMLL TTML DB is a free and open-source lyrics' database built by the AMLL community. Want to contribute your lyrics to AMLL TTML DB? Head over to the <1>GitHub repository</1> to learn more on how to submit!",
 			"noResults": "No results."
+		},
+		"ws": {
+			"connectionError": "Failed to connect to WS server",
+			"connected": "Connected to WS server",
+			"status": {
+				"connected": "Connected",
+				"connecting": "Connecting...",
+				"error": "Connection Failed",
+				"disconnected": "Disconnected",
+				"not_connected": "Not Connected"
+			},
+			"title": "WS Protocol Mode",
+			"description": "Receive and display playback information from other applications",
+			"connection_status": "Connection Status",
+			"server_address": "Server Address",
+			"action": {
+				"disconnect": "Disconnect",
+				"connect": "Connect",
+				"reconnect": "Reconnect"
+			}
 		}
 	},
 	"common": {
@@ -73,6 +93,7 @@
 			},
 			"menu": {
 				"auditMode": "Lyric Audit Mode",
+				"wsMode": "进入 WS Protocol 模式",
 				"settings": "Settings"
 			},
 			"noPlaylistTip": "Nothing is here, try to create something?",

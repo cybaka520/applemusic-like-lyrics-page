@@ -48,6 +48,11 @@ export const router = createBrowserRouter(
 				lazy={() => import("./pages/audit/index.tsx")}
 				errorElement={<ErrorPage />}
 			/>
+			<Route
+				path="/ws-mode"
+				lazy={() => import("./pages/websocket-mode/index.tsx")}
+				errorElement={<ErrorPage />}
+			/>
 		</>,
 	),
 );

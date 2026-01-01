@@ -1,12 +1,3 @@
-import type { LyricLine as CoreLyricLine } from "@applemusic-like-lyrics/core";
-import {
-	type LyricLine,
-	parseEslrc,
-	parseLrc,
-	parseLys,
-	parseQrc,
-	parseYrc,
-} from "@applemusic-like-lyrics/lyric";
 import {
 	AudioQualityType,
 	fftDataRangeAtom,
@@ -45,6 +36,7 @@ import { type FC, useEffect, useLayoutEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { db } from "../../dexie.ts";
+import { useLyricParser } from "../../hooks/useLyricParser.ts";
 import { useMediaSession } from "../../hooks/useMediaSession.ts";
 import {
 	currentMusicIndexAtom,
@@ -57,7 +49,6 @@ import {
 	syncLyricsDatabase,
 } from "../../utils/lyric-sync-manager.ts";
 import { extractMusicMetadata } from "../../utils/music-file.ts";
-import { parseTTML } from "../../utils/parseTTML.ts";
 import { mapMetadataToQuality } from "../../utils/quality.ts";
 import { webPlayer } from "../../utils/web-player.ts";
 
@@ -79,59 +70,6 @@ export const FFTToLowPassContext: FC = () => {
 
 	return null;
 };
-
-type TransLine = {
-	[K in keyof CoreLyricLine]: CoreLyricLine[K] extends string ? K : never;
-}[keyof CoreLyricLine];
-
-function pairLyric(line: LyricLine, lines: CoreLyricLine[], key: TransLine) {
-	if (
-		line.words
-			.map((v) => v.word)
-			.join("")
-			.trim().length === 0
-	)
-		return;
-	interface PairedLine {
-		startTime: number;
-		lineText: string;
-		origIndex: number;
-		original: CoreLyricLine;
-	}
-	const processed: PairedLine[] = lines.map((v, i) => ({
-		startTime: Math.min(v.startTime, ...v.words.map((v) => v.startTime)),
-		origIndex: i,
-		lineText: v.words
-			.map((v) => v.word)
-			.join("")
-			.trim(),
-		original: v,
-	}));
-	let nearestLine: PairedLine | undefined;
-	for (const coreLine of processed) {
-		if (coreLine.lineText.length > 0) {
-			if (coreLine.startTime === line.words[0].startTime) {
-				nearestLine = coreLine;
-				break;
-			}
-			if (
-				nearestLine &&
-				Math.abs(nearestLine.startTime - line.words[0].startTime) >
-					Math.abs(coreLine.startTime - line.words[0].startTime)
-			) {
-				nearestLine = coreLine;
-			} else if (nearestLine === undefined) {
-				nearestLine = coreLine;
-			}
-		}
-	}
-	if (nearestLine) {
-		const joined = line.words.map((w) => w.word).join("");
-		if (nearestLine.original[key].length > 0)
-			nearestLine.original[key] += joined;
-		else nearestLine.original[key] = joined;
-	}
-}
 
 const MusicQualityTagText: FC = () => {
 	const { t } = useTranslation();
@@ -206,115 +144,17 @@ const LyricContext: FC = () => {
 		});
 	}, []);
 
+	const { lyricLines, hasLyrics } = useLyricParser(
+		song?.lyric,
+		song?.lyricFormat,
+		song?.translatedLrc,
+		song?.romanLrc,
+	);
+
 	useEffect(() => {
-		if (song) {
-			try {
-				let parsedLyricLines: LyricLine[] = [];
-				switch (song.lyricFormat) {
-					case "lrc": {
-						parsedLyricLines = parseLrc(song.lyric);
-						console.log(LYRIC_LOG_TAG, "解析出 LyRiC 歌词", parsedLyricLines);
-						break;
-					}
-					case "eslrc": {
-						parsedLyricLines = parseEslrc(song.lyric);
-						console.log(LYRIC_LOG_TAG, "解析出 ESLyRiC 歌词", parsedLyricLines);
-						break;
-					}
-					case "yrc": {
-						parsedLyricLines = parseYrc(song.lyric);
-						console.log(LYRIC_LOG_TAG, "解析出 YRC 歌词", parsedLyricLines);
-						break;
-					}
-					case "qrc": {
-						parsedLyricLines = parseQrc(song.lyric);
-						console.log(LYRIC_LOG_TAG, "解析出 QRC 歌词", parsedLyricLines);
-						break;
-					}
-					case "lys": {
-						parsedLyricLines = parseLys(song.lyric);
-						console.log(
-							LYRIC_LOG_TAG,
-							"解析出 Lyricify Syllable 歌词",
-							parsedLyricLines,
-						);
-						break;
-					}
-					case "ttml": {
-						parsedLyricLines = parseTTML(song.lyric).lines;
-						console.log(LYRIC_LOG_TAG, "解析出 TTML 歌词", parsedLyricLines);
-						break;
-					}
-					default: {
-						setLyricLines([]);
-						setHideLyricView(true);
-						return;
-					}
-				}
-				const compatibleLyricLines: CoreLyricLine[] = parsedLyricLines.map(
-					(line) => ({
-						...line,
-						words: line.words.map((word) => ({
-							...word,
-							obscene: false,
-						})),
-					}),
-				);
-				if (song.translatedLrc) {
-					try {
-						const translatedLyricLines = parseLrc(song.translatedLrc);
-						for (const line of translatedLyricLines) {
-							pairLyric(
-								{
-									...line,
-									words: line.words.map((word) => ({
-										...word,
-										obscene: false,
-									})),
-								},
-								compatibleLyricLines,
-								"translatedLyric",
-							);
-						}
-						console.log(LYRIC_LOG_TAG, "已匹配翻译歌词");
-					} catch (err) {
-						console.warn(LYRIC_LOG_TAG, "解析翻译歌词时出现错误", err);
-					}
-				}
-				if (song.romanLrc) {
-					try {
-						const romanLyricLines = parseLrc(song.romanLrc);
-						for (const line of romanLyricLines) {
-							pairLyric(
-								{
-									...line,
-									words: line.words.map((word) => ({
-										...word,
-										obscene: false,
-									})),
-								},
-								compatibleLyricLines,
-								"romanLyric",
-							);
-						}
-						console.log(LYRIC_LOG_TAG, "已匹配音译歌词");
-					} catch (err) {
-						console.warn(LYRIC_LOG_TAG, "解析音译歌词时出现错误", err);
-					}
-				}
-				const processedLines: CoreLyricLine[] = compatibleLyricLines;
-				setLyricLines(processedLines);
-				setHideLyricView(processedLines.length === 0);
-			} catch (e) {
-				console.warn("解析歌词时出现错误", e);
-				setLyricLines([]);
-				setHideLyricView(true);
-			}
-		} else {
-			setLyricLines([]);
-			setHideLyricView(true);
-		}
-	}, [song, setLyricLines, setHideLyricView]);
+		setLyricLines(lyricLines);
+		setHideLyricView(!hasLyrics);
+	}, [lyricLines, hasLyrics, setLyricLines, setHideLyricView]);
 
 	return null;
 };

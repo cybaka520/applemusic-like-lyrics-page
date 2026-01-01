@@ -1,4 +1,8 @@
-import { HamburgerMenuIcon, MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import {
+	HamburgerMenuIcon,
+	Link1Icon,
+	MagnifyingGlassIcon,
+} from "@radix-ui/react-icons";
 import {
 	Box,
 	DropdownMenu,
@@ -67,6 +71,17 @@ export const Component: FC = () => {
 										</Link>
 									</DropdownMenu.Item>
 								)}
+
+								<DropdownMenu.Item asChild>
+									<Link to="/ws-mode">
+										<Flex align="center" gap="2">
+											<Link1Icon />
+											<Trans i18nKey="page.main.menu.wsMode">
+												进入 WS Protocol 模式
+											</Trans>
+										</Flex>
+									</Link>
+								</DropdownMenu.Item>
 
 								<DropdownMenu.Item asChild>
 									<Link to="/settings">
