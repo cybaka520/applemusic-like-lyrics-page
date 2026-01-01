@@ -38,13 +38,11 @@ import {
 } from "../../states/appAtoms";
 import type { MessageV2, Payload, RepeatMode as WSRepeatMode } from "./types";
 
-const RECONNECT_INTERVAL = 3000;
-
 export const WebSocketClientContext: FC = () => {
 	const store = useStore();
 	const { t } = useTranslation();
 	const wsRef = useRef<WebSocket | null>(null);
-	const pingTimerRef = useRef<number | null>(null);
+	const connectErrorRef = useRef(false);
 	const [status, setStatus] = useAtom(wsConnectionStatusAtom);
 	const savedWsUrl = useAtomValue(wsServerUrlAtom);
 
@@ -82,9 +80,12 @@ export const WebSocketClientContext: FC = () => {
 			if (isUnmounted) return;
 
 			const wsUrl = savedWsUrl;
+			if (!wsUrl) return;
 
 			console.log(`[WS] Connecting to ${wsUrl}...`);
 			setStatus(WebSocketConnectionStatus.Connecting);
+
+			connectErrorRef.current = false;
 
 			const ws = new WebSocket(wsUrl);
 			wsRef.current = ws;
@@ -93,22 +94,23 @@ export const WebSocketClientContext: FC = () => {
 			ws.onopen = () => {
 				console.log("[WS] Connected");
 				setStatus(WebSocketConnectionStatus.Connected);
+				connectErrorRef.current = false;
 				send({ type: "initialize" });
 			};
 
 			ws.onclose = () => {
 				console.log("[WS] Closed");
-				setStatus(WebSocketConnectionStatus.Disconnected);
-				if (pingTimerRef.current) clearInterval(pingTimerRef.current);
+
 				wsRef.current = null;
 
-				if (!isUnmounted) {
-					setTimeout(connect, RECONNECT_INTERVAL);
+				if (!connectErrorRef.current) {
+					setStatus(WebSocketConnectionStatus.Disconnected);
 				}
 			};
 
 			ws.onerror = (err) => {
 				console.error("[WS] Error", err);
+				connectErrorRef.current = true;
 				setStatus(WebSocketConnectionStatus.Error);
 			};
 
@@ -131,14 +133,11 @@ export const WebSocketClientContext: FC = () => {
 		return () => {
 			isUnmounted = true;
 			if (wsRef.current) wsRef.current.close();
-			if (pingTimerRef.current) clearInterval(pingTimerRef.current);
 		};
-	}, [setStatus]);
+	}, [setStatus, savedWsUrl]);
 
 	const handleMessage = (msg: MessageV2) => {
 		const payload = msg;
-
-		console.log(payload);
 
 		switch (payload.type) {
 			case "ping":

@@ -121,7 +121,7 @@ export const Component: FC = () => {
 						</Box>
 
 						<Flex gap="3" justify="end" mt="2">
-							{isWsMode ? (
+							{connectionStatus === WebSocketConnectionStatus.Connected ? (
 								<Button color="red" variant="soft" onClick={handleDisconnect}>
 									{t("amll.ws.action.disconnect", "断开连接")}
 								</Button>
@@ -133,6 +133,7 @@ export const Component: FC = () => {
 
 							{isWsMode &&
 								connectionStatus !== WebSocketConnectionStatus.Connected &&
+								connectionStatus !== WebSocketConnectionStatus.Disconnected &&
 								connectionStatus !== WebSocketConnectionStatus.Connecting && (
 									<Button
 										variant="outline"
