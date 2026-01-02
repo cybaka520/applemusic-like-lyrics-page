@@ -26,8 +26,8 @@ export interface Song {
 	lyric: string;
 	translatedLrc?: string;
 	romanLrc?: string;
-	addTime?: number;
-	accessTime?: number;
+	addTime: number;
+	accessTime: number;
 }
 
 export interface TTMLDBLyricEntry {
@@ -65,6 +65,21 @@ db.version(1).stores({
 	auditMetadata: "&songId, prId, status",
 });
 
-db.version(2).stores({
-	songs: "&id,filePath,songName,songArtists,accessTime",
-});
+db.version(2)
+	.stores({
+		songs: "&id,filePath,songName,songArtists,accessTime",
+	})
+	.upgrade(async (tx) => {
+		await tx
+			.table("songs")
+			.toCollection()
+			.modify((song) => {
+				const now = Date.now();
+				if (!song.accessTime) {
+					song.accessTime = now;
+				}
+				if (!song.addTime) {
+					song.addTime = now;
+				}
+			});
+	});
