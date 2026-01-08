@@ -1,9 +1,10 @@
 import {
 	AudioQualityType,
-	fftDataRangeAtom,
+	fftDataAtom,
 	hideLyricViewAtom,
 	isLyricPageOpenedAtom,
 	isShuffleActiveAtom,
+	lowFreqVolumeAtom,
 	type MusicQualityState,
 	musicArtistsAtom,
 	musicCoverAtom,
@@ -63,11 +64,96 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export const FFTToLowPassContext: FC = () => {
-	const fftDataRange = useAtomValue(fftDataRangeAtom);
+	const store = useStore();
+	// const fftDataRange = useAtomValue(fftDataRangeAtom); // 这个不太适合 web 的音频分析节点
+	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
+	const isPlaying = useAtomValue(musicPlayingAtom);
 
 	useEffect(() => {
-		// This is a placeholder, as FFT is not implemented in audioPlayer yet.
-	}, [fftDataRange]);
+		if (!isLyricPageOpened) return;
+
+		let rafId: number;
+		let curValue = 1;
+		let lt = 0;
+
+		const gradient: number[] = [];
+
+		const dataArray = new Uint8Array(1024);
+
+		function amplitudeToLevel(amplitude: number): number {
+			const normalized = amplitude / 255;
+			return normalized ** 2.5;
+		}
+
+		function calculateGradient(bassEnergy: number): number {
+			const window = 8;
+			const volume = amplitudeToLevel(bassEnergy);
+
+			if (gradient.length < window) {
+				gradient.push(volume);
+				return 0;
+			}
+			gradient.shift();
+			gradient.push(volume);
+
+			const max = Math.max(...gradient);
+			const min = Math.min(...gradient);
+
+			const difference = max - min;
+
+			const THRESHOLD = 0.12;
+
+			if (difference > THRESHOLD) {
+				return max;
+			} else {
+				return min * 0.7;
+			}
+		}
+
+		const onFrame = (timestamp: number) => {
+			if (audioPlayer.analyser) {
+				audioPlayer.analyser.getByteFrequencyData(dataArray);
+			} else {
+				dataArray.fill(0);
+			}
+			store.set(fftDataAtom, Array.from(dataArray));
+
+			let bassSum = 0;
+			const bassBinCount = 6;
+			for (let i = 1; i < 1 + bassBinCount; i++) {
+				bassSum += dataArray[i];
+			}
+			const avgBass = bassSum / bassBinCount;
+
+			const delta = timestamp - lt;
+			const targetValue = calculateGradient(avgBass);
+
+			if (curValue < targetValue) {
+				curValue = Math.min(
+					targetValue,
+					curValue + (targetValue - curValue) * 0.1 * (delta / 16),
+				);
+			} else {
+				curValue = Math.max(
+					targetValue,
+					curValue + (targetValue - curValue) * 0.03 * (delta / 16),
+				);
+			}
+
+			if (Number.isNaN(curValue)) curValue = 0;
+
+			store.set(lowFreqVolumeAtom, Math.min(1.2, Math.max(0, curValue)));
+
+			lt = timestamp;
+			rafId = requestAnimationFrame(onFrame);
+		};
+
+		rafId = requestAnimationFrame(onFrame);
+
+		return () => {
+			cancelAnimationFrame(rafId);
+		};
+	}, [store, isLyricPageOpened, isPlaying]);
 
 	return null;
 };
