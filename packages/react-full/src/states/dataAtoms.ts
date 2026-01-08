@@ -42,6 +42,8 @@ export interface MusicQualityState {
 export const musicIdAtom = atomWithStorage<string | null>(
 	"amll-react-full.current_id",
 	null,
+	undefined,
+	{ getOnInit: true },
 );
 
 /**
@@ -88,6 +90,8 @@ export const musicPlayingAtom = atom(false);
 export const musicPlayingPositionAtom = atomWithStorage<number>(
 	"amll-react-full.position",
 	0,
+	undefined,
+	{ getOnInit: true },
 );
 
 /**

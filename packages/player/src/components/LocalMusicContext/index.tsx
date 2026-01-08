@@ -32,7 +32,7 @@ import {
 import chalk from "chalk";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
-import { type FC, useEffect, useLayoutEffect, useState } from "react";
+import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { db } from "../../dexie.ts";
@@ -170,6 +170,7 @@ export const LocalMusicContext: FC = () => {
 	const savedPosition = useAtomValue(musicPlayingPositionAtom);
 	const savedVolume = useAtomValue(musicVolumeAtom);
 	const [hasRestored, setHasRestored] = useState(false);
+	const isSeekingRef = useRef(false);
 
 	useMediaSession();
 
@@ -205,15 +206,23 @@ export const LocalMusicContext: FC = () => {
 
 						store.set(musicDurationAtom, (song.duration || 0) * 1000);
 
-						await audioPlayer.load(file);
+						const handleCanPlayAndSeek = () => {
+							if (savedPosition > 0) {
+								audioPlayer.seek(savedPosition / 1000);
+							}
 
-						if (savedPosition > 0) {
-							audioPlayer.seek(savedPosition / 1000);
-						}
+							audioPlayer.removeEventListener("canplay", handleCanPlayAndSeek);
+						};
+
+						audioPlayer.addEventListener("canplay", handleCanPlayAndSeek);
+
+						await audioPlayer.load(file);
 
 						store.set(musicPlayingAtom, false);
 					} catch (e) {
 						console.warn("恢复播放状态失败:", e);
+						const removeHandler = () => {};
+						audioPlayer.removeEventListener("canplay", removeHandler);
 					}
 				}
 			}
@@ -221,13 +230,8 @@ export const LocalMusicContext: FC = () => {
 
 		if (savedPosition) {
 			restorePlaybackState();
-			setHasRestored(true);
-		} else {
-			const timer = setTimeout(() => {
-				setHasRestored(true);
-			}, 500);
-			return () => clearTimeout(timer);
 		}
+		setHasRestored(true);
 	}, [savedMusicId, savedPosition, hasRestored, store]);
 
 	useEffect(() => {
@@ -340,21 +344,10 @@ export const LocalMusicContext: FC = () => {
 			}),
 		);
 
-		const handleLoaded = async () => {
-			const durationSec = audioPlayer.duration;
-			const durationMs = (durationSec * 1000) | 0;
-
+		const handleDurationChange = (e: CustomEvent<number>) => {
+			const durationSec = e.detail;
 			if (Number.isFinite(durationSec)) {
-				store.set(musicDurationAtom, durationMs);
-
-				const currentMusicId = store.get(musicIdAtom);
-				if (currentMusicId) {
-					try {
-						await db.songs.update(currentMusicId, { duration: durationSec });
-					} catch (e) {
-						console.warn("更新歌曲时长失败", e);
-					}
-				}
+				store.set(musicDurationAtom, (durationSec * 1000) | 0);
 			}
 		};
 
@@ -364,6 +357,16 @@ export const LocalMusicContext: FC = () => {
 
 		const handlePause = () => {
 			setMusicPlaying(false);
+		};
+
+		const handleSeeking = () => {
+			isSeekingRef.current = true;
+		};
+
+		const handleSeeked = () => {
+			isSeekingRef.current = false;
+			const currentTime = audioPlayer.currentTime;
+			store.set(musicPlayingPositionAtom, (currentTime * 1000) | 0);
 		};
 
 		const playNextManual = () => {
@@ -464,6 +467,8 @@ export const LocalMusicContext: FC = () => {
 		};
 
 		const handleTimeUpdate = (e: CustomEvent<number>) => {
+			if (isSeekingRef.current) return;
+
 			store.set(musicPlayingPositionAtom, (e.detail * 1000) | 0);
 		};
 
@@ -471,16 +476,20 @@ export const LocalMusicContext: FC = () => {
 		audioPlayer.addEventListener("pause", handlePause);
 		audioPlayer.addEventListener("ended", handleEnded);
 		audioPlayer.addEventListener("volumechange", handleVolumeChange);
-		audioPlayer.addEventListener("loaded", handleLoaded);
+		audioPlayer.addEventListener("durationchange", handleDurationChange);
 		audioPlayer.addEventListener("timeupdate", handleTimeUpdate);
+		audioPlayer.addEventListener("seeking", handleSeeking);
+		audioPlayer.addEventListener("seeked", handleSeeked);
 
 		return () => {
 			audioPlayer.removeEventListener("play", handlePlay);
 			audioPlayer.removeEventListener("pause", handlePause);
 			audioPlayer.removeEventListener("ended", handleEnded);
 			audioPlayer.removeEventListener("volumechange", handleVolumeChange);
-			audioPlayer.removeEventListener("loaded", handleLoaded);
+			audioPlayer.removeEventListener("durationchange", handleDurationChange);
 			audioPlayer.removeEventListener("timeupdate", handleTimeUpdate);
+			audioPlayer.removeEventListener("seeking", handleSeeking);
+			audioPlayer.removeEventListener("seeked", handleSeeked);
 
 			const doNothing = toEmit(() => {});
 			store.set(onRequestNextSongAtom, doNothing);
