@@ -1,9 +1,10 @@
 import {
 	AudioQualityType,
-	fftDataRangeAtom,
+	fftDataAtom,
 	hideLyricViewAtom,
 	isLyricPageOpenedAtom,
 	isShuffleActiveAtom,
+	lowFreqVolumeAtom,
 	type MusicQualityState,
 	musicArtistsAtom,
 	musicCoverAtom,
@@ -32,7 +33,7 @@ import {
 import chalk from "chalk";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useAtom, useAtomValue, useSetAtom, useStore } from "jotai";
-import { type FC, useEffect, useLayoutEffect, useState } from "react";
+import { type FC, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { db } from "../../dexie.ts";
@@ -63,11 +64,96 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 export const FFTToLowPassContext: FC = () => {
-	const fftDataRange = useAtomValue(fftDataRangeAtom);
+	const store = useStore();
+	// const fftDataRange = useAtomValue(fftDataRangeAtom); // 这个不太适合 web 的音频分析节点
+	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
+	const isPlaying = useAtomValue(musicPlayingAtom);
 
 	useEffect(() => {
-		// This is a placeholder, as FFT is not implemented in audioPlayer yet.
-	}, [fftDataRange]);
+		if (!isLyricPageOpened) return;
+
+		let rafId: number;
+		let curValue = 1;
+		let lt = 0;
+
+		const gradient: number[] = [];
+
+		const dataArray = new Uint8Array(1024);
+
+		function amplitudeToLevel(amplitude: number): number {
+			const normalized = amplitude / 255;
+			return normalized ** 2.5;
+		}
+
+		function calculateGradient(bassEnergy: number): number {
+			const window = 8;
+			const volume = amplitudeToLevel(bassEnergy);
+
+			if (gradient.length < window) {
+				gradient.push(volume);
+				return 0;
+			}
+			gradient.shift();
+			gradient.push(volume);
+
+			const max = Math.max(...gradient);
+			const min = Math.min(...gradient);
+
+			const difference = max - min;
+
+			const THRESHOLD = 0.12;
+
+			if (difference > THRESHOLD) {
+				return max;
+			} else {
+				return min * 0.7;
+			}
+		}
+
+		const onFrame = (timestamp: number) => {
+			if (audioPlayer.analyser) {
+				audioPlayer.analyser.getByteFrequencyData(dataArray);
+			} else {
+				dataArray.fill(0);
+			}
+			store.set(fftDataAtom, Array.from(dataArray));
+
+			let bassSum = 0;
+			const bassBinCount = 6;
+			for (let i = 1; i < 1 + bassBinCount; i++) {
+				bassSum += dataArray[i];
+			}
+			const avgBass = bassSum / bassBinCount;
+
+			const delta = timestamp - lt;
+			const targetValue = calculateGradient(avgBass);
+
+			if (curValue < targetValue) {
+				curValue = Math.min(
+					targetValue,
+					curValue + (targetValue - curValue) * 0.1 * (delta / 16),
+				);
+			} else {
+				curValue = Math.max(
+					targetValue,
+					curValue + (targetValue - curValue) * 0.03 * (delta / 16),
+				);
+			}
+
+			if (Number.isNaN(curValue)) curValue = 0;
+
+			store.set(lowFreqVolumeAtom, Math.min(1.2, Math.max(0, curValue)));
+
+			lt = timestamp;
+			rafId = requestAnimationFrame(onFrame);
+		};
+
+		rafId = requestAnimationFrame(onFrame);
+
+		return () => {
+			cancelAnimationFrame(rafId);
+		};
+	}, [store, isLyricPageOpened, isPlaying]);
 
 	return null;
 };
@@ -170,6 +256,7 @@ export const LocalMusicContext: FC = () => {
 	const savedPosition = useAtomValue(musicPlayingPositionAtom);
 	const savedVolume = useAtomValue(musicVolumeAtom);
 	const [hasRestored, setHasRestored] = useState(false);
+	const isSeekingRef = useRef(false);
 
 	useMediaSession();
 
@@ -205,15 +292,23 @@ export const LocalMusicContext: FC = () => {
 
 						store.set(musicDurationAtom, (song.duration || 0) * 1000);
 
-						await audioPlayer.load(file);
+						const handleCanPlayAndSeek = () => {
+							if (savedPosition > 0) {
+								audioPlayer.seek(savedPosition / 1000);
+							}
 
-						if (savedPosition > 0) {
-							audioPlayer.seek(savedPosition / 1000);
-						}
+							audioPlayer.removeEventListener("canplay", handleCanPlayAndSeek);
+						};
+
+						audioPlayer.addEventListener("canplay", handleCanPlayAndSeek);
+
+						await audioPlayer.load(file);
 
 						store.set(musicPlayingAtom, false);
 					} catch (e) {
 						console.warn("恢复播放状态失败:", e);
+						const removeHandler = () => {};
+						audioPlayer.removeEventListener("canplay", removeHandler);
 					}
 				}
 			}
@@ -221,13 +316,8 @@ export const LocalMusicContext: FC = () => {
 
 		if (savedPosition) {
 			restorePlaybackState();
-			setHasRestored(true);
-		} else {
-			const timer = setTimeout(() => {
-				setHasRestored(true);
-			}, 500);
-			return () => clearTimeout(timer);
 		}
+		setHasRestored(true);
 	}, [savedMusicId, savedPosition, hasRestored, store]);
 
 	useEffect(() => {
@@ -340,21 +430,10 @@ export const LocalMusicContext: FC = () => {
 			}),
 		);
 
-		const handleLoaded = async () => {
-			const durationSec = audioPlayer.duration;
-			const durationMs = (durationSec * 1000) | 0;
-
+		const handleDurationChange = (e: CustomEvent<number>) => {
+			const durationSec = e.detail;
 			if (Number.isFinite(durationSec)) {
-				store.set(musicDurationAtom, durationMs);
-
-				const currentMusicId = store.get(musicIdAtom);
-				if (currentMusicId) {
-					try {
-						await db.songs.update(currentMusicId, { duration: durationSec });
-					} catch (e) {
-						console.warn("更新歌曲时长失败", e);
-					}
-				}
+				store.set(musicDurationAtom, (durationSec * 1000) | 0);
 			}
 		};
 
@@ -364,6 +443,16 @@ export const LocalMusicContext: FC = () => {
 
 		const handlePause = () => {
 			setMusicPlaying(false);
+		};
+
+		const handleSeeking = () => {
+			isSeekingRef.current = true;
+		};
+
+		const handleSeeked = () => {
+			isSeekingRef.current = false;
+			const currentTime = audioPlayer.currentTime;
+			store.set(musicPlayingPositionAtom, (currentTime * 1000) | 0);
 		};
 
 		const playNextManual = () => {
@@ -464,6 +553,8 @@ export const LocalMusicContext: FC = () => {
 		};
 
 		const handleTimeUpdate = (e: CustomEvent<number>) => {
+			if (isSeekingRef.current) return;
+
 			store.set(musicPlayingPositionAtom, (e.detail * 1000) | 0);
 		};
 
@@ -471,16 +562,20 @@ export const LocalMusicContext: FC = () => {
 		audioPlayer.addEventListener("pause", handlePause);
 		audioPlayer.addEventListener("ended", handleEnded);
 		audioPlayer.addEventListener("volumechange", handleVolumeChange);
-		audioPlayer.addEventListener("loaded", handleLoaded);
+		audioPlayer.addEventListener("durationchange", handleDurationChange);
 		audioPlayer.addEventListener("timeupdate", handleTimeUpdate);
+		audioPlayer.addEventListener("seeking", handleSeeking);
+		audioPlayer.addEventListener("seeked", handleSeeked);
 
 		return () => {
 			audioPlayer.removeEventListener("play", handlePlay);
 			audioPlayer.removeEventListener("pause", handlePause);
 			audioPlayer.removeEventListener("ended", handleEnded);
 			audioPlayer.removeEventListener("volumechange", handleVolumeChange);
-			audioPlayer.removeEventListener("loaded", handleLoaded);
+			audioPlayer.removeEventListener("durationchange", handleDurationChange);
 			audioPlayer.removeEventListener("timeupdate", handleTimeUpdate);
+			audioPlayer.removeEventListener("seeking", handleSeeking);
+			audioPlayer.removeEventListener("seeked", handleSeeked);
 
 			const doNothing = toEmit(() => {});
 			store.set(onRequestNextSongAtom, doNothing);
