@@ -65,95 +65,63 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export const FFTToLowPassContext: FC = () => {
 	const store = useStore();
-	// const fftDataRange = useAtomValue(fftDataRangeAtom); // 这个不太适合 web 的音频分析节点
+	const setLowFreqVolume = useSetAtom(lowFreqVolumeAtom);
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const isPlaying = useAtomValue(musicPlayingAtom);
 
+	const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+	if (dataArrayRef.current === null) {
+		dataArrayRef.current = new Uint8Array(1024);
+	}
+
 	useEffect(() => {
-		if (!isLyricPageOpened) return;
-
-		let rafId: number;
-		let curValue = 1;
-		let lt = 0;
-
-		const gradient: number[] = [];
-
-		const dataArray = new Uint8Array(1024);
-
-		function amplitudeToLevel(amplitude: number): number {
-			const normalized = amplitude / 255;
-			return normalized ** 2.5;
+		if (!isPlaying || !isLyricPageOpened) {
+			setLowFreqVolume(0);
+			return;
 		}
 
-		function calculateGradient(bassEnergy: number): number {
-			const window = 8;
-			const volume = amplitudeToLevel(bassEnergy);
+		let animationFrameId: number;
+		// biome-ignore lint/style/noNonNullAssertion: 肯定有
+		const dataArray = dataArrayRef.current!;
 
-			if (gradient.length < window) {
-				gradient.push(volume);
-				return 0;
-			}
-			gradient.shift();
-			gradient.push(volume);
+		const updateMeter = () => {
+			const analyser = audioPlayer.analyser;
 
-			const max = Math.max(...gradient);
-			const min = Math.min(...gradient);
+			if (analyser) {
+				if (analyser.fftSize !== 2048) analyser.fftSize = 2048;
+				if (analyser.smoothingTimeConstant !== 0.85)
+					analyser.smoothingTimeConstant = 0.85;
 
-			const difference = max - min;
+				analyser.getByteFrequencyData(dataArray);
+				store.set(fftDataAtom, Array.from(dataArray));
 
-			const THRESHOLD = 0.12;
+				const startIndex = 0;
+				const endIndex = 10;
+				let sum = 0;
 
-			if (difference > THRESHOLD) {
-				return max;
-			} else {
-				return min * 0.7;
-			}
-		}
+				for (let i = startIndex; i < endIndex; i++) {
+					sum += dataArray[i];
+				}
 
-		const onFrame = (timestamp: number) => {
-			if (audioPlayer.analyser) {
-				audioPlayer.analyser.getByteFrequencyData(dataArray);
-			} else {
-				dataArray.fill(0);
-			}
-			store.set(fftDataAtom, Array.from(dataArray));
+				const average = sum / (endIndex - startIndex);
+				let volume = (average / 255) * 3.0;
 
-			let bassSum = 0;
-			const bassBinCount = 6;
-			for (let i = 1; i < 1 + bassBinCount; i++) {
-				bassSum += dataArray[i];
-			}
-			const avgBass = bassSum / bassBinCount;
+				if (volume > 0.1) {
+					volume = Math.max(volume, 0.4);
+				}
 
-			const delta = timestamp - lt;
-			const targetValue = calculateGradient(avgBass);
-
-			if (curValue < targetValue) {
-				curValue = Math.min(
-					targetValue,
-					curValue + (targetValue - curValue) * 0.1 * (delta / 16),
-				);
-			} else {
-				curValue = Math.max(
-					targetValue,
-					curValue + (targetValue - curValue) * 0.03 * (delta / 16),
-				);
+				setLowFreqVolume(volume);
 			}
 
-			if (Number.isNaN(curValue)) curValue = 0;
-
-			store.set(lowFreqVolumeAtom, Math.min(1.2, Math.max(0, curValue)));
-
-			lt = timestamp;
-			rafId = requestAnimationFrame(onFrame);
+			animationFrameId = requestAnimationFrame(updateMeter);
 		};
 
-		rafId = requestAnimationFrame(onFrame);
+		updateMeter();
 
 		return () => {
-			cancelAnimationFrame(rafId);
+			cancelAnimationFrame(animationFrameId);
 		};
-	}, [store, isLyricPageOpened, isPlaying]);
+	}, [isPlaying, setLowFreqVolume]);
 
 	return null;
 };
