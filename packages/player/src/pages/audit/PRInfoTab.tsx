@@ -16,7 +16,6 @@ import {
 	Text,
 } from "@radix-ui/themes";
 import { useMemo } from "react";
-import type { GitHubPR } from "../../services/audit-service";
 import {
 	AppleMusicIcon,
 	NeteaseIcon,
@@ -24,6 +23,7 @@ import {
 	SpotifyIcon,
 } from "../../utils/PlatformIcons";
 import styles from "./index.module.css";
+import type { GitHubPR } from "./services/audit-service";
 
 const getPlatformConfig = (key: string) => {
 	const lowerKey = key.toLowerCase();

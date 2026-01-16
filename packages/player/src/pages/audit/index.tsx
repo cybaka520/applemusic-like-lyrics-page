@@ -38,11 +38,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { db } from "../../dexie";
 import {
-	AuditService,
-	type GitHubPR,
-	type ReviewEvent,
-} from "../../services/audit-service";
-import {
 	currentMusicIndexAtom,
 	currentMusicQueueAtom,
 	onRequestPlaySongByIndexAtom,
@@ -57,6 +52,11 @@ import styles from "./index.module.css";
 import { PRActionsTab } from "./PRActionsTab";
 import { PRAudioTab } from "./PRAudioTab";
 import { PRInfoTab } from "./PRInfoTab";
+import {
+	AuditService,
+	type GitHubPR,
+	type ReviewEvent,
+} from "./services/audit-service";
 
 const generatePagination = (current: number, total: number) => {
 	if (total <= 1) return [1];

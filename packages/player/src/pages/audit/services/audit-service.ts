@@ -1,23 +1,20 @@
-import { AUDIT_PLAYLIST_ID, db, type Playlist, type Song } from "../dexie";
-import { extractMusicMetadata } from "../utils/music-file";
-import { parseTTML } from "../utils/parseTTML";
+import {
+	AUDIT_PLAYLIST_ID,
+	db,
+	type Playlist,
+	type Song,
+} from "../../../dexie";
+import { extractMusicMetadata } from "../../../utils/music-file";
+import { parseTTML } from "../../../utils/parseTTML";
+import {
+	type AudioSourceType,
+	fetchAudioSource,
+	type StandardMetadata,
+} from "./music-provider";
 
-const MUSIC_API_BASE = "https://api.kxzjoker.cn/api/163_music";
 const MAX_AUDIT_CACHE_SIZE = 20;
 
 export type ReviewEvent = "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
-
-interface NeteaseApiResponse {
-	status: number;
-	name: string;
-	pic: string;
-	ar_name: string;
-	al_name: string;
-	level: string;
-	url: string;
-	lyric: string;
-	tlyric: string;
-}
 
 export interface GitHubPR {
 	id: number;
@@ -182,27 +179,40 @@ export class AuditService {
 		}
 	}
 
-	async fetchAndBindAudio(songId: string, platformId: string) {
+	async fetchAndBindAudio(
+		songId: string,
+		platformId: string,
+		source: AudioSourceType = "TOUBIEC",
+	) {
 		await this.enforceCacheLimit();
 
-		const apiRes = await fetch(
-			`${MUSIC_API_BASE}?ids=${platformId}&level=lossless&type=json`,
-		);
-		const apiData: NeteaseApiResponse = await apiRes.json();
+		const sourceResult = await fetchAudioSource(platformId, source);
 
-		if (apiData.status !== 200) {
-			throw new Error(`Music API Error: ${apiData.status}`);
+		const finalMetadata: StandardMetadata = {
+			name: sourceResult.metadata?.name || "Unknown Title",
+			artist: sourceResult.metadata?.artist || "Unknown Artist",
+			album: sourceResult.metadata?.album || "Unknown Album",
+			coverUrl: sourceResult.metadata?.coverUrl || "",
+		};
+
+		const downloadPromises: Promise<Blob>[] = [
+			fetch(sourceResult.audioUrl).then((r) => r.blob()),
+		];
+
+		if (finalMetadata.coverUrl) {
+			downloadPromises.push(
+				fetch(finalMetadata.coverUrl).then((r) => r.blob()),
+			);
+		} else {
+			downloadPromises.push(Promise.resolve(new Blob()));
 		}
 
-		const [audioBlob, coverBlob] = await Promise.all([
-			fetch(apiData.url).then((r) => r.blob()),
-			fetch(apiData.pic).then((r) => r.blob()),
-		]);
+		const [audioBlob, coverBlob] = await Promise.all(downloadPromises);
 
 		await db.songs.update(songId, {
-			songName: apiData.name,
-			songArtists: apiData.ar_name,
-			songAlbum: apiData.al_name,
+			songName: finalMetadata.name,
+			songArtists: finalMetadata.artist,
+			songAlbum: finalMetadata.album,
 			cover: coverBlob,
 			file: audioBlob,
 			accessTime: Date.now(),
