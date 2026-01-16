@@ -228,9 +228,12 @@ export const Component = () => {
 			setAudioLoadStatus((prev) => ({ ...prev, [platformId]: "loading" }));
 
 			try {
-				await service.fetchAndBindAudio(currentMeta.songId, platformId);
+				const newSongId = await service.fetchAndBindAudio(
+					currentMeta.songId,
+					platformId,
+				);
 
-				setCurrentQueue([currentMeta.songId]);
+				setCurrentQueue([newSongId]);
 				requestPlaySong.onEmit(0);
 
 				setAudioLoadStatus((prev) => ({ ...prev, [platformId]: "idle" }));
