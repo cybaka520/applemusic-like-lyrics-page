@@ -28,6 +28,7 @@ export interface Song {
 	romanLrc?: string;
 	addTime: number;
 	accessTime: number;
+	lyricOffset?: number;
 }
 
 export interface TTMLDBLyricEntry {

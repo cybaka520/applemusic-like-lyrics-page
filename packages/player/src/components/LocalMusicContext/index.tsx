@@ -11,6 +11,7 @@ import {
 	musicDurationAtom,
 	musicIdAtom,
 	musicLyricLinesAtom,
+	musicLyricOffsetAtom,
 	musicNameAtom,
 	musicPlayingAtom,
 	musicPlayingPositionAtom,
@@ -171,6 +172,7 @@ const LyricContext: FC = () => {
 	const musicId = useAtomValue(musicIdAtom);
 	const setLyricLines = useSetAtom(musicLyricLinesAtom);
 	const setHideLyricView = useSetAtom(hideLyricViewAtom);
+	const setLyricOffset = useSetAtom(musicLyricOffsetAtom);
 	const song = useLiveQuery(
 		() => (musicId ? db.songs.get(musicId) : undefined),
 		[musicId],
@@ -209,7 +211,15 @@ const LyricContext: FC = () => {
 	useEffect(() => {
 		setLyricLines(lyricLines);
 		setHideLyricView(!hasLyrics);
-	}, [lyricLines, hasLyrics, setLyricLines, setHideLyricView]);
+		setLyricOffset(song?.lyricOffset ?? 0);
+	}, [
+		lyricLines,
+		hasLyrics,
+		song?.lyricOffset,
+		setLyricLines,
+		setHideLyricView,
+		setLyricOffset,
+	]);
 
 	return null;
 };

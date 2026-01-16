@@ -1,4 +1,11 @@
-import { Button, Callout, Flex, Select, TextArea } from "@radix-ui/themes";
+import {
+	Button,
+	Callout,
+	Flex,
+	Select,
+	TextArea,
+	TextField,
+} from "@radix-ui/themes";
 import {
 	type FC,
 	useCallback,
@@ -7,6 +14,7 @@ import {
 	useState,
 } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import { TTMLImportDialog } from "../../components/TTMLImportDialog/index.tsx";
 import { db } from "../../dexie.ts";
 import { Option } from "./common.tsx";
@@ -18,15 +26,18 @@ export const LyricTabContent: FC = () => {
 	const [lyricContent, setLyricContent] = useState("");
 	const [translatedLyricContent, setTranslatedLyricContent] = useState("");
 	const [romanLyricContent, setRomanLyricContent] = useState("");
+	const [lyricOffset, setLyricOffset] = useState("0");
 	const { t } = useTranslation();
 
 	useLayoutEffect(() => {
 		if (song) {
 			setLyricFormat(song.lyricFormat);
 			setLyricContent(song.lyric);
+			setLyricOffset(song.lyricOffset?.toString() ?? "0");
 		} else {
 			setLyricFormat("none");
 			setLyricContent("");
+			setLyricOffset("0");
 		}
 	}, [song]);
 
@@ -36,10 +47,19 @@ export const LyricTabContent: FC = () => {
 			saveLyricContent: string,
 			saveTranslatedLyricContent: string,
 			saveRomanLyricContent: string,
+			saveLyricOffset: string,
 		) => {
 			if (song === undefined) return;
+			const offset = Number.parseInt(saveLyricOffset, 10);
+			if (Number.isNaN(offset)) {
+				toast.error(
+					t("page.song.lyric.invalidOffset", "歌词偏移量必须是有效数字"),
+				);
+				return;
+			}
 			db.songs.update(song, (song) => {
 				song.lyric = saveLyricFormat;
+				song.lyricOffset = offset;
 				if (saveLyricFormat === "none") {
 					song.lyricFormat = "none";
 					song.lyric = "";
@@ -195,9 +215,27 @@ export const LyricTabContent: FC = () => {
 				<TTMLImportDialog
 					defaultValue={song ? `${song.songArtists} - ${song.songName}` : ""}
 					onSelectedLyric={(ttmlContent) => {
-						saveData("ttml", ttmlContent, "", "");
+						saveData("ttml", ttmlContent, "", "", "0");
 					}}
 				/>
+				<Option label={t("page.song.lyric.lyricOffsetLabel", "歌词偏移")}>
+					<TextField.Root
+						value={lyricOffset}
+						onChange={(v) => {
+							const val = v.target.value;
+							setLyricOffset(val);
+						}}
+					>
+						<TextField.Slot side="right">ms</TextField.Slot>
+					</TextField.Root>
+					<Callout.Root mt="2">
+						<Callout.Text>
+							<Trans i18nKey="page.song.lyric.lyricOffsetTip">
+								正数让歌词偏慢，负数让歌词偏快
+							</Trans>
+						</Callout.Text>
+					</Callout.Root>
+				</Option>
 			</Flex>
 			<Button
 				mt="4"
@@ -207,6 +245,7 @@ export const LyricTabContent: FC = () => {
 						lyricContent,
 						translatedLyricContent,
 						romanLyricContent,
+						lyricOffset,
 					)
 				}
 			>

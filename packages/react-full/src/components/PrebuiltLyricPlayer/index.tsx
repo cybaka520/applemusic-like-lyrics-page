@@ -107,6 +107,7 @@ import {
 	musicCoverIsVideoAtom,
 	musicDurationAtom,
 	musicLyricLinesAtom,
+	musicLyricOffsetAtom,
 	musicNameAtom,
 	musicPlayingAtom,
 	musicPlayingPositionAtom,
@@ -326,6 +327,7 @@ const PrebuiltCoreLyricPlayer: FC<{
 	const lyricLines = useAtomValue(musicLyricLinesAtom);
 	const isLyricPageOpened = useAtomValue(isLyricPageOpenedAtom);
 	const musicPlayingPosition = useAtomValue(musicPlayingPositionAtom);
+	const lyricOffset = useAtomValue(musicLyricOffsetAtom);
 
 	const lyricFontFamily = useAtomValue(lyricFontFamilyAtom);
 	const lyricFontWeight = useAtomValue(lyricFontWeightAtom);
@@ -407,7 +409,7 @@ const PrebuiltCoreLyricPlayer: FC<{
 			disabled={!isLyricPageOpened}
 			alignPosition={alignPosition}
 			alignAnchor={alignAnchor}
-			currentTime={musicPlayingPosition}
+			currentTime={musicPlayingPosition - lyricOffset}
 			lyricLines={processedLyricLines}
 			enableBlur={enableLyricLineBlurEffect}
 			enableScale={enableLyricLineScaleEffect}
