@@ -144,3 +144,8 @@ export const fftDataAtom = atom<number[]>([]);
  * 取值范围建议在 [0.0-1.0] 之间
  */
 export const lowFreqVolumeAtom = atom<number>(1);
+
+/**
+ * 歌词偏移量，单位为毫秒
+ */
+export const musicLyricOffsetAtom = atom<number>(0);

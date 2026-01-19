@@ -8,8 +8,8 @@ import {
 	TextArea,
 	Tooltip,
 } from "@radix-ui/themes";
-import type { ReviewEvent } from "../../services/audit-service";
 import styles from "./index.module.css";
+import type { ReviewEvent } from "./services/audit-service";
 
 const REPLY_TEMPLATES = [
 	{

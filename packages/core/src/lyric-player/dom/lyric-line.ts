@@ -430,13 +430,13 @@ export class LyricLineEl extends LyricLineBase {
 				if (word.romanWord && word.romanWord.trim().length > 0) {
 					const wordEl = document.createElement("div");
 					const romanWordEl = document.createElement("div");
-					wordEl.innerText = word.word;
-					romanWordEl.innerText = word.romanWord;
+					wordEl.innerText = word.word.trim();
+					romanWordEl.innerText = word.romanWord.trim();
 					romanWordEl.classList.add(styles.romanWord);
 					mainWordEl.appendChild(wordEl);
 					mainWordEl.appendChild(romanWordEl);
 				} else {
-					mainWordEl.innerText = word.word;
+					mainWordEl.innerText = word.word.trim();
 				}
 				this.splittedWords.push({
 					...word,
@@ -470,10 +470,7 @@ export class LyricLineEl extends LyricLineBase {
 			main.appendChild(document.createTextNode(" "));
 		}
 		main.appendChild(wrapperWordEl);
-		if (
-			merged.word.trimEnd() !== merged.word &&
-			LyricLineBase.shouldEmphasize(merged)
-		) {
+		if (merged.word.trimEnd() !== merged.word) {
 			main.appendChild(document.createTextNode(" "));
 		}
 	}
