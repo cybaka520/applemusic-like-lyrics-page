@@ -7,7 +7,7 @@ import {
 import { extractMusicMetadata } from "../../../utils/music-file";
 import { parseTTML } from "../../../utils/parseTTML";
 import {
-	type AudioSourceType,
+	type AudioSourceResult,
 	fetchAudioSource,
 	type StandardMetadata,
 } from "./music-provider";
@@ -182,7 +182,7 @@ export class AuditService {
 	async fetchAndBindAudio(
 		oldSongId: string,
 		platformId: string,
-		source: AudioSourceType = "TOUBIEC",
+		cookie?: string,
 	): Promise<string> {
 		await this.enforceCacheLimit();
 
@@ -194,7 +194,22 @@ export class AuditService {
 			console.log(`命中缓存: ${newSongId}`);
 			await this.touchSong(newSongId);
 		} else {
-			const sourceResult = await fetchAudioSource(platformId, source);
+			let sourceResult: AudioSourceResult;
+			if (cookie) {
+				try {
+					console.log(`[Audio] 尝试使用网易云音乐 API 获取: ${platformId}`);
+					sourceResult = await fetchAudioSource(
+						platformId,
+						"NETEASE_PRIVATE",
+						cookie,
+					);
+				} catch (e) {
+					console.warn(`[Audio] 网易云音乐 API 获取失败，降级到公共 API:`, e);
+					sourceResult = await fetchAudioSource(platformId, "TOUBIEC");
+				}
+			} else {
+				sourceResult = await fetchAudioSource(platformId, "TOUBIEC");
+			}
 
 			const finalMetadata: StandardMetadata = {
 				name: sourceResult.metadata?.name || "Unknown Title",
