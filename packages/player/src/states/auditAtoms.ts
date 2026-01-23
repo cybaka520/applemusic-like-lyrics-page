@@ -6,6 +6,8 @@ export const isAuditModeAtom = atom(false);
 export const githubTokenAtom = atomWithStorage<string>(
 	"amll-player.audit.githubToken",
 	"",
+	undefined,
+	{ getOnInit: true },
 );
 
 export const auditRepoConfigAtom = atomWithStorage(

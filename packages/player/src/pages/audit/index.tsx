@@ -49,6 +49,7 @@ import {
 } from "../../states/auditAtoms";
 import { formatRelativeTime } from "../../utils/time-format";
 import styles from "./index.module.css";
+import { NeteaseLoginDialog } from "./NeteaseLoginDialog";
 import { PRActionsTab } from "./PRActionsTab";
 import { PRAudioTab } from "./PRAudioTab";
 import { PRInfoTab } from "./PRInfoTab";
@@ -57,6 +58,7 @@ import {
 	type GitHubPR,
 	type ReviewEvent,
 } from "./services/audit-service";
+import { neteaseCookieAtom } from "./services/neteaseAtoms";
 
 const generatePagination = (current: number, total: number) => {
 	if (total <= 1) return [1];
@@ -102,6 +104,7 @@ export const Component = () => {
 	const token = useAtomValue(githubTokenAtom);
 	const repoConfig = useAtomValue(auditRepoConfigAtom);
 	const [currentPrId, setCurrentPrId] = useAtom(currentAuditPrIdAtom);
+	const neteaseCookie = useAtomValue(neteaseCookieAtom);
 
 	const setCurrentQueue = useSetAtom(currentMusicQueueAtom);
 	const setCurrentIndex = useSetAtom(currentMusicIndexAtom);
@@ -231,6 +234,7 @@ export const Component = () => {
 				const newSongId = await service.fetchAndBindAudio(
 					currentMeta.songId,
 					platformId,
+					neteaseCookie || undefined,
 				);
 
 				setCurrentQueue([newSongId]);
@@ -566,6 +570,9 @@ export const Component = () => {
 						<ChevronRightIcon width="16" height="16" />
 					</IconButton>
 				</Flex>
+				<div style={{ padding: "8px", borderTop: "1px solid var(--gray-a4)" }}>
+					<NeteaseLoginDialog />
+				</div>
 			</div>
 
 			<div
