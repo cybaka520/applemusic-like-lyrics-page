@@ -94,6 +94,44 @@ const EditablePlaylistName: FC<{
 	);
 };
 
+// 我们编译的 FFmpeg 所支持的文件格式
+const SUPPORTED_AUDIO_EXTENSIONS = [
+	".mp3",
+	".flac",
+	".wav",
+	".aac",
+	".m4a",
+	".ogg",
+	".opus",
+	".wma",
+	".ape",
+	".wv",
+	".alac",
+	".aiff",
+	".aif",
+	".dsf",
+	".dff",
+	".mpc",
+	".tak",
+	".tta",
+	".ac3",
+	".dts",
+	".thd",
+	".truehd",
+	".mka",
+	".mkv",
+	".mp4",
+	".m4v",
+	".mov",
+	".webm",
+	".asf",
+	".amr",
+	".au",
+	".ra",
+	".rm",
+	".3gp",
+].join(",");
+
 export const Component: FC = () => {
 	const param = useParams();
 	const playlist = useLiveQuery(() => db.playlists.get(Number(param.id)));
@@ -112,7 +150,7 @@ export const Component: FC = () => {
 		const input = document.createElement("input");
 		input.type = "file";
 		input.multiple = true;
-		input.accept = "audio/*";
+		input.accept = SUPPORTED_AUDIO_EXTENSIONS;
 		input.onchange = async () => {
 			const files = Array.from(input.files || []);
 			if (files.length === 0) return;

@@ -42,35 +42,67 @@ export const RecordPanel = () => {
 	useLayoutEffect(() => {
 		if (!lyricOpened) return;
 		if (!recordPanelOpened) return;
-		const amllEl = document.getElementById("amll-lyric-player");
+		const amllEl = document.getElementById("amll-lyric-player-wrapper");
 		if (!amllEl) return;
+		let ignore = false;
 
 		const mediaTask = (async () => {
-			const restricter = await RestrictionTarget.fromElement(amllEl);
-			const media = await navigator.mediaDevices.getDisplayMedia({
-				video: {
-					frameRate: {
-						max: 120,
+			try {
+				const restricter = await RestrictionTarget.fromElement(amllEl);
+				if (ignore) return;
+				const media = await navigator.mediaDevices.getDisplayMedia({
+					video: {
+						frameRate: {
+							max: 120,
+						},
+						cursor: "never",
 					},
-					cursor: "never",
-					displaySurface: "browser",
-				},
-			});
-			const [track] = media.getVideoTracks();
-			await track.restrictTo(restricter);
-			setMediaStream(media);
-			return media;
+					preferCurrentTab: true,
+				} as DisplayMediaStreamOptions & { preferCurrentTab: boolean });
+
+				if (ignore) {
+					media.getTracks().forEach((t) => {
+						t.stop();
+					});
+					return;
+				}
+
+				const [track] = media.getVideoTracks();
+				await track.restrictTo(restricter);
+
+				track.onended = () => {
+					setRecordPanelOpened(false);
+					setMediaStream(undefined);
+				};
+
+				setMediaStream(media);
+				return media;
+			} catch (e) {
+				if ((e as Error).name === "NotAllowedError") {
+					// ignore
+				} else {
+					console.error("获取媒体流失败:", e);
+					toast.error("无法启动录制，请重试");
+				}
+
+				if (!ignore) {
+					setRecordPanelOpened(false);
+				}
+			}
 		})();
 
 		return () => {
+			ignore = true;
 			mediaTask.then((stream) => {
-				stream.getTracks().forEach((track) => {
-					track.stop();
-				});
+				if (stream) {
+					stream.getTracks().forEach((track) => {
+						track.stop();
+					});
+				}
 				setMediaStream(undefined);
 			});
 		};
-	}, [recordPanelOpened, lyricOpened]);
+	}, [recordPanelOpened, lyricOpened, setRecordPanelOpened]);
 
 	return (
 		<AnimatePresence>

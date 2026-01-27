@@ -1,12 +1,5 @@
 import { PlusIcon } from "@radix-ui/react-icons";
-import {
-	Button,
-	Dialog,
-	Flex,
-	Select,
-	Text,
-	TextField,
-} from "@radix-ui/themes";
+import { Button, Dialog, Flex, Text, TextField } from "@radix-ui/themes";
 import { type FC, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { db } from "../../dexie.ts";
@@ -50,15 +43,6 @@ export const NewPlaylistButton: FC = () => {
 						onChange={(e) => setName(e.currentTarget.value)}
 						autoFocus
 					/>
-					<Select.Root>
-						<Select.Trigger placeholder="歌单管理源" />
-						<Select.Content>
-							<Select.Item value="amll-player:local">本地歌曲源</Select.Item>
-							<Select.Item value="amll-player:android-music">
-								安卓内容提供者 - 音频媒体源
-							</Select.Item>
-						</Select.Content>
-					</Select.Root>
 				</Flex>
 				<Flex gap="3" mt="4" justify="end">
 					<Dialog.Close>
