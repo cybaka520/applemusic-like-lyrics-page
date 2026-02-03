@@ -575,6 +575,14 @@ export abstract class LyricPlayerBase
 	}
 
 	/**
+	 * 获取当前是否在播放
+	 * @returns 当前是否在播放
+	 */
+	public getIsPlaying() {
+		return this.isPlaying;
+	}
+
+	/**
 	 * 设置当前播放进度，单位为毫秒且**必须是整数**，此时将会更新内部的歌词进度信息
 	 * 内部会根据调用间隔和播放进度自动决定如何滚动和显示歌词，所以这个的调用频率越快越准确越好
 	 *
@@ -639,7 +647,7 @@ export abstract class LyricPlayerBase
 
 			if (!line.isBG && line.startTime <= time && line.endTime > time) {
 				if (isSeek) {
-					lineObj.enable(time);
+					lineObj.enable(time, this.isPlaying);
 				}
 
 				if (!this.hotLines.has(id)) {
@@ -654,7 +662,7 @@ export abstract class LyricPlayerBase
 						this.hotLines.add(id + 1);
 						addedIds.add(id + 1);
 						if (isSeek) {
-							arr[id + 1].enable(time);
+							arr[id + 1].enable(time, this.isPlaying);
 						} else {
 							arr[id + 1].enable();
 						}
@@ -1046,7 +1054,7 @@ export abstract class LyricLineBase extends EventTarget implements Disposable {
 		scale: new Spring(100),
 	};
 	abstract getLine(): LyricLine;
-	abstract enable(time?: number): void;
+	abstract enable(time?: number, shouldPlay?: boolean): void;
 	abstract disable(): void;
 	abstract resume(): void;
 	abstract pause(): void;

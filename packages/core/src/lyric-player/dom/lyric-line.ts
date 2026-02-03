@@ -191,7 +191,10 @@ export class LyricLineEl extends LyricLineBase {
 	}
 
 	private isEnabled = false;
-	async enable(maskAnimationTime = this.lyricLine.startTime) {
+	async enable(
+		maskAnimationTime = this.lyricLine.startTime,
+		shouldPlay = true,
+	) {
 		this.isEnabled = true;
 		this.element.classList.add(styles.active);
 		const main = this.element.children[0] as HTMLDivElement;
@@ -200,25 +203,35 @@ export class LyricLineEl extends LyricLineBase {
 			0,
 			maskAnimationTime - this.lyricLine.startTime,
 		);
-		const firstWordStart =
-			this.lyricLine.words[0]?.startTime ?? this.lyricLine.startTime;
 		const actualMaskTime =
 			maskAnimationTime === this.lyricLine.startTime
 				? this.lyricPlayer.getCurrentTime()
 				: maskAnimationTime;
-		const maskRelativeTime = Math.max(0, actualMaskTime - firstWordStart);
+
+		const maskRelativeTime = Math.max(
+			0,
+			actualMaskTime - this.lyricLine.startTime,
+		);
 
 		for (const word of this.splittedWords) {
 			for (const a of word.elementAnimations) {
 				a.currentTime = relativeTime;
 				a.playbackRate = 1;
-				a.play();
+				if (shouldPlay) {
+					a.play();
+				} else {
+					a.pause();
+				}
 			}
 
 			for (const a of word.maskAnimations) {
 				a.currentTime = Math.min(this.totalDuration, maskRelativeTime);
 				a.playbackRate = 1;
-				a.play();
+				if (shouldPlay) {
+					a.play();
+				} else {
+					a.pause();
+				}
 			}
 		}
 		main.classList.add(styles.active);
@@ -648,7 +661,8 @@ export class LyricLineEl extends LyricLineBase {
 			this.generateCalcBasedMaskImage();
 		}
 		if (this.isEnabled) {
-			this.enable(this.lyricPlayer.getCurrentTime());
+			const isPlayerRunning = this.lyricPlayer.getIsPlaying?.() ?? true;
+			this.enable(this.lyricPlayer.getCurrentTime(), isPlayerRunning);
 		}
 	}
 
