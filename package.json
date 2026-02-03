@@ -20,7 +20,8 @@
 			"@swc/core",
 			"esbuild",
 			"nx",
-			"sharp"
+			"sharp",
+			"wasm-pack"
 		]
 	}
 }
