@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import type { LabelFilter } from "../pages/audit/services/audit-service";
 
 export const isAuditModeAtom = atom(false);
 
@@ -31,4 +32,9 @@ export const auditProcessingStateAtom = atom<{
 export const enableAuditModeAtom = atomWithStorage<boolean>(
 	"amll-player.audit.enable",
 	false,
+);
+
+export const auditLabelFilterAtom = atomWithStorage<LabelFilter[]>(
+	"amll-player.audit.labelFilter",
+	[],
 );

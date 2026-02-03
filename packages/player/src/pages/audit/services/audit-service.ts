@@ -17,6 +17,21 @@ const MAX_AUDIT_CACHE_SIZE = 20;
 
 export type ReviewEvent = "APPROVE" | "REQUEST_CHANGES" | "COMMENT";
 
+export interface LabelFilter {
+	name: string;
+	mode: "include" | "exclude";
+}
+
+export interface GitHubLabel {
+	id: number;
+	node_id: string;
+	url: string;
+	name: string;
+	color: string;
+	default: boolean;
+	description: string;
+}
+
 export interface GitHubPR {
 	id: number;
 	number: number;
@@ -103,6 +118,52 @@ export class AuditService {
 		if (!res.ok) return 0;
 		const data = await res.json();
 		return data.total_count;
+	}
+
+	async fetchRepoLabels(): Promise<GitHubLabel[]> {
+		const url = `https://api.github.com/repos/${this.owner}/${this.repo}/labels`;
+		const res = await fetch(url, { headers: this.authHeaders });
+		if (!res.ok) throw new Error(`Fetch Labels Error: ${res.statusText}`);
+		return await res.json();
+	}
+
+	async getPullRequestDetails(prNumber: number): Promise<GitHubPR> {
+		const url = `https://api.github.com/repos/${this.owner}/${this.repo}/pulls/${prNumber}`;
+		const res = await fetch(url, {
+			headers: this.authHeaders,
+			cache: "no-store",
+		});
+		if (!res.ok) throw new Error(`Fetch PR Details Error: ${res.statusText}`);
+		return await res.json();
+	}
+
+	async searchPullRequests(
+		page: number,
+		filters: LabelFilter[],
+	): Promise<[GitHubPR[], number]> {
+		const labelQuery = filters
+			.map((f) => {
+				if (f.mode === "exclude") {
+					return `-label:"${f.name}"`;
+				}
+				return `label:"${f.name}"`;
+			})
+			.join(" ");
+
+		const query = `repo:${this.owner}/${this.repo} is:pr is:open ${labelQuery}`;
+		const url = `https://api.github.com/search/issues?q=${encodeURIComponent(
+			query,
+		)}&sort=created&order=desc&page=${page}&per_page=30`;
+
+		const res = await fetch(url, {
+			headers: this.authHeaders,
+			cache: "no-store",
+		});
+
+		if (!res.ok) throw new Error(`Search API Error: ${res.statusText}`);
+		const data = await res.json();
+
+		return [data.items, data.total_count];
 	}
 
 	async processPR(pr: GitHubPR): Promise<string> {

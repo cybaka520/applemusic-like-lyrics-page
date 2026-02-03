@@ -1,10 +1,13 @@
 import {
 	ArrowLeftIcon,
+	CheckIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
 	ClockIcon,
+	Cross2Icon,
 	ExclamationTriangleIcon,
 	ExternalLinkIcon,
+	MixerHorizontalIcon,
 	PersonIcon,
 	ReaderIcon,
 	ReloadIcon,
@@ -15,6 +18,7 @@ import {
 	Button,
 	Callout,
 	Dialog,
+	DropdownMenu,
 	Flex,
 	Heading,
 	IconButton,
@@ -26,7 +30,7 @@ import {
 } from "@radix-ui/themes";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import {
+import React, {
 	type ChangeEvent,
 	useCallback,
 	useEffect,
@@ -43,6 +47,7 @@ import {
 	onRequestPlaySongByIndexAtom,
 } from "../../states/appAtoms";
 import {
+	auditLabelFilterAtom,
 	auditRepoConfigAtom,
 	currentAuditPrIdAtom,
 	githubTokenAtom,
@@ -55,7 +60,9 @@ import { PRAudioTab } from "./PRAudioTab";
 import { PRInfoTab } from "./PRInfoTab";
 import {
 	AuditService,
+	type GitHubLabel,
 	type GitHubPR,
+	type LabelFilter,
 	type ReviewEvent,
 } from "./services/audit-service";
 import { neteaseCookieAtom } from "./services/neteaseAtoms";
@@ -104,6 +111,8 @@ export const Component = () => {
 	const token = useAtomValue(githubTokenAtom);
 	const repoConfig = useAtomValue(auditRepoConfigAtom);
 	const [currentPrId, setCurrentPrId] = useAtom(currentAuditPrIdAtom);
+	const [labelFilter, setLabelFilter] = useAtom(auditLabelFilterAtom);
+	const [tempFilter, setTempFilter] = useState<LabelFilter[]>([]);
 	const neteaseCookie = useAtomValue(neteaseCookieAtom);
 
 	const setCurrentQueue = useSetAtom(currentMusicQueueAtom);
@@ -111,6 +120,7 @@ export const Component = () => {
 	const requestPlaySong = useAtomValue(onRequestPlaySongByIndexAtom);
 
 	const [prs, setPrs] = useState<GitHubPR[]>([]);
+	const [availableLabels, setAvailableLabels] = useState<GitHubLabel[]>([]);
 	const [page, setPage] = useState(1);
 	const pageRef = useRef(page);
 	const [totalCount, setTotalCount] = useState(0);
@@ -171,13 +181,21 @@ export const Component = () => {
 			const pageToFetch = targetPage ?? pageRef.current;
 
 			try {
-				const [list, count] = await Promise.all([
-					service.fetchPullRequests(pageToFetch),
-					service.fetchOpenPRCount(),
-				]);
-
-				setPrs(list);
-				setTotalCount(count);
+				if (labelFilter.length === 0) {
+					const [list, count] = await Promise.all([
+						service.fetchPullRequests(pageToFetch),
+						service.fetchOpenPRCount(),
+					]);
+					setPrs(list);
+					setTotalCount(count);
+				} else {
+					const [list, count] = await service.searchPullRequests(
+						pageToFetch,
+						labelFilter,
+					);
+					setPrs(list);
+					setTotalCount(count);
+				}
 			} catch (e) {
 				console.error(e);
 				toast.error("加载列表失败");
@@ -185,12 +203,17 @@ export const Component = () => {
 				setLoading(false);
 			}
 		},
-		[token, service],
+		[token, service, labelFilter],
 	);
 
 	useEffect(() => {
-		loadPRs(1);
-	}, [token]);
+		if (token) {
+			service
+				.fetchRepoLabels()
+				.then(setAvailableLabels)
+				.catch((e) => console.warn("获取标签失败", e));
+		}
+	}, [token, service]);
 
 	const handlePageChange = (newPage: number) => {
 		setPage(newPage);
@@ -199,14 +222,77 @@ export const Component = () => {
 		setReviewComment("");
 	};
 
+	const handleOpenChange = (open: boolean) => {
+		if (open) {
+			setTempFilter(labelFilter);
+		} else {
+			const isChanged =
+				labelFilter.length !== tempFilter.length ||
+				!labelFilter.every((l) =>
+					tempFilter.some((t) => t.name === l.name && t.mode === l.mode),
+				);
+
+			if (isChanged) {
+				setPage(1);
+				setLabelFilter(tempFilter);
+			}
+		}
+	};
+
+	const getLabelState = (
+		labelName: string,
+		currentFilters: LabelFilter[],
+	): "include" | "exclude" | "none" => {
+		const found = currentFilters.find((f) => f.name === labelName);
+		return found ? found.mode : "none";
+	};
+
+	const handleLeftClickLabel = (labelName: string) => {
+		setTempFilter((prev) => {
+			const currentState = getLabelState(labelName, prev);
+			const cleanPrev = prev.filter((f) => f.name !== labelName);
+
+			if (currentState === "include") {
+				return cleanPrev;
+			}
+			return [...cleanPrev, { name: labelName, mode: "include" }];
+		});
+	};
+
+	const handleRightClickLabel = (e: React.MouseEvent, labelName: string) => {
+		e.preventDefault();
+		setTempFilter((prev) => {
+			const currentState = getLabelState(labelName, prev);
+			const cleanPrev = prev.filter((f) => f.name !== labelName);
+
+			if (currentState === "exclude") {
+				return cleanPrev;
+			}
+			return [...cleanPrev, { name: labelName, mode: "exclude" }];
+		});
+	};
+
+	useEffect(() => {
+		loadPRs(1);
+	}, [token, labelFilter]);
+
 	const totalPages = Math.ceil(totalCount / 30) || 1;
 
 	const handlePrClick = async (pr: GitHubPR) => {
 		setCurrentPrId(pr.number);
 		setProcessingPrId(pr.number);
 		setAudioLoadStatus({});
+
 		try {
-			await service.processPR(pr);
+			let targetPr = pr;
+			if (!pr.head) {
+				targetPr = await service.getPullRequestDetails(pr.number);
+				setPrs((prev) =>
+					prev.map((p) => (p.number === targetPr.number ? targetPr : p)),
+				);
+			}
+
+			await service.processPR(targetPr);
 		} catch (e) {
 			console.error(e);
 			toast.error("PR 解析失败");
@@ -408,15 +494,98 @@ export const Component = () => {
 						</Text>
 					</Flex>
 
-					<Tooltip content="刷新列表">
-						<IconButton
-							variant="solid"
-							onClick={() => loadPRs(page)}
-							disabled={loading}
-						>
-							<ReloadIcon width="18" height="18" />
-						</IconButton>
-					</Tooltip>
+					<Flex align="center" gap="3">
+						<DropdownMenu.Root onOpenChange={handleOpenChange}>
+							<DropdownMenu.Trigger>
+								<IconButton
+									variant={labelFilter.length > 0 ? "solid" : "ghost"}
+									color={labelFilter.length > 0 ? "blue" : "gray"}
+								>
+									<MixerHorizontalIcon width="18" height="18" />
+								</IconButton>
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content
+								style={{ maxHeight: "300px", overflowY: "auto" }}
+							>
+								<DropdownMenu.Label>筛选</DropdownMenu.Label>
+								{availableLabels.length === 0 ? (
+									<DropdownMenu.Item disabled>加载标签中...</DropdownMenu.Item>
+								) : (
+									availableLabels.map((label) => {
+										const state = getLabelState(label.name, tempFilter);
+
+										return (
+											<DropdownMenu.Item
+												key={label.id}
+												onSelect={(e) => {
+													e.preventDefault();
+													handleLeftClickLabel(label.name);
+												}}
+												onContextMenu={(e) =>
+													handleRightClickLabel(e, label.name)
+												}
+											>
+												<Flex align="center" gap="2" style={{ width: "100%" }}>
+													<div
+														style={{
+															width: 16,
+															display: "flex",
+															alignItems: "center",
+															justifyContent: "center",
+														}}
+													>
+														{state === "include" && (
+															<CheckIcon width="16" height="16" />
+														)}
+														{state === "exclude" && (
+															<Cross2Icon
+																width="16"
+																height="16"
+																color="var(--red-9)"
+															/>
+														)}
+													</div>
+
+													<div
+														style={{
+															width: 8,
+															height: 8,
+															borderRadius: "50%",
+															backgroundColor: `#${label.color}`,
+														}}
+													/>
+
+													<Text
+														style={{
+															textDecoration:
+																state === "exclude" ? "line-through" : "none",
+															opacity: state === "exclude" ? 0.7 : 1,
+															color:
+																state === "exclude"
+																	? "var(--red-11)"
+																	: "inherit",
+														}}
+													>
+														{label.name}
+													</Text>
+												</Flex>
+											</DropdownMenu.Item>
+										);
+									})
+								)}
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
+
+						<Tooltip content="刷新列表">
+							<IconButton
+								variant="solid"
+								onClick={() => loadPRs(page)}
+								disabled={loading}
+							>
+								<ReloadIcon width="18" height="18" />
+							</IconButton>
+						</Tooltip>
+					</Flex>
 				</Flex>
 				<div className={styles.prList}>
 					{loading
