@@ -719,13 +719,7 @@ export abstract class LyricPlayerBase
 
 		const fontSize = this.baseFontSize || 24;
 		const dotMargin = fontSize * 0.4;
-		const totalInterludeHeight = this.interludeDotsSize[1] + dotMargin * 2;
 
-		if (interlude) {
-			if (interlude[2] !== -1) {
-				curPos -= totalInterludeHeight;
-			}
-		}
 		// 避免一开始就让所有歌词行挤在一起
 		const LINE_HEIGHT_FALLBACK = this.size[1] / 5;
 		const scrollOffset = this.currentLyricLineObjects
@@ -743,20 +737,28 @@ export abstract class LyricPlayerBase
 		curPos += this.size[1] * this.alignPosition;
 		const curLine = this.currentLyricLineObjects[targetAlignIndex];
 		this.targetAlignIndex = targetAlignIndex;
+
 		if (curLine) {
 			const lineHeight =
 				this.lyricLinesSize.get(curLine)?.[1] ?? LINE_HEIGHT_FALLBACK;
-			switch (this.alignAnchor) {
-				case "bottom":
-					curPos -= lineHeight;
-					break;
-				case "center":
-					curPos -= lineHeight / 2;
-					break;
-				case "top":
-					break;
+
+			if (interlude && interlude[2] === targetAlignIndex) {
+				const dotsCenterOffset = dotMargin + this.interludeDotsSize[1] / 2;
+				curPos -= lineHeight + dotsCenterOffset;
+			} else {
+				switch (this.alignAnchor) {
+					case "bottom":
+						curPos -= lineHeight;
+						break;
+					case "center":
+						curPos -= lineHeight / 2;
+						break;
+					case "top":
+						break;
+				}
 			}
 		}
+
 		const latestIndex = Math.max(...this.bufferedLines);
 		let delay = 0;
 		let baseDelay = sync ? 0 : 0.05;
