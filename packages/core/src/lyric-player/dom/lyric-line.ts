@@ -1,5 +1,9 @@
 import bezier from "bezier-easing";
-import type { LyricLine, LyricWord } from "../../interfaces.ts";
+import {
+	type LyricLine,
+	LyricLineRenderMode,
+	type LyricWord,
+} from "../../interfaces.ts";
 import styles from "../../styles/lyric-player.module.css";
 import { isCJK } from "../../utils/is-cjk.ts";
 import { chunkAndSplitLyricWords } from "../../utils/lyric-split-words.ts";
@@ -63,17 +67,6 @@ export class RawLyricLineMouseEvent extends MouseEvent {
 	}
 }
 
-function getScaleFromTransform(transform: string): number {
-	const match = transform.match(/matrix\(([^)]+)\)/);
-	if (match) {
-		const values = match[1].split(", ");
-		const scaleX = Number.parseFloat(values[0]);
-		const scaleY = Number.parseFloat(values[3]);
-		return (scaleX + scaleY) / 2; // Average of scaleX and scaleY
-	}
-	return 1; // Default scale value if not found
-}
-
 type MouseEventMap = {
 	[evt in keyof HTMLElementEventMap]: HTMLElementEventMap[evt] extends MouseEvent
 		? evt
@@ -93,6 +86,14 @@ export class LyricLineEl extends LyricLineBase {
 
 	// 由 LyricPlayer 来设置
 	lineSize: number[] = [0, 0];
+
+	private renderMode = LyricLineRenderMode.SOLID;
+
+	private currentBrightAlpha = 1.0;
+	private currentDarkAlpha = 0.2;
+
+	private targetBrightAlpha = 1.0;
+	private targetDarkAlpha = 0.2;
 
 	constructor(
 		private lyricPlayer: DomLyricPlayer,
@@ -253,7 +254,10 @@ export class LyricLineEl extends LyricLineBase {
 	disable() {
 		this.isEnabled = false;
 		this.element.classList.remove(styles.active);
+		this.renderMode = LyricLineRenderMode.SOLID;
+
 		const main = this.element.children[0] as HTMLDivElement;
+
 		for (const word of this.splittedWords) {
 			for (const a of word.elementAnimations) {
 				if (
@@ -858,15 +862,57 @@ export class LyricLineEl extends LyricLineBase {
 		return this.element;
 	}
 
-	private updateMaskAlpha(scale: number) {
+	private updateMaskAlphaTargets(scale: number) {
 		const factor = Math.max(0.0, Math.min(1.0, (scale - 0.97) / 0.03));
+		const dynamicDarkAlpha = factor * 0.2 + 0.2;
+		const dynamicBrightAlpha = factor * 0.8 + 0.2;
+
+		if (this.renderMode === LyricLineRenderMode.SOLID) {
+			this.targetBrightAlpha = dynamicDarkAlpha;
+			this.targetDarkAlpha = dynamicDarkAlpha;
+		} else {
+			this.targetBrightAlpha = dynamicBrightAlpha;
+			this.targetDarkAlpha = dynamicDarkAlpha;
+		}
+	}
+
+	private applyAlphaToDom(delta: number) {
+		const dt = delta || 0.016;
+		const ATTACK_SPEED = 50.0;
+		const RELEASE_SPEED = 7.0;
+		const getFactor = (speed: number) => 1 - Math.exp(-speed * dt);
+
+		// 根据即将变亮还是变暗选择速度
+		// 如果即将变亮，让速度非常快，以免播放到第一个字的时候透明度还在慢慢增加导致看不清
+		const isBrightening = this.targetBrightAlpha > this.currentBrightAlpha;
+		const brightSpeed = isBrightening ? ATTACK_SPEED : RELEASE_SPEED;
+		const brightFactor = getFactor(brightSpeed);
+
+		if (Math.abs(this.targetBrightAlpha - this.currentBrightAlpha) < 0.001) {
+			this.currentBrightAlpha = this.targetBrightAlpha;
+		} else {
+			this.currentBrightAlpha +=
+				(this.targetBrightAlpha - this.currentBrightAlpha) * brightFactor;
+		}
+
+		const isDarkening = this.targetDarkAlpha > this.currentDarkAlpha;
+		const darkSpeed = isDarkening ? ATTACK_SPEED : RELEASE_SPEED;
+		const darkFactor = getFactor(darkSpeed);
+
+		if (Math.abs(this.targetDarkAlpha - this.currentDarkAlpha) < 0.001) {
+			this.currentDarkAlpha = this.targetDarkAlpha;
+		} else {
+			this.currentDarkAlpha +=
+				(this.targetDarkAlpha - this.currentDarkAlpha) * darkFactor;
+		}
+
 		this.element.style.setProperty(
 			"--bright-mask-alpha",
-			`${factor * 0.8 + 0.2}`,
+			this.currentBrightAlpha.toFixed(3),
 		);
 		this.element.style.setProperty(
 			"--dark-mask-alpha",
-			`${factor * 0.2 + 0.2}`,
+			this.currentDarkAlpha.toFixed(3),
 		);
 	}
 
@@ -877,8 +923,10 @@ export class LyricLineEl extends LyricLineBase {
 		blur = 0,
 		force = false,
 		delay = 0,
+		mode: LyricLineRenderMode = LyricLineRenderMode.SOLID,
 	) {
 		super.setTransform(top, scale, opacity, blur, force, delay);
+		this.renderMode = mode;
 		const beforeInSight = this.isInSight;
 		const enableSpring = this.lyricPlayer.getEnableSpring();
 		this.top = top;
@@ -912,7 +960,17 @@ export class LyricLineEl extends LyricLineBase {
 			// 		this.element.classList.remove(styles.tmpDisableTransition);
 			// 	});
 			const currentScale = this.lineTransforms.scale.getCurrentPosition();
-			this.updateMaskAlpha(currentScale / 100);
+			this.updateMaskAlphaTargets(currentScale / 100);
+			this.currentBrightAlpha = this.targetBrightAlpha;
+			this.currentDarkAlpha = this.targetDarkAlpha;
+			this.element.style.setProperty(
+				"--bright-mask-alpha",
+				String(this.currentBrightAlpha),
+			);
+			this.element.style.setProperty(
+				"--dark-mask-alpha",
+				String(this.currentDarkAlpha),
+			);
 		} else {
 			// this.lineWebAnimationTransforms.posX.stop();
 			// this.lineWebAnimationTransforms.posY.stop();
@@ -929,26 +987,19 @@ export class LyricLineEl extends LyricLineBase {
 
 	update(delta = 0) {
 		if (!this.lyricPlayer.getEnableSpring()) return;
+
 		this.lineTransforms.posY.update(delta);
 		this.lineTransforms.scale.update(delta);
+
 		if (this.isInSight) {
 			this.show();
 		} else {
 			this.hide();
 		}
 
-		if (this.lyricPlayer.getEnableSpring()) {
-			this.updateMaskAlpha(
-				this.lineTransforms.scale.getCurrentPosition() / 100,
-			);
-		} else {
-			const computedStyle = window.getComputedStyle(this.element);
-			const transform = computedStyle.transform;
-
-			// Extract the scale value from the transform property
-			const scale = getScaleFromTransform(transform);
-			this.updateMaskAlpha(scale);
-		}
+		const currentScale = this.lineTransforms.scale.getCurrentPosition() / 100;
+		this.updateMaskAlphaTargets(currentScale);
+		this.applyAlphaToDom(delta);
 	}
 
 	_getDebugTargetPos(): string {

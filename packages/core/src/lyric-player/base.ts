@@ -1,9 +1,10 @@
 import structuredClone from "@ungap/structured-clone";
-import type {
-	Disposable,
-	HasElement,
-	LyricLine,
-	LyricWord,
+import {
+	type Disposable,
+	type HasElement,
+	type LyricLine,
+	LyricLineRenderMode,
+	type LyricWord,
 } from "../interfaces.ts";
 import styles from "../styles/lyric-player.module.css";
 import { eqSet } from "../utils/eq-set.ts";
@@ -842,6 +843,10 @@ export abstract class LyricPlayerBase
 				blurLevel = 0;
 			}
 
+			const renderMode = isActive
+				? LyricLineRenderMode.GRADIENT
+				: LyricLineRenderMode.SOLID;
+
 			lineObj.setTransform(
 				curPos,
 				targetScale,
@@ -849,7 +854,9 @@ export abstract class LyricPlayerBase
 				window.innerWidth <= 1024 ? blurLevel * 0.8 : blurLevel,
 				force,
 				delay,
+				renderMode,
 			);
+
 			if (line.isBG && (isActive || !this.isPlaying)) {
 				curPos += this.lyricLinesSize.get(lineObj)?.[1] ?? LINE_HEIGHT_FALLBACK;
 			} else if (!line.isBG) {
@@ -1024,6 +1031,7 @@ export abstract class LyricLineBase extends EventTarget implements Disposable {
 		blur: number = this.blur,
 		_force = false,
 		delay = 0,
+		_mode = LyricLineRenderMode.SOLID,
 	) {
 		this.top = top;
 		this.scale = scale;
