@@ -528,4 +528,28 @@ export class AuditService {
 		}
 		return new TextDecoder("utf-8").decode(bytes);
 	}
+
+	static async cleanGhostEntries() {
+		try {
+			const ghostSongs = await db.songs
+				.where("id")
+				.startsWith("audit-")
+				.filter((song) => {
+					return !!song.file && song.file.size === 0;
+				})
+				.toArray();
+
+			if (ghostSongs.length > 0) {
+				const ghostIds = ghostSongs.map((s) => s.id);
+				console.log(
+					`[AuditService] 发现并清理 ${ghostIds.length} 个未完成的下载任务`,
+					ghostIds,
+				);
+
+				await db.songs.bulkDelete(ghostIds);
+			}
+		} catch (e) {
+			console.warn("[AuditService] 清理无效数据失败", e);
+		}
+	}
 }

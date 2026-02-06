@@ -174,6 +174,10 @@ export const Component = () => {
 		return db.songs.get(currentMeta.songId);
 	}, [currentMeta]);
 
+	useEffect(() => {
+		AuditService.cleanGhostEntries();
+	}, []);
+
 	const loadPRs = useCallback(
 		async (targetPage?: number) => {
 			setLoading(true);
@@ -305,7 +309,10 @@ export const Component = () => {
 		async (platformId: string) => {
 			if (!currentMeta) return;
 
-			if (currentMeta.platformId === platformId) {
+			const existingSong = await db.songs.get(currentMeta.songId);
+			const hasValidFile = existingSong?.file && existingSong.file.size > 0;
+
+			if (currentMeta.platformId === platformId && hasValidFile) {
 				void service.touchSong(currentMeta.songId);
 
 				setCurrentQueue([currentMeta.songId]);
