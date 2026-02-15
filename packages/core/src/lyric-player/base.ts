@@ -1,13 +1,15 @@
 import structuredClone from "@ungap/structured-clone";
-import type {
-	Disposable,
-	HasElement,
-	LyricLine,
-	LyricWord,
+import {
+	type Disposable,
+	type HasElement,
+	type LyricLine,
+	LyricLineRenderMode,
+	type LyricWord,
 } from "../interfaces.ts";
 import styles from "../styles/lyric-player.module.css";
 import { eqSet } from "../utils/eq-set.ts";
 import { isCJK } from "../utils/is-cjk.ts";
+import { optimizeLyricLines } from "../utils/optimize-lyric.ts";
 import { Spring, type SpringParams } from "../utils/spring.ts";
 import { BottomLineEl } from "./bottom-line.ts";
 import { InterludeDots } from "./dom/interlude-dots.ts";
@@ -499,16 +501,13 @@ export abstract class LyricPlayerBase
 		if (import.meta.env.DEV) {
 			console.log("设置歌词行", lines, initialTime);
 		}
+
 		this.initialLayoutFinished = true;
-		for (const line of lines) {
-			for (const word of line.words) {
-				word.word = word.word.replace(/\s+/g, " ");
-			}
-		}
 		this.lastCurrentTime = initialTime;
 		this.currentTime = initialTime;
-		this.currentLyricLines = structuredClone(lines) as LyricLine[];
-		this.processedLines = structuredClone(lines) as LyricLine[];
+		this.currentLyricLines = structuredClone(lines);
+		this.processedLines = structuredClone(this.currentLyricLines);
+		optimizeLyricLines(this.processedLines);
 
 		this.isNonDynamic = true;
 		for (const line of this.processedLines) {
@@ -520,47 +519,6 @@ export abstract class LyricPlayerBase
 
 		this.hasDuetLine = this.processedLines.some((line) => line.isDuet);
 
-		// 将行开始时间提早最多一秒
-		for (let i = this.processedLines.length - 1; i >= 0; i--) {
-			const line = this.processedLines[i];
-			if (line.isBG) continue;
-			const prevLine = this.processedLines[i - 1];
-			if (prevLine) {
-				// 增加一个 min 边界是为了如果现有歌词已经和上一行歌词有交错，则不做修改
-				line.startTime = Math.max(
-					Math.min(prevLine.endTime, line.startTime),
-					line.startTime - 1000,
-				);
-			} else {
-				line.startTime = Math.max(0, line.startTime - 1000);
-			}
-		}
-
-		// 让背景歌词和上一行歌词一同出现并一同消失
-		for (let i = this.processedLines.length - 1; i >= 0; i--) {
-			const line = this.processedLines[i];
-			if (line.isBG) continue;
-			const nextLine = this.processedLines[i + 1];
-			if (nextLine?.isBG) {
-				const bgStartTime = Math.min(
-					...nextLine.words
-						.filter((w) => w.word.trim().length > 0)
-						.map((w) => w.startTime),
-					line.startTime,
-				);
-				const bgEndTime = Math.max(
-					...nextLine.words
-						.filter((w) => w.word.trim().length > 0)
-						.map((w) => w.endTime),
-					line.endTime,
-				);
-				const startTime = Math.min(bgStartTime, line.startTime);
-				const endTime = Math.max(bgEndTime, line.endTime);
-				nextLine.startTime = startTime;
-				nextLine.endTime = endTime;
-			}
-		}
-
 		for (const line of this.currentLyricLineObjects) {
 			line.dispose();
 		}
@@ -569,9 +527,18 @@ export abstract class LyricPlayerBase
 		this.hotLines.clear();
 		this.bufferedLines.clear();
 		this.setCurrentTime(0, true);
+
 		if (import.meta.env.DEV) {
 			console.log("歌词处理完成", this);
 		}
+	}
+
+	/**
+	 * 获取当前是否在播放
+	 * @returns 当前是否在播放
+	 */
+	public getIsPlaying() {
+		return this.isPlaying;
 	}
 
 	/**
@@ -639,7 +606,7 @@ export abstract class LyricPlayerBase
 
 			if (!line.isBG && line.startTime <= time && line.endTime > time) {
 				if (isSeek) {
-					lineObj.enable(time);
+					lineObj.enable(time, this.isPlaying);
 				}
 
 				if (!this.hotLines.has(id)) {
@@ -654,7 +621,7 @@ export abstract class LyricPlayerBase
 						this.hotLines.add(id + 1);
 						addedIds.add(id + 1);
 						if (isSeek) {
-							arr[id + 1].enable(time);
+							arr[id + 1].enable(time, this.isPlaying);
 						} else {
 							arr[id + 1].enable();
 						}
@@ -876,6 +843,10 @@ export abstract class LyricPlayerBase
 				blurLevel = 0;
 			}
 
+			const renderMode = isActive
+				? LyricLineRenderMode.GRADIENT
+				: LyricLineRenderMode.SOLID;
+
 			lineObj.setTransform(
 				curPos,
 				targetScale,
@@ -883,7 +854,9 @@ export abstract class LyricPlayerBase
 				window.innerWidth <= 1024 ? blurLevel * 0.8 : blurLevel,
 				force,
 				delay,
+				renderMode,
 			);
+
 			if (line.isBG && (isActive || !this.isPlaying)) {
 				curPos += this.lyricLinesSize.get(lineObj)?.[1] ?? LINE_HEIGHT_FALLBACK;
 			} else if (!line.isBG) {
@@ -1046,7 +1019,7 @@ export abstract class LyricLineBase extends EventTarget implements Disposable {
 		scale: new Spring(100),
 	};
 	abstract getLine(): LyricLine;
-	abstract enable(time?: number): void;
+	abstract enable(time?: number, shouldPlay?: boolean): void;
 	abstract disable(): void;
 	abstract resume(): void;
 	abstract pause(): void;
@@ -1058,6 +1031,7 @@ export abstract class LyricLineBase extends EventTarget implements Disposable {
 		blur: number = this.blur,
 		_force = false,
 		delay = 0,
+		_mode = LyricLineRenderMode.SOLID,
 	) {
 		this.top = top;
 		this.scale = scale;

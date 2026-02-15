@@ -1,5 +1,6 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import type { LabelFilter } from "../pages/audit/services/audit-service";
 
 export const isAuditModeAtom = atom(false);
 
@@ -8,14 +9,6 @@ export const githubTokenAtom = atomWithStorage<string>(
 	"",
 	undefined,
 	{ getOnInit: true },
-);
-
-export const auditRepoConfigAtom = atomWithStorage(
-	"amll-player.audit.repoConfig",
-	{
-		owner: "Steve-xmh",
-		repo: "amll-ttml-db",
-	},
 );
 
 export const currentAuditPrIdAtom = atom<number | null>(null);
@@ -31,4 +24,9 @@ export const auditProcessingStateAtom = atom<{
 export const enableAuditModeAtom = atomWithStorage<boolean>(
 	"amll-player.audit.enable",
 	false,
+);
+
+export const auditLabelFilterAtom = atomWithStorage<LabelFilter[]>(
+	"amll-player.audit.labelFilter",
+	[],
 );

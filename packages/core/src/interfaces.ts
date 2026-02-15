@@ -24,6 +24,15 @@ export interface Disposable {
 	dispose(): void;
 }
 
+/**
+ * 歌词行的渲染模式
+ * @internal
+ */
+export enum LyricLineRenderMode {
+	SOLID = 0,
+	GRADIENT = 1,
+}
+
 /** 一个歌词单词 */
 export interface LyricWord {
 	/** 单词的起始时间，单位为毫秒 */

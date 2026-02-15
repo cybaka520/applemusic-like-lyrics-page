@@ -1,5 +1,4 @@
-const NETEASE_API_BASE =
-	"https://netease-cloud-music-api-1035942257985.asia-east1.run.app";
+const NETEASE_API_BASE = "https://api-enhanced-one-sigma.vercel.app";
 
 export interface NeteaseResponse<T> {
 	code: number;
