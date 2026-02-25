@@ -43,6 +43,7 @@ export function chunkAndSplitLyricWords(
 					romanWord: "",
 					startTime: startTime,
 					endTime: startTime,
+					obscene: w.obscene,
 				});
 				continue;
 			}
@@ -59,6 +60,7 @@ export function chunkAndSplitLyricWords(
 						romanWord: "",
 						startTime: startTime,
 						endTime: startTime + charDuration,
+						obscene: w.obscene,
 					});
 					currentOffset += 1;
 				}
@@ -75,6 +77,7 @@ export function chunkAndSplitLyricWords(
 					romanWord: w.romanWord,
 					startTime: startTime,
 					endTime: startTime + duration,
+					obscene: w.obscene,
 				});
 				currentOffset += partRealLen;
 			}

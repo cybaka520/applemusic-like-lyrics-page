@@ -7,12 +7,12 @@
 
 import * as lyrics from "@applemusic-like-lyrics/lyric";
 import {
-	type LyricLine as RawLyricLine,
 	parseLrc,
 	parseLys,
 	parseQrc,
 	parseTTML,
 	parseYrc,
+	type LyricLine as RawLyricLine,
 } from "@applemusic-like-lyrics/lyric";
 import GUI from "lil-gui";
 import Stats from "stats.js";
@@ -39,9 +39,9 @@ const debugValues = {
 	bgFPS: 60,
 	bgMode: new URL(location.href).searchParams.get("bg") || "mg",
 	bgScale: 1,
-	bgFlowSpeed: 2,
+	bgFlowSpeed: 0.2,
 	bgPlaying: true,
-	bgStaticMode: true,
+	bgStaticMode: false,
 	currentTime: 0,
 	enableBlur: true,
 	playing: false,
@@ -56,6 +56,12 @@ const debugValues = {
 			lyricPlayer.setCurrentTime(baseTime + time);
 			await waitFrame();
 		}
+	},
+	forceUpdateAlbum() {
+		window.globalBackground.setAlbum(debugValues.album);
+	},
+	forceUpdateLyric() {
+		loadLyric();
 	},
 	play() {
 		this.playing = true;
@@ -108,6 +114,7 @@ function recreateBGRenderer(mode: string) {
 	bg.setFPS(debugValues.bgFPS);
 	bg.setRenderScale(debugValues.bgScale);
 	bg.setStaticMode(debugValues.bgStaticMode);
+	bg.setFlowSpeed(debugValues.bgFlowSpeed);
 	bg.getElement().style.position = "absolute";
 	bg.getElement().style.top = "0";
 	bg.getElement().style.left = "0";
@@ -143,7 +150,8 @@ gui
 	.onFinishChange((v: string) => {
 		window.globalBackground.setAlbum(v);
 	});
-
+gui.add(debugValues, "forceUpdateAlbum").name("强制更新专辑图片");
+gui.add(debugValues, "forceUpdateLyric").name("强制更新歌词");
 const bgGui = gui.addFolder("背景");
 bgGui
 	.add(debugValues, "bgPlaying")
@@ -168,7 +176,7 @@ bgGui
 		window.globalBackground.setRenderScale(v);
 	});
 bgGui
-	.add(debugValues, "bgFPS", 1, 60, 1)
+	.add(debugValues, "bgFPS", 1, 1000, 1)
 	.name("帧率")
 	.onFinishChange((v: number) => {
 		window.globalBackground.setFPS(v);
@@ -331,7 +339,7 @@ async function loadLyric() {
 			const words = [];
 			for (const word of lyric.split("|")) {
 				const [text, duration] = word.split(",");
-				const endTime = curTime + Number.parseInt(duration);
+				const endTime = curTime + Number.parseInt(duration, 10);
 				words.push({
 					word: text,
 					romanWord: "",

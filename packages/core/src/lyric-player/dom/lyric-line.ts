@@ -489,6 +489,7 @@ export class LyricLineEl extends LyricLineBase {
 				startTime: Number.POSITIVE_INFINITY,
 				endTime: Number.NEGATIVE_INFINITY,
 				wordType: "normal",
+				obscene: false,
 			} as LyricWord,
 		);
 
