@@ -37,6 +37,7 @@
 			height: 20em;
 			border: solid 1px #3337;
 			background-color: #1117;
+			resize: both;
 			color: white;
 			font-family:
 				"Fira Code", "SF Pro Display", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
@@ -57,6 +58,26 @@
 			user-select: none;
 		}
 
+		.dragger-handle {
+			position: absolute;
+			width: 12px;
+			height: 12px;
+			border-radius: 50%;
+			background-color: #4af;
+			border: solid 2px #fff;
+			cursor: pointer;
+			transform: translate(-50%, -50%);
+			z-index: 10;
+		}
+
+		.dragger-line {
+			position: absolute;
+			height: 2px;
+			background-color: #4af8;
+			transform-origin: left center;
+			pointer-events: none;
+		}
+
 		.active {
 			border-color: #f44;
 		}
@@ -65,10 +86,6 @@
 
 	<body>
 		<canvas id="bg"></canvas>
-		<textarea
-			id="result"
-			placeholder="控制点代码将会在这里显示"
-			readonly
-		></textarea>
+		<textarea id="result" placeholder="控制点代码将会在这里显示"></textarea>
 	</body>
 </html>

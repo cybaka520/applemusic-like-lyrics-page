@@ -79,6 +79,8 @@ export const FFTToLowPassContext: FC = () => {
 	const currentSmoothedVolumeRef = useRef<number>(0);
 
 	useEffect(() => {
+		if (!isPlaying) return;
+
 		if (!isLyricPageOpened) {
 			setLowFreqVolume(0);
 			currentSmoothedVolumeRef.current = 0;
